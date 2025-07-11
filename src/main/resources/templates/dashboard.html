@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Portal Profissional</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-orange: #ff6b35;
+            --accent-orange-hover: #ff8c42;
+            --border-color: #4a4a4a;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+
+        
+        .navbar {
+            background: var(--bg-secondary) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-metric {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-orange);
+            transition: all 0.3s ease;
+            height: 140px;
+            cursor: pointer;
+        }
+        
+        .card-metric:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
+            border-left-color: var(--accent-orange-hover);
+        }
+        
+        .card-metric .card-body {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 100%;
+        }
+        
+        .metric-content {
+            flex: 1;
+        }
+        
+        .metric-icon {
+            font-size: 2.5rem;
+            color: var(--accent-orange);
+            opacity: 0.8;
+        }
+        
+        .metric-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .card-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .btn-primary {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-orange-hover);
+            border-color: var(--accent-orange-hover);
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        .nav-link.active {
+            background: var(--accent-orange) !important;
+        }
+        
+        .alert {
+            border: 1px solid var(--border-color);
+        }
+        
+        .github-card {
+            background: linear-gradient(135deg, #24292e 0%, #2f363d 100%);
+            border-left-color: #f0f6fc;
+        }
+        
+        .github-stats {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 100%;
+        }
+        
+        .github-stat {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .github-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f0f6fc;
+        }
+        
+        .github-stat-label {
+            font-size: 0.7rem;
+            color: #8b949e;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <span th:text="${user.name}">Usuário</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2">Dashboard</h1>
+                        <p class="text-muted">Acompanhe seu progresso profissional</p>
+                    </div>
+                    <button id="refreshBtn" class="btn btn-outline-light" onclick="refreshDashboard()" title="Atualizar dados">
+                        <i class="fas fa-sync-alt" id="refreshIcon"></i>
+                    </button>
+                </div>
+
+                <!-- Mensagens de Alerta -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${successMessage}">Mensagem de sucesso</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${errorMessage}">Mensagem de erro</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Métricas Cards -->
+                <div class="row mb-4">
+                    <!-- Atividades -->
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <a href="/activities" class="text-decoration-none">
+                            <div class="card card-metric">
+                                <div class="card-body">
+                                    <div class="metric-content">
+                                        <div class="metric-title">Atividades Concluídas</div>
+                                        <div class="metric-value" th:text="${metrics.completedActivities}">0</div>
+                                    </div>
+                                    <div class="metric-icon">
+                                        <i class="fas fa-tasks"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Metas -->
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <a href="/goals" class="text-decoration-none">
+                            <div class="card card-metric">
+                                <div class="card-body">
+                                    <div class="metric-content">
+                                        <div class="metric-title">Metas Ativas</div>
+                                        <div class="metric-value" th:text="${metrics.activeGoals}">0</div>
+                                    </div>
+                                    <div class="metric-icon">
+                                        <i class="fas fa-bullseye"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Conquistas -->
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <a href="/achievements" class="text-decoration-none">
+                            <div class="card card-metric">
+                                <div class="card-body">
+                                    <div class="metric-content">
+                                        <div class="metric-title">Conquistas</div>
+                                        <div class="metric-value" th:text="${metrics.achievements}">0</div>
+                                    </div>
+                                    <div class="metric-icon">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- GitHub Stats -->
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <a th:href="'https://github.com/' + ${user.githubUsername}" target="_blank" class="text-decoration-none">
+                            <div class="card card-metric github-card">
+                                <div class="card-body">
+                                    <div class="github-stats">
+                                        <div class="github-stat">
+                                            <div class="github-stat-value" th:text="${metrics.pullRequests}">0</div>
+                                            <div class="github-stat-label">Pull Requests</div>
+                                        </div>
+                                    </div>
+                                    <div class="metric-icon" style="color: #f0f6fc;">
+                                        <i class="fab fa-github"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Ações Rápidas -->
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
+                                    <i class="fas fa-rocket me-2"></i>Ações Rápidas
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/activities/new" class="btn btn-primary w-100">
+                                            <i class="fas fa-plus me-2"></i>Nova Atividade
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/goals/new" class="btn btn-outline-light w-100">
+                                            <i class="fas fa-bullseye me-2"></i>Nova Meta
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/achievements/new" class="btn btn-outline-light w-100">
+                                            <i class="fas fa-trophy me-2"></i>Nova Conquista
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/reports" class="btn btn-outline-light w-100">
+                                            <i class="fas fa-chart-bar me-2"></i>Ver Relatórios
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
+                                    <i class="fab fa-github me-2"></i>Perfil GitHub
+                                </h6>
+                            </div>
+                            <div class="card-body text-center d-flex flex-column justify-content-center">
+                                <div th:if="${user.githubUsername}">
+                                    <i class="fab fa-github fa-4x mb-3" style="color: var(--accent-orange);"></i>
+                                    <h5 th:text="'@' + ${user.githubUsername}" style="color: var(--text-primary);">@username</h5>
+                                    <p class="text-muted mb-3">Conectado ao GitHub</p>
+                                    <div class="d-grid gap-2">
+                                        <a th:href="'https://github.com/' + ${user.githubUsername}" target="_blank" class="btn btn-outline-light">
+                                            <i class="fas fa-external-link-alt me-2"></i>Ver Perfil no GitHub
+                                        </a>
+                                        <a href="/reports/pdf" class="btn btn-primary">
+                                            <i class="fas fa-file-pdf me-2"></i>Exportar Relatório PDF
+                                        </a>
+                                    </div>
+                                </div>
+                                <div th:unless="${user.githubUsername}">
+                                    <i class="fab fa-github fa-4x text-muted mb-3"></i>
+                                    <h5 class="text-muted">GitHub não conectado</h5>
+                                    <p class="text-muted mb-3">Conecte sua conta para ver estatísticas</p>
+                                    <a href="/auth/github" class="btn btn-primary">
+                                        <i class="fab fa-github me-2"></i>Conectar GitHub
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        let lastRefresh = Date.now();
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+        
+        function refreshDashboard() {
+            const now = Date.now();
+            if (now - lastRefresh < 10000) { // Evita spam (10s)
+                return;
+            }
+            
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshIcon = document.getElementById('refreshIcon');
+            
+            // Visual feedback
+            refreshBtn.disabled = true;
+            refreshIcon.classList.add('fa-spin');
+            
+            // Fetch new data
+            fetch('/api/dashboard/metrics', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateMetrics(data);
+                lastRefresh = now;
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar:', error);
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    refreshBtn.disabled = false;
+                    refreshIcon.classList.remove('fa-spin');
+                }, 1000);
+            });
+        }
+        
+        function updateMetrics(data) {
+            document.querySelector('[th\\:text="${metrics.completedActivities}"]').textContent = data.completedActivities || 0;
+            document.querySelector('[th\\:text="${metrics.activeGoals}"]').textContent = data.activeGoals || 0;
+            document.querySelector('[th\\:text="${metrics.achievements}"]').textContent = data.achievements || 0;
+            document.querySelector('[th\\:text="${metrics.pullRequests}"]').textContent = data.pullRequests || 0;
+        }
+        
+        // Auto-refresh se dados estão muito antigos
+        window.addEventListener('focus', function() {
+            const now = Date.now();
+            if (now - lastRefresh > CACHE_DURATION) {
+                refreshDashboard();
+            }
+        });
+    </script>
+</body>
+</html>

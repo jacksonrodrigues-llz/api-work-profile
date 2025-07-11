@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metas - Portal Profissional</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        .kanban-board { min-height: 80vh; }
+        .kanban-column { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); min-height: 70vh; height: auto; }
+        .kanban-header { padding: 1rem; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); border-radius: 8px 8px 0 0; }
+        .kanban-cards { padding: 0.5rem; min-height: 60vh; overflow-y: auto; }
+        .kanban-cards.drag-over { background: rgba(255, 107, 53, 0.1); border: 2px dashed var(--accent-orange); }
+        .kanban-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem; transition: all 0.2s ease; cursor: pointer; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15); }
+        .draggable-goal { cursor: grab; }
+        .draggable-goal:active { cursor: grabbing; }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <button id="refreshBtn" class="btn btn-outline-light refresh-btn me-2" onclick="refreshGoals()" title="Atualizar">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>Usuário
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2">Metas SMART</h1>
+                        <p class="text-muted">Gerencie seus objetivos profissionais</p>
+                    </div>
+                    <a href="/goals/new" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Nova Meta
+                    </a>
+                </div>
+
+                <!-- Kanban Board Metas -->
+                <div th:if="${goals.empty}" class="text-center py-5">
+                    <i class="fas fa-bullseye fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhuma meta encontrada</h4>
+                    <p class="text-muted">Comece definindo sua primeira meta SMART</p>
+                    <a href="/goals/new" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Criar Primeira Meta
+                    </a>
+                </div>
+                
+                <div th:unless="${goals.empty}" class="kanban-board">
+                    <div class="row g-3">
+                        <!-- ACTIVE Column -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-primary me-2"></i>
+                                        ATIVA 
+                                        <span class="badge bg-primary ms-2" th:text="${activeCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="ACTIVE">
+                                    <div th:each="goal : ${activeGoals}" class="kanban-card draggable-goal" 
+                                         th:data-id="${goal.id}"
+                                         draggable="true"
+                                         onclick="showGoalModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge bg-info" th:if="${goal.category}" th:text="${goal.category}">Category</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${goal.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(goal.description, 60)}">Description</p>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-primary" th:style="'width: ' + ${goal.progressPercentage} + '%'"></div>
+                                        </div>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:text="${goal.progressPercentage} + '%'">0%</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${goal.description}"></span>
+                                            <span class="target-date" th:text="${goal.targetDate}"></span>
+                                            <span class="edit-url" th:text="@{/goals/{id}/edit(id=${goal.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- PAUSED Column -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-warning me-2"></i>
+                                        PAUSADA 
+                                        <span class="badge bg-warning ms-2" th:text="${pausedCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="PAUSED">
+                                    <div th:each="goal : ${pausedGoals}" class="kanban-card draggable-goal" 
+                                         th:data-id="${goal.id}"
+                                         draggable="true"
+                                         onclick="showGoalModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge bg-info" th:if="${goal.category}" th:text="${goal.category}">Category</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${goal.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(goal.description, 60)}">Description</p>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" th:style="'width: ' + ${goal.progressPercentage} + '%'"></div>
+                                        </div>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:text="${goal.progressPercentage} + '%'">0%</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${goal.description}"></span>
+                                            <span class="target-date" th:text="${goal.targetDate}"></span>
+                                            <span class="edit-url" th:text="@{/goals/{id}/edit(id=${goal.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- CANCELLED Column -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-danger me-2"></i>
+                                        CANCELADA 
+                                        <span class="badge bg-danger ms-2" th:text="${cancelledCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="CANCELLED">
+                                    <div th:each="goal : ${cancelledGoals}" class="kanban-card draggable-goal" 
+                                         th:data-id="${goal.id}"
+                                         draggable="true"
+                                         onclick="showGoalModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge bg-info" th:if="${goal.category}" th:text="${goal.category}">Category</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${goal.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(goal.description, 60)}">Description</p>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-danger" th:style="'width: ' + ${goal.progressPercentage} + '%'"></div>
+                                        </div>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:text="${goal.progressPercentage} + '%'">0%</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${goal.description}"></span>
+                                            <span class="target-date" th:text="${goal.targetDate}"></span>
+                                            <span class="edit-url" th:text="@{/goals/{id}/edit(id=${goal.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- COMPLETED Column -->
+                        <div class="col-lg-3 col-md-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-success me-2"></i>
+                                        COMPLETA 
+                                        <span class="badge bg-success ms-2" th:text="${completedCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="COMPLETED">
+                                    <div th:each="goal : ${completedGoals}" class="kanban-card draggable-goal" 
+                                         th:data-id="${goal.id}"
+                                         draggable="true"
+                                         onclick="showGoalModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge bg-info" th:if="${goal.category}" th:text="${goal.category}">Category</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${goal.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(goal.description, 60)}">Description</p>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-success" th:style="'width: ' + ${goal.progressPercentage} + '%'"></div>
+                                        </div>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:text="${goal.progressPercentage} + '%'">100%</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${goal.description}"></span>
+                                            <span class="target-date" th:text="${goal.targetDate}"></span>
+                                            <span class="edit-url" th:text="@{/goals/{id}/edit(id=${goal.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Pré-visualização Meta -->
+    <div class="modal fade" id="goalModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" id="goalModalTitle" style="color: var(--text-primary);">Meta</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p id="goalModalDescription" style="color: var(--text-secondary);">Descrição</p>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-orange);">Progresso:</strong>
+                                <div class="progress mt-2" style="height: 12px;">
+                                    <div id="goalModalProgress" class="progress-bar" style="background: var(--accent-orange);"></div>
+                                </div>
+                                <small id="goalModalProgressText" class="text-muted">0%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <strong style="color: var(--accent-orange);">Categoria:</strong> <span id="goalModalCategory" class="badge bg-info">-</span>
+                            </div>
+                            <div class="mb-2" id="goalModalTargetDiv">
+                                <strong style="color: var(--accent-orange);">Data Meta:</strong> <span id="goalModalTarget">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
+                    <a id="goalModalEditBtn" href="#" class="btn btn-primary">Editar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        // Drag and Drop for Goals
+        let draggedGoal = null;
+        
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.classList.contains('draggable-goal')) {
+                draggedGoal = e.target;
+                e.target.style.opacity = '0.5';
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+        
+        document.addEventListener('dragend', function(e) {
+            if (e.target.classList.contains('draggable-goal')) {
+                e.target.style.opacity = '1';
+            }
+            // Remove drag-over class from all drop zones
+            document.querySelectorAll('.kanban-cards').forEach(zone => {
+                zone.classList.remove('drag-over');
+            });
+        });
+        
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const dropZone = e.target.closest('.kanban-cards');
+            if (dropZone) {
+                dropZone.classList.add('drag-over');
+            }
+        });
+        
+        document.addEventListener('dragleave', function(e) {
+            const dropZone = e.target.closest('.kanban-cards');
+            if (dropZone && !dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+        
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropZone = e.target.closest('.kanban-cards');
+            if (dropZone && draggedGoal) {
+                dropZone.classList.remove('drag-over');
+                
+                const currentParent = draggedGoal.parentElement;
+                if (dropZone !== currentParent) {
+                    const newStatus = dropZone.dataset.status;
+                    const goalId = draggedGoal.dataset.id;
+                    
+                    console.log('Moving goal', goalId, 'from', currentParent.dataset.status, 'to', newStatus);
+                    
+                    // Update status via AJAX first
+                    updateGoalStatus(goalId, newStatus)
+                        .then(() => {
+                            // Move element to new column only after successful update
+                            dropZone.appendChild(draggedGoal);
+                            // Update counters
+                            updateGoalCounters();
+                            console.log('Goal moved successfully');
+                        })
+                        .catch((error) => {
+                            console.error('Failed to update goal status, not moving card:', error);
+                        });
+                }
+            }
+        });
+        
+        function updateGoalStatus(goalId, newStatus) {
+            return fetch(`/goals/${goalId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update goal status');
+                }
+                console.log('Goal status updated successfully');
+                return response;
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar status da meta:', error);
+                throw error;
+            });
+        }
+        
+        function updateGoalCounters() {
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                const cards = column.querySelectorAll('.kanban-card');
+                const badge = column.querySelector('.badge');
+                if (badge) {
+                    badge.textContent = cards.length;
+                }
+            });
+        }
+        
+        // Modal functionality for Goals
+        function refreshGoals() {
+            location.reload();
+        }
+        
+        function showGoalModal(card) {
+            event.stopPropagation();
+            
+            const title = card.querySelector('.card-title').textContent;
+            const description = card.querySelector('.full-description') ? card.querySelector('.full-description').textContent : card.querySelector('.card-text').textContent;
+            const category = card.querySelector('.badge') ? card.querySelector('.badge').textContent : '-';
+            const progress = card.querySelector('.card-footer-small .text-muted').textContent.replace('%', '');
+            const targetDate = card.querySelector('.target-date') ? card.querySelector('.target-date').textContent : '';
+            const editUrl = card.querySelector('.edit-url') ? card.querySelector('.edit-url').textContent : '';
+            
+            document.getElementById('goalModalTitle').textContent = title;
+            document.getElementById('goalModalDescription').textContent = description;
+            document.getElementById('goalModalCategory').textContent = category;
+            document.getElementById('goalModalProgress').style.width = progress + '%';
+            document.getElementById('goalModalProgressText').textContent = progress + '%';
+            
+            const targetText = targetDate && targetDate !== 'null' && targetDate !== '' ? new Date(targetDate).toLocaleDateString('pt-BR') : '-';
+            document.getElementById('goalModalTarget').textContent = targetText;
+            document.getElementById('goalModalEditBtn').href = editUrl;
+            
+            // Hide empty fields
+            document.getElementById('goalModalTargetDiv').style.display = targetText === '-' ? 'none' : 'block';
+            
+            new bootstrap.Modal(document.getElementById('goalModal')).show();
+        }
+    </script>
+</body>
+</html>

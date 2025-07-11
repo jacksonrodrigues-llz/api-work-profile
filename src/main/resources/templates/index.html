@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Progresso Profissional</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, #404040 100%);
+            min-height: 100vh;
+        }
+        .feature-card {
+            transition: transform 0.3s;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
+        }
+        .cta-section {
+            background: var(--bg-secondary) !important;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Hero Section -->
+    <section class="hero-section d-flex align-items-center text-white">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        <i class="fas fa-chart-line me-3" style="color: var(--accent-orange);"></i>
+                        <span style="color: var(--accent-orange);">Dev</span>Portal
+                    </h1>
+                    <p class="lead mb-4">
+                        Gerencie atividades, metas e conquistas. Acompanhe seu progresso 
+                        com integração GitHub e métricas de produtividade.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="/login" class="btn btn-light btn-lg">
+                            <i class="fab fa-github me-2"></i>Começar Agora
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-lg">
+                            Saiba Mais
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <i class="fas fa-code" style="font-size: 15rem; opacity: 0.3; color: var(--accent-orange);"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5" style="background: var(--bg-primary);">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="display-5 fw-bold">Funcionalidades Principais</h2>
+                    <p class="lead text-muted">Tudo que você precisa para documentar seu crescimento profissional</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-tasks fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h5 class="fw-bold">Gestão de Atividades</h5>
+                            <p class="text-muted">Organize suas tarefas, projetos e entregas com sistema de prioridades e acompanhamento de tempo.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-bullseye fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h5 class="fw-bold">Metas SMART</h5>
+                            <p class="text-muted">Defina objetivos claros, mensuráveis e acompanhe seu progresso com indicadores visuais.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fab fa-github fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h5 class="fw-bold">Integração GitHub</h5>
+                            <p class="text-muted">Sincronize automaticamente seus pull requests, commits e contribuições de código.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-trophy fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h5 class="fw-bold">Conquistas</h5>
+                            <p class="text-muted">Registre marcos, certificações, reconhecimentos e impactos mensuráveis.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-chart-bar fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h5 class="fw-bold">Dashboard Analítico</h5>
+                            <p class="text-muted">Visualize métricas de produtividade, gráficos de evolução e comparativos.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-file-pdf fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h5 class="fw-bold">Exportação PDF</h5>
+                            <p class="text-muted">Gere relatórios profissionais para performance reviews e apresentações.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 cta-section text-white">
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="display-6 fw-bold mb-4">Pronto para começar?</h2>
+                    <p class="lead mb-4">
+                        Crie sua conta e comece a documentar seu progresso profissional hoje mesmo.
+                    </p>
+                    <a href="/login" class="btn btn-light btn-lg">
+                        <i class="fab fa-github me-2"></i>Entrar com GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Portal Profissional</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, #404040 100%);
+            min-height: 100vh;
+        }
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(255, 107, 53, 0.1);
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center">
+    
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card login-card border-0">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-code fa-3x mb-3" style="color: var(--accent-orange);"></i>
+                            <h3 class="fw-bold" style="color: var(--text-primary);">
+                                <span style="color: var(--accent-orange);">Dev</span>Portal
+                            </h3>
+                            <p class="text-muted">Gerencie seu progresso profissional</p>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="/oauth2/authorization/github" class="btn btn-primary btn-lg">
+                                <i class="fab fa-github me-2"></i>
+                                Entrar com GitHub
+                            </a>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                Conecte-se com sua conta GitHub para acessar<br>
+                                suas métricas de desenvolvimento
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

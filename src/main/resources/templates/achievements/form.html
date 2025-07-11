@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conquista - Portal Profissional</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dark-theme.css" rel="stylesheet">
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>Usuário
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2" th:text="${achievement.id != null ? 'Editar Conquista' : 'Nova Conquista'}">Nova Conquista</h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><span style="color: var(--accent-orange);">Dashboard</span></li>
+                            <li class="breadcrumb-item"><span style="color: var(--accent-orange);">Conquistas</span></li>
+                            <li class="breadcrumb-item active" style="color: var(--text-primary);" th:text="${achievement.id != null ? 'Editar' : 'Nova'}">Nova</li>
+                        </ol>
+                    </nav>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <form th:action="${achievement.id != null ? '/achievements/' + achievement.id : '/achievements'}" 
+                                      th:object="${achievement}" method="post">
+                                    <input type="hidden" th:if="${achievement.id != null}" name="_method" value="PUT"/>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-8">
+                                            <label for="title" class="form-label">Título da Conquista *</label>
+                                            <input type="text" class="form-control" id="title" th:field="*{title}" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="type" class="form-label">Tipo</label>
+                                            <select class="form-select" id="type" th:field="*{type}">
+                                                <option th:each="type : ${T(api.work.profile.entity.Achievement.AchievementType).values()}" 
+                                                        th:value="${type}" th:text="${type}">Tipo</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Descrição</label>
+                                        <textarea class="form-control" id="description" rows="4" th:field="*{description}" 
+                                                  placeholder="Descreva detalhadamente sua conquista"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="impact" class="form-label">Impacto Gerado</label>
+                                        <textarea class="form-control" id="impact" rows="3" th:field="*{impact}" 
+                                                  placeholder="Qual foi o impacto desta conquista? (ex: economia de tempo, melhoria de processo, etc.)"></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="recognition" class="form-label">Reconhecimento Recebido</label>
+                                        <textarea class="form-control" id="recognition" rows="2" th:field="*{recognition}" 
+                                                  placeholder="Elogios, premiações, menções recebidas"></textarea>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="achievedAt" class="form-label">Data da Conquista</label>
+                                        <input type="datetime-local" class="form-control" id="achievedAt" th:field="*{achievedAt}">
+                                    </div>
+
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-save me-2"></i>Salvar
+                                        </button>
+                                        <a href="/achievements" class="btn btn-secondary">
+                                            <i class="fas fa-times me-2"></i>Cancelar
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h6 class="m-0"><i class="fas fa-trophy me-2"></i>Tipos de Conquista</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                        <i class="fas fa-flag text-primary me-2"></i>
+                                        <strong>Milestone</strong> - Marcos importantes
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-certificate text-success me-2"></i>
+                                        <strong>Certification</strong> - Certificações obtidas
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-award text-warning me-2"></i>
+                                        <strong>Recognition</strong> - Reconhecimentos
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-lightbulb text-info me-2"></i>
+                                        <strong>Innovation</strong> - Inovações criadas
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-users text-danger me-2"></i>
+                                        <strong>Leadership</strong> - Liderança exercida
+                                    </li>
+                                    <li class="mb-0">
+                                        <i class="fas fa-code text-secondary me-2"></i>
+                                        <strong>Technical</strong> - Conquistas técnicas
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

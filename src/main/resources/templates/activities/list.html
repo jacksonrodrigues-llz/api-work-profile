@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Atividades - Portal Profissional</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        .kanban-board {
+            min-height: 80vh;
+        }
+        .kanban-column {
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            min-height: 70vh;
+            height: auto;
+        }
+        .kanban-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+        }
+        .kanban-cards {
+            padding: 0.5rem;
+            min-height: 60vh;
+            overflow-y: auto;
+        }
+        .kanban-cards.drag-over {
+            background: rgba(255, 107, 53, 0.1);
+            border: 2px dashed var(--accent-orange);
+        }
+        .kanban-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .kanban-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+        }
+        .kanban-card .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .kanban-card .card-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+        .card-header-small {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 0.5rem;
+        }
+        .card-footer-small {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .priority-badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .priority-urgent { border-left: 3px solid #dc3545; }
+        .priority-high { border-left: 3px solid #ffc107; }
+        .priority-medium { border-left: 3px solid #17a2b8; }
+        .priority-low { border-left: 3px solid #28a745; }
+        .kanban-cards::-webkit-scrollbar {
+            width: 4px;
+        }
+        .kanban-cards::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        .kanban-cards::-webkit-scrollbar-thumb {
+            background: var(--accent-orange);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <button id="refreshBtn" class="btn btn-outline-light refresh-btn me-2" onclick="refreshActivities()" title="Atualizar">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>Usuário
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2">Atividades</h1>
+                        <p class="text-muted">Gerencie suas tarefas e projetos</p>
+                    </div>
+                    <a href="/activities/new" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Nova Atividade
+                    </a>
+                </div>
+
+                <!-- Kanban Board -->
+                <div th:if="${activities.empty}" class="text-center py-5">
+                    <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhuma atividade encontrada</h4>
+                    <p class="text-muted">Comece criando sua primeira atividade</p>
+                    <a href="/activities/new" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Criar Primeira Atividade
+                    </a>
+                </div>
+                
+                <div th:unless="${activities.empty}" class="kanban-board">
+                    <div class="row g-3">
+                        <!-- TODO Column -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-secondary me-2"></i>
+                                        A FAZER 
+                                        <span class="badge bg-secondary ms-2" th:text="${todoCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="TODO">
+                                    <div th:each="activity : ${todoActivities}" class="kanban-card draggable" 
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <!-- Hidden data for modal -->
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- IN_PROGRESS Column -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-warning me-2"></i>
+                                        EM PROGRESSO 
+                                        <span class="badge bg-warning ms-2" th:text="${inProgressCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="IN_PROGRESS">
+                                    <div th:each="activity : ${inProgressActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TEST Column -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-info me-2"></i>
+                                        TESTE 
+                                        <span class="badge bg-info ms-2" th:text="${testCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="TEST">
+                                    <div th:each="activity : ${testActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- DEPLOY Column -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle me-2" style="color: var(--accent-orange);"></i>
+                                        DEPLOY 
+                                        <span class="badge ms-2" style="background: var(--accent-orange);" th:text="${deployCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="DEPLOY">
+                                    <div th:each="activity : ${deployActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- DONE Column -->
+                        <div class="col-lg-2 col-md-4 col-sm-6">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-success me-2"></i>
+                                        CONCLUÍDO 
+                                        <span class="badge bg-success ms-2" th:text="${doneCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="DONE">
+                                    <div th:each="activity : ${doneActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Pré-visualização Atividade -->
+    <div class="modal fade" id="activityModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" id="modalTitle" style="color: var(--text-primary);">Atividade</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p id="modalDescription" style="color: var(--text-secondary);">Descrição</p>
+                            <div class="mb-2">
+                                <strong style="color: var(--accent-orange);">Projeto:</strong> <span id="modalProject">-</span>
+                            </div>
+                            <div class="mb-2" id="modalSkillsDiv">
+                                <strong style="color: var(--accent-orange);">Habilidades:</strong> <span id="modalSkills">-</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-2">
+                                <strong style="color: var(--accent-orange);">Prioridade:</strong> <span id="modalPriority" class="badge">-</span>
+                            </div>
+                            <div class="mb-2" id="modalEstimatedDiv">
+                                <strong style="color: var(--accent-orange);">Horas Estimadas:</strong> <span id="modalEstimated">-</span>
+                            </div>
+                            <div class="mb-2" id="modalActualDiv">
+                                <strong style="color: var(--accent-orange);">Horas Reais:</strong> <span id="modalActual">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
+                    <a id="modalEditBtn" href="#" class="btn btn-primary">Editar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        // Modal functionality
+        function showActivityModal(card) {
+            event.stopPropagation();
+            
+            const title = card.querySelector('.card-title').textContent;
+            const description = card.querySelector('.full-description') ? card.querySelector('.full-description').textContent : card.querySelector('.card-text').textContent;
+            const project = card.querySelector('.card-footer-small .text-muted') ? card.querySelector('.card-footer-small .text-muted').textContent : '-';
+            const priority = card.querySelector('.priority-badge').textContent;
+            const priorityClass = card.querySelector('.priority-badge').className;
+            const estimatedHours = card.querySelector('.estimated-hours') ? card.querySelector('.estimated-hours').textContent : '';
+            const actualHours = card.querySelector('.actual-hours') ? card.querySelector('.actual-hours').textContent : '';
+            const skills = card.querySelector('.skills') ? card.querySelector('.skills').textContent : '';
+            const editUrl = card.querySelector('.edit-url') ? card.querySelector('.edit-url').textContent : '';
+            
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDescription').textContent = description;
+            document.getElementById('modalProject').textContent = project;
+            document.getElementById('modalPriority').textContent = priority;
+            document.getElementById('modalPriority').className = 'badge ' + priorityClass.split(' ').slice(-1)[0];
+            
+            const estHours = estimatedHours && estimatedHours !== 'null' && estimatedHours !== '' ? estimatedHours + 'h' : '-';
+            const actHours = actualHours && actualHours !== 'null' && actualHours !== '' ? actualHours + 'h' : '-';
+            const skillsText = skills && skills !== 'null' && skills !== '' ? skills : '-';
+            
+            document.getElementById('modalEstimated').textContent = estHours;
+            document.getElementById('modalActual').textContent = actHours;
+            document.getElementById('modalSkills').textContent = skillsText;
+            document.getElementById('modalEditBtn').href = editUrl;
+            
+            // Hide empty fields
+            document.getElementById('modalSkillsDiv').style.display = skillsText === '-' ? 'none' : 'block';
+            document.getElementById('modalEstimatedDiv').style.display = estHours === '-' ? 'none' : 'block';
+            document.getElementById('modalActualDiv').style.display = actHours === '-' ? 'none' : 'block';
+            
+            new bootstrap.Modal(document.getElementById('activityModal')).show();
+        }
+        
+        // Drag and Drop functionality
+        let draggedElement = null;
+        
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.classList.contains('draggable')) {
+                draggedElement = e.target;
+                e.target.style.opacity = '0.5';
+                e.dataTransfer.effectAllowed = 'move';
+            }
+        });
+        
+        document.addEventListener('dragend', function(e) {
+            if (e.target.classList.contains('draggable')) {
+                e.target.style.opacity = '1';
+            }
+            // Remove drag-over class from all drop zones
+            document.querySelectorAll('.kanban-cards').forEach(zone => {
+                zone.classList.remove('drag-over');
+            });
+        });
+        
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const dropZone = e.target.closest('.kanban-cards');
+            if (dropZone) {
+                dropZone.classList.add('drag-over');
+            }
+        });
+        
+        document.addEventListener('dragleave', function(e) {
+            const dropZone = e.target.closest('.kanban-cards');
+            if (dropZone && !dropZone.contains(e.relatedTarget)) {
+                dropZone.classList.remove('drag-over');
+            }
+        });
+        
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropZone = e.target.closest('.kanban-cards');
+            if (dropZone && draggedElement) {
+                dropZone.classList.remove('drag-over');
+                
+                const currentParent = draggedElement.parentElement;
+                if (dropZone !== currentParent) {
+                    const newStatus = dropZone.dataset.status;
+                    const activityId = draggedElement.dataset.id;
+                    
+                    console.log('Moving activity', activityId, 'from', currentParent.dataset.status, 'to', newStatus);
+                    
+                    // Update status via AJAX first
+                    updateActivityStatus(activityId, newStatus)
+                        .then(() => {
+                            // Move element to new column only after successful update
+                            dropZone.appendChild(draggedElement);
+                            // Update counters
+                            updateCounters();
+                            console.log('Activity moved successfully');
+                        })
+                        .catch((error) => {
+                            console.error('Failed to update status, not moving card:', error);
+                        });
+                }
+            }
+        });
+        
+        function updateActivityStatus(activityId, newStatus) {
+            return fetch(`/activities/${activityId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update status');
+                }
+                console.log('Status updated successfully');
+                return response;
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar status:', error);
+                throw error;
+            });
+        }
+        
+        function updateCounters() {
+            document.querySelectorAll('.kanban-column').forEach(column => {
+                const cards = column.querySelectorAll('.kanban-card');
+                const badge = column.querySelector('.badge');
+                if (badge) {
+                    badge.textContent = cards.length;
+                }
+            });
+        }
+        
+        function refreshActivities() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>
