@@ -19,17 +19,14 @@ target/
 *.iml
 *.ipr
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+/logs
 
 ### VS Code ###
 .vscode/
 .env
-.env
+/mvnw text eol=lf
+*.cmd text eol=crlf
+.mvn/wrapper
+.gitattributes
+.gitignore
+mvnw
