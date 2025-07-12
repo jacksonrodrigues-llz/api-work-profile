@@ -10,15 +10,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +28,7 @@ public class TechDebtController {
     private final UserService userService;
     
     @GetMapping
-    public String list(@AuthenticationPrincipal OAuth2User principal,
+    public String list(Authentication authentication,
                       @RequestParam(defaultValue = "0") int page,
                       @RequestParam(defaultValue = "10") int size,
                       @RequestParam(required = false) String status,
@@ -39,7 +36,7 @@ public class TechDebtController {
                       @RequestParam(required = false) String tipo,
                       Model model) {
         
-        User user = userService.findOrCreateUser(principal);
+        User user = getUserFromAuthentication(authentication);
         Pageable pageable = PageRequest.of(page, size);
         
         TechDebt.StatusDebito statusEnum = null;
@@ -60,14 +57,14 @@ public class TechDebtController {
             }
         }
         
-        Page<TechDebt> debts = techDebtService.findByUserWithFilters(user, statusEnum, prioridade, tipoEnum, pageable);
-        Map<String, Object> metrics = techDebtService.getDashboardMetrics(user);
+        Page<TechDebt> debts = techDebtService.findAllWithFilters(statusEnum, prioridade, tipoEnum, pageable);
+        Map<String, Object> metrics = techDebtService.getAllDashboardMetrics();
         
         // Adicionar contadores específicos por status
-        metrics.put("pause", techDebtService.countByUserAndStatus(user, TechDebt.StatusDebito.PAUSE));
-        metrics.put("cancelled", techDebtService.countByUserAndStatus(user, TechDebt.StatusDebito.CANCELLED));
-        metrics.put("test", techDebtService.countByUserAndStatus(user, TechDebt.StatusDebito.TEST));
-        metrics.put("deploy", techDebtService.countByUserAndStatus(user, TechDebt.StatusDebito.DEPLOY));
+        metrics.put("pause", techDebtService.countByStatus(TechDebt.StatusDebito.PAUSE));
+        metrics.put("cancelled", techDebtService.countByStatus(TechDebt.StatusDebito.CANCELLED));
+        metrics.put("test", techDebtService.countByStatus(TechDebt.StatusDebito.TEST));
+        metrics.put("deploy", techDebtService.countByStatus(TechDebt.StatusDebito.DEPLOY));
         
         model.addAttribute("debts", debts);
         model.addAttribute("metrics", metrics);
@@ -82,44 +79,62 @@ public class TechDebtController {
     }
     
     @GetMapping("/new")
-    public String newForm(Model model) {
+    public String newForm(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         model.addAttribute("techDebt", new TechDebt());
         model.addAttribute("statusOptions", TechDebt.StatusDebito.values());
         model.addAttribute("tipoOptions", TechDebt.TipoDebito.values());
         model.addAttribute("title", "Novo Débito Técnico");
+        model.addAttribute("user", user);
         return "tech-debts/form";
     }
     
     @PostMapping
     public String save(@ModelAttribute TechDebt techDebt, 
-                      @AuthenticationPrincipal OAuth2User principal) {
-        User user = userService.findOrCreateUser(principal);
+                      Authentication authentication) {
+        User user = getUserFromAuthentication(authentication);
         techDebt.setUser(user);
         techDebt.setCriadoPor(user.getName());
+        techDebt.setCriadoPorId(user.getId());
+        if (techDebt.getId() != null) {
+            techDebt.setAlteradoPorId(user.getId());
+        }
         techDebtService.save(techDebt);
         return "redirect:/tech-debts";
     }
     
     @GetMapping("/{id}/edit")
-    public String editForm(@PathVariable Long id, Model model) {
+    public String editForm(@PathVariable Long id, Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         TechDebt techDebt = techDebtService.findById(id);
         model.addAttribute("techDebt", techDebt);
         model.addAttribute("statusOptions", TechDebt.StatusDebito.values());
         model.addAttribute("tipoOptions", TechDebt.TipoDebito.values());
         model.addAttribute("title", "Editar Débito Técnico");
+        model.addAttribute("user", user);
         return "tech-debts/form";
     }
     
     @PostMapping("/{id}/delete")
-    public String delete(@PathVariable Long id) {
+    public String delete(@PathVariable Long id, Authentication authentication, RedirectAttributes redirectAttributes) {
+        User user = getUserFromAuthentication(authentication);
+        if (user.getRole() != api.work.profile.enums.UserRole.ADMIN) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Apenas administradores podem excluir débitos técnicos");
+            return "redirect:/tech-debts";
+        }
         techDebtService.delete(id);
+        redirectAttributes.addFlashAttribute("successMessage", "Débito técnico excluído com sucesso!");
         return "redirect:/tech-debts";
     }
     
     @PostMapping("/delete-multiple")
     @ResponseBody
-    public ResponseEntity<?> deleteMultiple(@RequestBody List<Long> ids) {
+    public ResponseEntity<?> deleteMultiple(@RequestBody List<Long> ids, Authentication authentication) {
         try {
+            User user = getUserFromAuthentication(authentication);
+            if (user.getRole() != api.work.profile.enums.UserRole.ADMIN) {
+                return ResponseEntity.badRequest().body("Apenas administradores podem excluir débitos técnicos");
+            }
             for (Long id : ids) {
                 techDebtService.delete(id);
             }
@@ -130,8 +145,8 @@ public class TechDebtController {
     }
     
     @GetMapping("/dashboard")
-    public String dashboard(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = userService.findOrCreateUser(principal);
+    public String dashboard(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         Map<String, Object> metrics = techDebtService.getDashboardMetrics(user);
         
         // Buscar débitos críticos (prioridade 1)
@@ -144,5 +159,16 @@ public class TechDebtController {
         model.addAttribute("title", "Dashboard - Débitos Técnicos");
         
         return "tech-debts/dashboard";
+    }
+    
+    private User getUserFromAuthentication(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            return userService.findOrCreateUser((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal());
+        } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
+            org.springframework.security.core.userdetails.User userDetails = 
+                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+            return userService.findByEmail(userDetails.getUsername());
+        }
+        throw new IllegalStateException("Tipo de autenticação não suportado");
     }
 }

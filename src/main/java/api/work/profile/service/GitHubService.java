@@ -23,12 +23,12 @@ public class GitHubService {
     public int getPullRequestCount(String username) {
         try {
             String query = String.format("author:%s type:pr", username);
-            log.debug("Query GitHub: {}", query);
+            log.debug("[GITHUB] Query PRs: {}", query);
             
             var response = gitHubClient.searchPullRequests(query, getAuthHeader());
             return (Integer) response.getOrDefault("total_count", 0);
         } catch (Exception e) {
-            log.error("Erro ao buscar PRs para {}: {}", username, e.getMessage());
+            log.error("[GITHUB] Erro ao buscar PRs para {}: {}", username, e.getMessage());
             return 0;
         }
     }

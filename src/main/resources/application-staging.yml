@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${RDS_HOSTNAME:jdbc:postgresql://localhost:5432/careertracker_staging}
+    username: ${RDS_USERNAME:postgres}
+    password: ${RDS_PASSWORD:postgres}
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+logging:
+  level:
+    api.work.profile: INFO
+    org.springframework.security: WARN
+  file:
+    name: /var/log/work-profile-staging.log
+
+server:
+  port: ${PORT:8080}

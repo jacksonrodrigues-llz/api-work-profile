@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Sidebar Fragment -->
+    <nav th:fragment="sidebar" class="sidebar">
+        <div class="pt-3">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/dashboard">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/activities">
+                        <i class="fas fa-tasks me-2"></i>Atividades
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/goals">
+                        <i class="fas fa-bullseye me-2"></i>Metas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/achievements">
+                        <i class="fas fa-trophy me-2"></i>Conquistas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/tech-debts">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/reports">
+                        <i class="fas fa-chart-bar me-2"></i>Relatórios
+                    </a>
+                </li>
+                <li class="nav-item" th:if="${user?.role?.name() == 'ADMIN'}">
+                    <a class="nav-link text-white" href="/admin/users">
+                        <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</body>
+</html>

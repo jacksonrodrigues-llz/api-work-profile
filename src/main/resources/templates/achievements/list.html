@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,9 +30,10 @@
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <div class="nav-item dropdown">
+                <div class="nav-item dropdown" th:if="${user != null}">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user me-1"></i>Usuário
+                        <i class="fas fa-user me-1"></i>
+                        <span th:text="${user.name}">Usuário</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
@@ -77,6 +78,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/reports">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user != null and user.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Pessoas
                             </a>
                         </li>
                     </ul>

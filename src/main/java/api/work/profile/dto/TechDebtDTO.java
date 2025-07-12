@@ -15,9 +15,9 @@ public class TechDebtDTO {
     private String problema;
     private String descricao;
     private Integer prioridade;
-    private List<String> tipos;
+    private List<TechDebt.TipoDebito> tipos;
     private List<String> tags;
-    private String status;
+    private TechDebt.StatusDebito status;
     private String dataCriacao;
     private String criadoPor;
     
@@ -30,31 +30,11 @@ public class TechDebtDTO {
         debt.setCriadoPor(this.criadoPor);
         
         if (this.tipos != null) {
-            debt.setTipos(this.tipos.stream()
-                .map(tipo -> {
-                    String normalizedTipo = tipo.toUpperCase()
-                        .replace("BACKEND", "BACKEND")
-                        .replace("FRONTEND", "FRONTEND")
-                        .replace("UI_UX", "UI_UX")
-                        .replace("UI/UX", "UI_UX")
-                        .replace("INFRA", "INFRA")
-                        .replace("NEGOCIO", "NEGOCIO")
-                        .replace("NEGÓCIO", "NEGOCIO");
-                    return TechDebt.TipoDebito.valueOf(normalizedTipo);
-                })
-                .toList());
+            debt.setTipos(this.tipos);
         }
         
         if (this.status != null) {
-            String normalizedStatus = this.status.toUpperCase()
-                .replace("TODO", "TODO")
-                .replace("IN_PROGRESS", "IN_PROGRESS")
-                .replace("PAUSE", "PAUSE")
-                .replace("CANCELLED", "CANCELLED")
-                .replace("TEST", "TEST")
-                .replace("DEPLOY", "DEPLOY")
-                .replace("DONE", "DONE");
-            debt.setStatus(TechDebt.StatusDebito.valueOf(normalizedStatus));
+            debt.setStatus(this.status);
         }
         
         if (this.dataCriacao != null) {

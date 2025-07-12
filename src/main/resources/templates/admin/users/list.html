@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Usuários - DevPortal</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        body { background: var(--bg-primary); color: var(--text-primary); }
+        .btn-primary { background: var(--accent-orange); border-color: var(--accent-orange); }
+        .btn-primary:hover { background: #e6661a; border-color: #e6661a; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); }
+        .table { color: var(--text-primary); }
+        .table-dark { background: var(--bg-secondary); }
+        h1, h2 { color: var(--text-primary); }
+        .form-control { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .form-control:focus { background: var(--bg-secondary); border-color: var(--accent-orange); color: var(--text-primary); }
+        .form-select { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .form-label { color: var(--text-primary); }
+        .alert-success { background: rgba(40, 167, 69, 0.2); border-color: #28a745; color: #28a745; }
+        .alert-danger { background: rgba(220, 53, 69, 0.2); border-color: #dc3545; color: #dc3545; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown" th:if="${user != null}">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        <span th:text="${user.name}">Usuário</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-users me-3" style="color: var(--accent-orange);"></i>
+                            Gestão de Usuários
+                        </h1>
+                    </div>
+                    <a href="/admin/users/new" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Novo Usuário
+                    </a>
+                </div>
+
+                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>E-mail</th>
+                                        <th>Perfil</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="user : ${users.content}">
+                                        <td th:text="${user.name}">Nome</td>
+                                        <td th:text="${user.email}">email@example.com</td>
+                                        <td>
+                                            <span class="badge" th:classappend="${user.role?.name() == 'ADMIN'} ? 'bg-danger' : 'bg-primary'" 
+                                                  th:text="${user.role?.description}">USER</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge" th:classappend="${user.enabled} ? 'bg-success' : 'bg-secondary'" 
+                                                  th:text="${user.enabled ? 'Ativo' : 'Inativo'}">Ativo</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="btn btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <form th:action="@{/admin/users/{id}/reset-password(id=${user.id})}" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-outline-warning" title="Reset Senha">
+                                                        <i class="fas fa-key"></i>
+                                                    </button>
+                                                </form>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button type="button" class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Alterar Role">
+                                                        <i class="fas fa-user-cog"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li>
+                                                            <form th:action="@{/admin/users/{id}/change-role(id=${user.id})}" method="post" class="d-inline">
+                                                                <input type="hidden" name="role" value="USER">
+                                                                <button type="submit" class="dropdown-item" th:disabled="${user.role?.name() == 'USER'}">
+                                                                    <i class="fas fa-user me-2"></i>Usuário
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <form th:action="@{/admin/users/{id}/change-role(id=${user.id})}" method="post" class="d-inline">
+                                                                <input type="hidden" name="role" value="ADMIN">
+                                                                <button type="submit" class="dropdown-item" th:disabled="${user.role?.name() == 'ADMIN'}">
+                                                                    <i class="fas fa-user-shield me-2"></i>Administrador
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

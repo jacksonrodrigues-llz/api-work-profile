@@ -4,8 +4,7 @@ import api.work.profile.entity.User;
 import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -28,20 +27,20 @@ public class ProfileController {
     private static final String UPLOAD_DIR = "uploads/";
     
     @GetMapping
-    public String profile(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = userService.findOrCreateUser(principal);
+    public String profile(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         model.addAttribute("user", user);
         
-        // Lista de avatars tecnológicos
+        // Lista de avatars militares
         String[] avatars = {
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev1",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev2",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev3",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev4",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev5",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev6",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev7",
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev8"
+            "https://api.dicebear.com/7.x/personas/svg?seed=military1&backgroundColor=2c3e50",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military2&backgroundColor=34495e",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military3&backgroundColor=7f8c8d",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military4&backgroundColor=95a5a6",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military5&backgroundColor=2c3e50",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military6&backgroundColor=34495e",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military7&backgroundColor=7f8c8d",
+            "https://api.dicebear.com/7.x/personas/svg?seed=military8&backgroundColor=95a5a6"
         };
         model.addAttribute("avatars", avatars);
         
@@ -49,11 +48,11 @@ public class ProfileController {
     }
     
     @PostMapping
-    public String updateProfile(@AuthenticationPrincipal OAuth2User principal, 
+    public String updateProfile(Authentication authentication, 
                                @ModelAttribute User userForm, 
                                RedirectAttributes redirectAttributes) {
         try {
-            User user = userService.findOrCreateUser(principal);
+            User user = getUserFromAuthentication(authentication);
             user.setName(userForm.getName());
             user.setCompany(userForm.getCompany());
             user.setPosition(userForm.getPosition());
@@ -64,7 +63,7 @@ public class ProfileController {
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (Exception e) {
-            log.error("Erro ao atualizar perfil: {}", e.getMessage(), e);
+            log.error("[PROFILE] Erro ao atualizar: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar perfil: " + e.getMessage());
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
@@ -73,7 +72,7 @@ public class ProfileController {
     }
     
     @PostMapping("/photo")
-    public String uploadPhoto(@AuthenticationPrincipal OAuth2User principal,
+    public String uploadPhoto(Authentication authentication,
                              @RequestParam("photo") MultipartFile file,
                              RedirectAttributes redirectAttributes) {
         try {
@@ -98,7 +97,7 @@ public class ProfileController {
             Files.copy(file.getInputStream(), filePath);
             
             // Update user profile
-            User user = userService.findOrCreateUser(principal);
+            User user = getUserFromAuthentication(authentication);
             user.setProfilePhoto("/uploads/" + filename);
             userService.save(user);
             
@@ -106,7 +105,7 @@ public class ProfileController {
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (IOException e) {
-            log.error("Erro ao fazer upload da foto: {}", e.getMessage(), e);
+            log.error("[PROFILE] Erro no upload: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao fazer upload da foto");
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
@@ -115,11 +114,11 @@ public class ProfileController {
     }
     
     @PostMapping("/avatar")
-    public String updateAvatar(@AuthenticationPrincipal OAuth2User principal,
+    public String updateAvatar(Authentication authentication,
                               @RequestParam("avatar") String avatar,
                               RedirectAttributes redirectAttributes) {
         try {
-            User user = userService.findOrCreateUser(principal);
+            User user = getUserFromAuthentication(authentication);
             user.setAvatar(avatar);
             userService.save(user);
             
@@ -127,11 +126,22 @@ public class ProfileController {
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (Exception e) {
-            log.error("Erro ao atualizar avatar: {}", e.getMessage(), e);
+            log.error("[PROFILE] Erro ao atualizar avatar: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar avatar");
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
         
         return "redirect:/profile";
+    }
+    
+    private User getUserFromAuthentication(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            return userService.findOrCreateUser((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal());
+        } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
+            org.springframework.security.core.userdetails.User userDetails = 
+                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+            return userService.findByEmail(userDetails.getUsername());
+        }
+        throw new IllegalStateException("Tipo de autenticação não suportado");
     }
 }

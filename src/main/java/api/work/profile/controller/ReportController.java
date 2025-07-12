@@ -11,8 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,12 +30,13 @@ public class ReportController {
     private final AchievementRepository achievementRepository;
     
     @GetMapping
-    public String reports(@AuthenticationPrincipal OAuth2User principal, Model model) {
+    public String reports(Authentication authentication, Model model) {
         try {
-            User user = userService.findOrCreateUser(principal);
-            log.info("Gerando relatório para usuário: {}", user.getEmail());
+            User user = getUserFromAuthentication(authentication);
+            log.debug("[REPORT] Carregando relatórios para: {}", user.getEmail());
             
             model.addAttribute("user", user);
+            model.addAttribute("currentUser", user);
             model.addAttribute("monthlyReport", reportService.getMonthlyReport(user));
             
             // Listas detalhadas para exibição
@@ -50,15 +50,15 @@ public class ReportController {
             
             return "reports/index";
         } catch (Exception e) {
-            log.error("Erro ao gerar relatório: {}", e.getMessage(), e);
+            log.error("[REPORT] Erro ao carregar relatórios: {}", e.getMessage());
             model.addAttribute("errorMessage", "Erro ao carregar relatórios: " + e.getMessage());
             return "error";
         }
     }
     
     @GetMapping("/pdf")
-    public ResponseEntity<byte[]> downloadPdf(@AuthenticationPrincipal OAuth2User principal) {
-        User user = userService.findOrCreateUser(principal);
+    public ResponseEntity<byte[]> downloadPdf(Authentication authentication) {
+        User user = getUserFromAuthentication(authentication);
         byte[] pdfBytes = reportService.generatePdfReport(user);
         
         HttpHeaders headers = new HttpHeaders();
@@ -70,5 +70,14 @@ public class ReportController {
                 .body(pdfBytes);
     }
     
-
+    private User getUserFromAuthentication(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            return userService.findOrCreateUser((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal());
+        } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
+            org.springframework.security.core.userdetails.User userDetails = 
+                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+            return userService.findByEmail(userDetails.getUsername());
+        }
+        throw new IllegalStateException("Tipo de autenticação não suportado");
+    }
 }

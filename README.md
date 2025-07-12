@@ -184,6 +184,28 @@ src/main/resources/
 
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
+## 🚀 Deploy na AWS
+
+### Configuração para Produção
+
+```bash
+# Variáveis de ambiente necessárias
+SPRING_PROFILES_ACTIVE=prod
+RDS_HOSTNAME=jdbc:postgresql://seu-rds.amazonaws.com:5432/careertracker
+RDS_USERNAME=seu_usuario
+RDS_PASSWORD=sua_senha
+GITHUB_CLIENT_ID=seu_client_id
+GITHUB_CLIENT_SECRET=seu_client_secret
+```
+
+### Serviços AWS Recomendados
+
+- **Elastic Beanstalk**: Deploy da aplicação
+- **RDS PostgreSQL**: Banco de dados
+- **CloudFront**: CDN para assets estáticos
+- **Route 53**: DNS
+- **Certificate Manager**: SSL/TLS
+
 ---
 
 **Desenvolvido com ❤️ para profissionais que querem acompanhar seu crescimento**

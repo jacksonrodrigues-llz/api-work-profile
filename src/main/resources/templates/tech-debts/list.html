@@ -77,6 +77,11 @@
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
                             </a>
                         </li>
+                        <li class="nav-item" th:if="${user?.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -195,11 +200,11 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select name="size" class="form-select">
-                        <option value="10" th:selected="${param.size == '10'}">10 por página</option>
-                        <option value="20" th:selected="${param.size == '20'}">20 por página</option>
-                        <option value="30" th:selected="${param.size == '30'}">30 por página</option>
-                        <option value="50" th:selected="${param.size == '50'}">50 por página</option>
+                    <select name="size" class="form-select" onchange="this.form.submit()">
+                        <option value="10" th:selected="${param.size == null or param.size[0] == '10'}">10 por página</option>
+                        <option value="20" th:selected="${param.size != null and param.size[0] == '20'}">20 por página</option>
+                        <option value="30" th:selected="${param.size != null and param.size[0] == '30'}">30 por página</option>
+                        <option value="50" th:selected="${param.size != null and param.size[0] == '50'}">50 por página</option>
                     </select>
                 </div>
                 <div class="col-md-1">
@@ -215,20 +220,38 @@
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="debtsTable">
                     <thead class="table-dark">
                         <tr>
-                            <th>Problema</th>
-                            <th>Prioridade</th>
-                            <th>Status</th>
-                            <th>Tipo</th>
-                            <th>Criado por</th>
-                            <th>Dias em Aberto</th>
+                            <th>
+                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                            </th>
+                            <th onclick="sortTable(1)" style="cursor: pointer;">
+                                Problema <i class="fas fa-sort" id="sort-1"></i>
+                            </th>
+                            <th onclick="sortTable(2)" style="cursor: pointer;">
+                                Prioridade <i class="fas fa-sort" id="sort-2"></i>
+                            </th>
+                            <th onclick="sortTable(3)" style="cursor: pointer;">
+                                Status <i class="fas fa-sort" id="sort-3"></i>
+                            </th>
+                            <th onclick="sortTable(4)" style="cursor: pointer;">
+                                Tipo <i class="fas fa-sort" id="sort-4"></i>
+                            </th>
+                            <th onclick="sortTable(5)" style="cursor: pointer;">
+                                Criado por <i class="fas fa-sort" id="sort-5"></i>
+                            </th>
+                            <th onclick="sortTable(6)" style="cursor: pointer;">
+                                Dias em Aberto <i class="fas fa-sort" id="sort-6"></i>
+                            </th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="debt : ${debts.content}" th:if="${debt != null}">
+                            <td>
+                                <input type="checkbox" class="debt-checkbox" th:value="${debt.id}" onchange="updateBulkActions()">
+                            </td>
                             <td>
                                 <strong th:text="${debt.problema ?: 'N/A'}"></strong>
                                 <br>
@@ -268,13 +291,15 @@
                             </td>
                             <td th:text="${debt.criadoPor}"></td>
                             <td>
-                                <span class="badge bg-warning text-dark" th:text="${debt.diasEmAberto} + ' dias'"></span>
+                                <span class="badge" 
+                                      th:classappend="${debt.diasEmAberto <= 7} ? 'bg-success' : (${debt.diasEmAberto <= 30} ? 'bg-warning text-dark' : (${debt.diasEmAberto <= 90} ? 'bg-danger' : 'bg-dark'))"
+                                      th:text="${debt.diasEmAberto} + ' dias'"></span>
                             </td>
                             <td>
                                 <a th:href="@{/tech-debts/{id}/edit(id=${debt.id})}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form th:action="@{/tech-debts/{id}/delete(id=${debt.id})}" method="post" class="d-inline">
+                                <form th:if="${user?.role?.name() == 'ADMIN'}" th:action="@{/tech-debts/{id}/delete(id=${debt.id})}" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-sm btn-outline-danger" 
                                             onclick="return confirm('Confirma exclusão?')">
                                         <i class="fas fa-trash"></i>
@@ -286,9 +311,33 @@
                 </table>
             </div>
 
-            <!-- Botão de exclusão em lote -->
-            <div class="mb-3">
-                <button type="button" class="btn btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" style="display: none;">
+            <!-- Ações em lote -->
+            <div class="mb-3" id="bulkActions" style="display: none;">
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-edit me-1"></i>Alterar Status
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" onclick="bulkUpdateStatus('TODO')">A Fazer</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdateStatus('IN_PROGRESS')">Em Progresso</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdateStatus('PAUSE')">Pausado</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdateStatus('TEST')">Teste</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdateStatus('DEPLOY')">Deploy</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdateStatus('DONE')">Concluído</button></li>
+                    </ul>
+                </div>
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-outline-warning dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-exclamation me-1"></i>Alterar Prioridade
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" onclick="bulkUpdatePriority(1)">1 - Crítico</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdatePriority(2)">2 - Alto</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdatePriority(3)">3 - Médio</button></li>
+                        <li><button class="dropdown-item" onclick="bulkUpdatePriority(4)">4 - Baixo</button></li>
+                    </ul>
+                </div>
+                <button th:if="${user?.role?.name() == 'ADMIN'}" type="button" class="btn btn-danger" onclick="confirmBulkDelete()">
                     <i class="fas fa-trash me-1"></i>Excluir Selecionados
                 </button>
             </div>
@@ -361,13 +410,24 @@
             const data = document.getElementById('jsonData').value;
             try {
                 const jsonObj = JSON.parse(data);
-                const arrayData = Array.isArray(jsonObj) ? jsonObj : [jsonObj];
                 
-                const response = await fetch('/api/tech-debts/upload/json', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(arrayData)
-                });
+                let response;
+                if (Array.isArray(jsonObj)) {
+                    // Múltiplos registros
+                    response = await fetch('/api/tech-debts/upload/json', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(jsonObj)
+                    });
+                } else {
+                    // Registro único
+                    response = await fetch('/api/tech-debts/upload/single', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(jsonObj)
+                    });
+                }
+                
                 const result = await response.text();
                 alert(result);
                 location.reload();
@@ -394,66 +454,127 @@
             }
         });
         
-        function refreshTechDebts() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const refreshIcon = document.getElementById('refreshIcon');
+        let sortDirection = {};
+        
+        function sortTable(columnIndex) {
+            const table = document.getElementById('debtsTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
             
-            refreshBtn.disabled = true;
-            refreshIcon.classList.add('fa-spin');
+            const currentDirection = sortDirection[columnIndex] || 'asc';
+            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            sortDirection[columnIndex] = newDirection;
             
-            setTimeout(() => {
-                location.reload();
-            }, 500);
+            // Update sort icons
+            document.querySelectorAll('[id^="sort-"]').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            document.getElementById(`sort-${columnIndex}`).className = 
+                `fas fa-sort-${newDirection === 'asc' ? 'up' : 'down'}`;
+            
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex].textContent.trim();
+                const bText = b.cells[columnIndex].textContent.trim();
+                
+                if (columnIndex === 2 || columnIndex === 6) { // Prioridade ou Dias
+                    const aNum = parseInt(aText.match(/\d+/)?.[0] || '0');
+                    const bNum = parseInt(bText.match(/\d+/)?.[0] || '0');
+                    return newDirection === 'asc' ? aNum - bNum : bNum - aNum;
+                }
+                
+                return newDirection === 'asc' ? 
+                    aText.localeCompare(bText) : bText.localeCompare(aText);
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
         }
         
         function toggleSelectAll() {
             const selectAll = document.getElementById('selectAll');
             const checkboxes = document.querySelectorAll('.debt-checkbox');
-            const deleteBtn = document.getElementById('deleteSelectedBtn');
-            
             checkboxes.forEach(cb => cb.checked = selectAll.checked);
-            deleteBtn.style.display = selectAll.checked ? 'block' : 'none';
+            updateBulkActions();
         }
         
-        function deleteSelected() {
+        function updateBulkActions() {
             const selected = document.querySelectorAll('.debt-checkbox:checked');
-            if (selected.length === 0) {
-                alert('Selecione pelo menos um item para excluir');
-                return;
-            }
-            
-            if (confirm(`Confirma exclusão de ${selected.length} débito(s) técnico(s)?`)) {
-                const ids = Array.from(selected).map(cb => cb.value);
-                
-                fetch('/tech-debts/delete-multiple', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(ids)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert('Erro ao excluir itens');
-                    }
-                })
-                .catch(error => {
-                    alert('Erro: ' + error.message);
-                });
-            }
+            const bulkActions = document.getElementById('bulkActions');
+            bulkActions.style.display = selected.length > 0 ? 'block' : 'none';
         }
         
-        // Mostrar/ocultar botão de exclusão baseado na seleção
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('debt-checkbox')) {
-                const selected = document.querySelectorAll('.debt-checkbox:checked');
-                const deleteBtn = document.getElementById('deleteSelectedBtn');
-                deleteBtn.style.display = selected.length > 0 ? 'block' : 'none';
-            }
-        });
+        function bulkUpdateStatus(status) {
+            const selected = Array.from(document.querySelectorAll('.debt-checkbox:checked')).map(cb => parseInt(cb.value));
+            if (selected.length === 0) return;
+            
+            fetch('/api/tech-debts/bulk-update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selected, status: status })
+            })
+            .then(response => response.ok ? location.reload() : alert('Erro ao atualizar'))
+            .catch(() => alert('Erro na requisição'));
+        }
+        
+        function bulkUpdatePriority(priority) {
+            const selected = Array.from(document.querySelectorAll('.debt-checkbox:checked')).map(cb => parseInt(cb.value));
+            if (selected.length === 0) return;
+            
+            fetch('/api/tech-debts/bulk-update-priority', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selected, priority: priority })
+            })
+            .then(response => response.ok ? location.reload() : alert('Erro ao atualizar'))
+            .catch(() => alert('Erro na requisição'));
+        }
+        
+        function confirmBulkDelete() {
+            const selected = document.querySelectorAll('.debt-checkbox:checked');
+            if (selected.length === 0) return;
+            
+            // Modal de confirmação personalizado
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                        <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                            <h5 class="modal-title" style="color: var(--text-primary);">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirmar Exclusão
+                            </h5>
+                        </div>
+                        <div class="modal-body" style="color: var(--text-primary);">
+                            <p>Tem certeza que deseja excluir <strong>${selected.length}</strong> débito(s) técnico(s)?</p>
+                            <p class="text-warning"><i class="fas fa-warning me-1"></i>Esta ação não pode ser desfeita.</p>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-danger" onclick="executeBulkDelete()">Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            new bootstrap.Modal(modal).show();
+        }
+        
+        function executeBulkDelete() {
+            const selected = Array.from(document.querySelectorAll('.debt-checkbox:checked')).map(cb => cb.value);
+            
+            fetch('/tech-debts/delete-multiple', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(selected)
+            })
+            .then(response => response.ok ? location.reload() : alert('Erro ao excluir'))
+            .catch(() => alert('Erro na requisição'));
+        }
+        
+        function refreshTechDebts() {
+            location.reload();
+        }
+        
+
     </script>
             </main>
         </div>

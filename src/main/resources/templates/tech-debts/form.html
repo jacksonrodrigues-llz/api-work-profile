@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Débito Técnico - Portal Profissional</title>
+    
+
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -44,9 +46,10 @@
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <div class="nav-item dropdown">
+                <div class="nav-item dropdown" th:if="${user != null}">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user me-1"></i>Usuário
+                        <i class="fas fa-user me-1"></i>
+                        <span th:text="${user.name}">Usuário</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
@@ -92,6 +95,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/reports">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user != null and user.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Pessoas
                             </a>
                         </li>
                     </ul>
@@ -202,13 +210,19 @@
                         <!-- JSON -->
                         <div class="tab-pane" id="json-tab">
                             <div class="mb-3">
+                                <button type="button" class="btn btn-outline-info btn-sm mb-2" onclick="loadTemplate()">
+                                    <i class="fas fa-file-code me-1"></i>Carregar Template
+                                </button>
                                 <label class="form-label">JSON do Débito Técnico</label>
                                 <textarea class="form-control" rows="15" id="jsonEditor" 
-                                          placeholder='{"problema": "Exemplo", "descricao": "Descrição detalhada", "prioridade": 2}'></textarea>
+                                          placeholder='Clique em "Carregar Template" para ver exemplo'></textarea>
                             </div>
                             <button type="button" class="btn btn-success" onclick="importFromJson()">
-                                <i class="fas fa-download me-1"></i>Importar do JSON
+                                <i class="fas fa-download me-1"></i>Importar JSON
                             </button>
+                            <div class="form-text mt-2">
+                                Aceita objeto único ou lista de objetos. Para listas, importa diretamente.
+                            </div>
                             
                             <script>
                             function importFromJson() {
@@ -221,30 +235,85 @@
                                 try {
                                     const data = JSON.parse(jsonData);
                                     
-                                    // Preencher campos do formulário
-                                    if (data.problema) document.querySelector('[name="problema"]').value = data.problema;
-                                    if (data.descricao) document.querySelector('[name="descricao"]').value = data.descricao;
-                                    if (data.prioridade) document.querySelector('[name="prioridade"]').value = data.prioridade;
-                                    if (data.status) document.querySelector('[name="status"]').value = data.status.toUpperCase();
-                                    
-                                    // Preencher tipos se existir
-                                    if (data.tipos && Array.isArray(data.tipos)) {
-                                        document.querySelectorAll('[name="tipos"]').forEach(cb => cb.checked = false);
-                                        data.tipos.forEach(tipo => {
-                                            const checkbox = document.querySelector(`[name="tipos"][value="${tipo.toUpperCase()}"]`);
-                                            if (checkbox) checkbox.checked = true;
-                                        });
+                                    // Verificar se é lista ou objeto único
+                                    if (Array.isArray(data)) {
+                                        // É uma lista - importar via API
+                                        importViaApi(data);
+                                    } else {
+                                        // É objeto único - pode preencher formulário ou importar via API
+                                        if (confirm('Deseja importar diretamente (OK) ou preencher o formulário (Cancelar)?')) {
+                                            importViaApi(data);
+                                        } else {
+                                            fillForm(data);
+                                        }
                                     }
-                                    
-                                    // Preencher tags
-                                    if (data.tags && Array.isArray(data.tags)) {
-                                        document.getElementById('tagsInput').value = data.tags.join(', ');
-                                    }
-                                    
-                                    alert('Dados importados com sucesso!');
                                 } catch (error) {
                                     alert('JSON inválido: ' + error.message);
                                 }
+                            }
+                            
+                            function fillForm(data) {
+                                // Preencher campos do formulário
+                                if (data.problema) document.querySelector('[name="problema"]').value = data.problema;
+                                if (data.descricao) document.querySelector('[name="descricao"]').value = data.descricao;
+                                if (data.prioridade) document.querySelector('[name="prioridade"]').value = data.prioridade;
+                                if (data.status) document.querySelector('[name="status"]').value = data.status.toUpperCase();
+                                
+                                // Preencher tipos se existir
+                                if (data.tipos && Array.isArray(data.tipos)) {
+                                    document.querySelectorAll('[name="tipos"]').forEach(cb => cb.checked = false);
+                                    data.tipos.forEach(tipo => {
+                                        const checkbox = document.querySelector(`[name="tipos"][value="${tipo.toUpperCase()}"]`);
+                                        if (checkbox) checkbox.checked = true;
+                                    });
+                                }
+                                
+                                // Preencher tags
+                                if (data.tags && Array.isArray(data.tags)) {
+                                    document.getElementById('tagsInput').value = data.tags.join(', ');
+                                }
+                                
+                                alert('Formulário preenchido com sucesso!');
+                            }
+                            
+                            function loadTemplate() {
+                                const template = {
+                                    "problema": "Refatorar método de autenticação",
+                                    "descricao": "O método atual de autenticação está complexo e precisa ser refatorado para melhor manutenibilidade",
+                                    "prioridade": 2,
+                                    "status": "TODO",
+                                    "tipos": ["Backend", "Frontend"],
+                                    "tags": ["#refatoracao", "#seguranca", "#melhoria"]
+                                };
+                                document.getElementById('jsonEditor').value = JSON.stringify(template, null, 2);
+                            }
+                            
+                            function importViaApi(data) {
+                                const headers = {
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                };
+                                
+                                fetch('/api/tech-debts/upload/single', {
+                                    method: 'POST',
+                                    headers: headers,
+                                    body: JSON.stringify(data)
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('Erro na requisição: ' + response.status);
+                                    }
+                                    return response.text();
+                                })
+                                .then(message => {
+                                    alert(message);
+                                    if (message.includes('Importados')) {
+                                        window.location.href = '/tech-debts';
+                                    }
+                                })
+                                .catch(error => {
+                                    alert('Erro na importação: ' + error.message);
+                                });
                             }
                             </script>
                             <button type="button" class="btn btn-outline-info" onclick="exportToJson()">
@@ -283,16 +352,52 @@
 
             <div class="card mt-3">
                 <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-code me-1"></i>Tipos Aceitos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge bg-primary me-1">BACKEND</span>
+                        <small class="text-muted">Backend, Back</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-success me-1">FRONTEND</span>
+                        <small class="text-muted">Frontend, Front</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-info me-1">UI_UX</span>
+                        <small class="text-muted">UI, UX</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-warning me-1">INFRA</span>
+                        <small class="text-muted">Infraestrutura</small>
+                    </div>
+                    <div class="mb-0">
+                        <span class="badge bg-secondary me-1">NEGOCIO</span>
+                        <small class="text-muted">Business</small>
+                    </div>
+                    <div class="mb-0">
+                        <span class="badge bg-secondary me-1">SEGURANÇA</span>
+                        <small class="text-muted">Segurança</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
                     <h6 class="mb-0"><i class="fas fa-tags me-1"></i>Tags Sugeridas</h6>
                 </div>
                 <div class="card-body">
                     <div class="d-flex flex-wrap gap-1">
-                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#refatoracao')">#refatoracao</span>
-                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#performance')">#performance</span>
-                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#seguranca')">#seguranca</span>
-                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#codigo-limpo')">#codigo-limpo</span>
-                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#documentacao')">#documentacao</span>
-                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#testes')">#testes</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#refatoracao,')" title="Clique para copiar">#refatoracao</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#performance,')" title="Clique para copiar">#performance</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#seguranca,')" title="Clique para copiar">#seguranca</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#codigo-limpo,')" title="Clique para copiar">#codigo-limpo</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#documentacao,')" title="Clique para copiar">#documentacao</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#testes,')" title="Clique para copiar">#testes</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#bug,')" title="Clique para copiar">#bug</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#melhoria,')" title="Clique para copiar">#melhoria</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#analise,')" title="Clique para copiar">#analise</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="copyTag('#hotfix,')" title="Clique para copiar">#hotfix</span>
                     </div>
                 </div>
             </div>
@@ -309,6 +414,26 @@
                 input.value = current + tag;
             }
         }
+        
+        function copyTag(tag) {
+            navigator.clipboard.writeText(tag).then(() => {
+                // Feedback visual
+                const element = event.target;
+                const originalText = element.textContent;
+                element.textContent = 'Copiado!';
+                element.style.backgroundColor = 'var(--accent-orange)';
+                element.style.color = 'white';
+                
+                setTimeout(() => {
+                    element.textContent = originalText;
+                    element.style.backgroundColor = '';
+                    element.style.color = '';
+                }, 1000);
+            }).catch(() => {
+                // Fallback: adicionar ao campo
+                addTag(tag);
+            });
+        }
 
         function exportToJson() {
             const form = document.querySelector('form');
@@ -324,30 +449,7 @@
             document.getElementById('jsonEditor').value = JSON.stringify(json, null, 2);
         }
 
-        function importFromJson() {
-            try {
-                const json = JSON.parse(document.getElementById('jsonEditor').value);
-                document.querySelector('[name="problema"]').value = json.problema || '';
-                document.querySelector('[name="descricao"]').value = json.descricao || '';
-                document.querySelector('[name="prioridade"]').value = json.prioridade || '';
-                document.querySelector('[name="status"]').value = json.status || 'TODO';
-                document.getElementById('tagsInput').value = (json.tags || []).join(', ');
-                
-                // Limpar checkboxes
-                document.querySelectorAll('[name="tipos"]').forEach(cb => cb.checked = false);
-                // Marcar tipos do JSON
-                if (json.tipos) {
-                    json.tipos.forEach(tipo => {
-                        const checkbox = document.querySelector(`[name="tipos"][value="${tipo}"]`);
-                        if (checkbox) checkbox.checked = true;
-                    });
-                }
-                
-                alert('Dados importados do JSON com sucesso!');
-            } catch (error) {
-                alert('Erro ao importar JSON: ' + error.message);
-            }
-        }
+
 
         // Processar tags antes do submit
         document.querySelector('form').addEventListener('submit', function(e) {

@@ -29,7 +29,8 @@
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user me-1"></i>Usuário
+                        <img th:src="${currentUser?.profilePhoto ?: (currentUser?.avatar ?: 'https://api.dicebear.com/7.x/personas/svg?seed=military1&backgroundColor=2c3e50')}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                        <span th:text="${currentUser?.name ?: 'Usuário'}">Usuário</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
@@ -76,6 +77,11 @@
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
                             </a>
                         </li>
+                        <li class="nav-item" th:if="${currentUser?.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -99,75 +105,83 @@
                 <!-- Métricas Resumo -->
                 <div class="row mb-4">
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-primary shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                            Atividades Concluídas
+                        <a href="/activities" class="text-decoration-none">
+                            <div class="card card-metric border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Atividades Concluídas
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedActivities}">0</div>
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedActivities}">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                                        <div class="col-auto">
+                                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-success shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Metas Concluídas
+                        <a href="/goals" class="text-decoration-none">
+                            <div class="card card-metric border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Metas Concluídas
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-bullseye fa-2x text-success"></i>
+                                        <div class="col-auto">
+                                            <i class="fas fa-bullseye fa-2x text-success"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-info shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Metas Ativas
+                        <a href="/goals" class="text-decoration-none">
+                            <div class="card card-metric border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Metas Ativas
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.activeGoals}">0</div>
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.activeGoals}">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-flag fa-2x text-info"></i>
+                                        <div class="col-auto">
+                                            <i class="fas fa-flag fa-2x text-info"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card border-left-warning shadow h-100 py-2">
-                            <div class="card-body">
-                                <div class="row no-gutters align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                            Conquistas
+                        <a href="/achievements" class="text-decoration-none">
+                            <div class="card card-metric border-left-warning shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Conquistas
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.achievements}">0</div>
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.achievements}">0</div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-trophy fa-2x text-warning"></i>
+                                        <div class="col-auto">
+                                            <i class="fas fa-trophy fa-2x text-warning"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 

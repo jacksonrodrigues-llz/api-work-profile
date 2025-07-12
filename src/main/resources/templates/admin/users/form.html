@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuário - DevPortal</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        body { background: var(--bg-primary); color: var(--text-primary); }
+        .btn-primary { background: var(--accent-orange); border-color: var(--accent-orange); }
+        .btn-primary:hover { background: #e6661a; border-color: #e6661a; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); }
+        h1, h2 { color: var(--text-primary); }
+        .form-control { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .form-control:focus { background: var(--bg-secondary); border-color: var(--accent-orange); color: var(--text-primary); }
+        .form-select { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
+        .form-label { color: var(--text-primary); }
+        .form-check-label { color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown" th:if="${currentUser != null}">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        <span th:text="${currentUser.name}">Usuário</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2">
+                            <i class="fas fa-user-edit me-3" style="color: var(--accent-orange);"></i>
+                            <span th:text="${user.id != null ? 'Editar' : 'Novo'} + ' Usuário'"></span>
+                        </h1>
+                    </div>
+                    <a href="/admin/users" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-1"></i>Voltar
+                    </a>
+                </div>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <form th:action="@{/admin/users}" th:object="${user}" method="post">
+                                    <input type="hidden" th:field="*{id}">
+                                    <input type="hidden" th:field="*{createdAt}">
+                                    <input type="hidden" th:field="*{githubUsername}">
+                                    <input type="hidden" th:field="*{githubToken}">
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Nome Completo *</label>
+                                            <input type="text" class="form-control" th:field="*{name}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">E-mail *</label>
+                                            <input type="email" class="form-control" th:field="*{email}" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Senha</label>
+                                            <input type="password" class="form-control" th:field="*{password}" 
+                                                   th:placeholder="${user.id != null ? 'Deixe em branco para manter atual' : 'Digite a senha'}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Perfil</label>
+                                            <select class="form-select" th:field="*{role}">
+                                                <option th:each="role : ${T(api.work.profile.enums.UserRole).values()}" 
+                                                        th:value="${role}" 
+                                                        th:text="${role.description}"
+                                                        th:selected="${role == user.role}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" th:field="*{enabled}">
+                                            <label class="form-check-label">Usuário ativo</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i>Salvar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

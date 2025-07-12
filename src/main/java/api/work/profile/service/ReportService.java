@@ -35,14 +35,14 @@ public class ReportService {
         }
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            log.info("Iniciando geração de PDF para usuário: {}", user.getEmail());
+            log.info("[REPORT] Gerando PDF para: {}", user.getEmail());
 
             String html = generateHtmlReport(user);
             if (html == null || html.trim().isEmpty()) {
                 throw new IllegalStateException("HTML gerado está vazio");
             }
 
-            log.debug("Configurando OpenHTML2PDF renderer");
+
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.withHtmlContent(html, null);
             builder.toStream(outputStream);
@@ -53,33 +53,25 @@ public class ReportService {
                 throw new IllegalStateException("PDF gerado está vazio");
             }
 
-            log.info("PDF gerado com sucesso: {} bytes", pdfBytes.length);
+            log.info("[REPORT] PDF gerado: {} bytes", pdfBytes.length);
             return pdfBytes;
         } catch (Exception e) {
-            log.error("Erro fatal ao gerar PDF para usuário {}: {}", user.getEmail(), e.getMessage(), e);
+            log.error("[REPORT] Erro ao gerar PDF para {}: {}", user.getEmail(), e.getMessage());
             throw new RuntimeException("Erro ao gerar PDF: " + e.getMessage(), e);
         }
     }
 
     private String generateHtmlReport(User user) {
         try {
-            log.debug("Buscando dados do usuário: {}", user.getEmail());
-
             var activities = activityRepository.findByUserOrderByCreatedAtDesc(user);
-            log.debug("Encontradas {} atividades", activities.size());
-
             var goals = goalRepository.findByUserOrderByCreatedAtDesc(user);
-            log.debug("Encontradas {} metas", goals.size());
-
             var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
-            log.debug("Encontradas {} conquistas", achievements.size());
+            
+            log.debug("[REPORT] Dados: {} atividades, {} metas, {} conquistas", 
+                     activities.size(), goals.size(), achievements.size());
 
-            // Análise inteligente
-            log.debug("Gerando insights");
             var insights = insightService.generateInsights(activities, goals, achievements);
             var radarData = insightService.calculateRadarData(activities, goals, achievements);
-
-            log.debug("Gerando HTML das atividades");
             StringBuilder activitiesHtml = new StringBuilder();
             activities.stream().limit(MAX_ACTIVITIES_TO_SHOW).forEach(activity -> {
                 String statusIcon = getStatusIcon(activity.getStatus().name());
@@ -98,7 +90,7 @@ public class ReportService {
                 ));
             });
 
-            log.debug("Gerando HTML das metas");
+
             StringBuilder goalsHtml = new StringBuilder();
             goals.stream().limit(MAX_GOALS_TO_SHOW).forEach(goal -> {
                 int progress = goal.getProgressPercentage() != null ? goal.getProgressPercentage() : 0;
@@ -114,7 +106,7 @@ public class ReportService {
                 ));
             });
 
-            log.debug("Gerando HTML das conquistas");
+
             StringBuilder achievementsHtml = new StringBuilder();
             achievements.stream().limit(MAX_ACHIEVEMENTS_TO_SHOW).forEach(achievement -> {
                 String description = achievement.getDescription() != null ?
@@ -130,7 +122,7 @@ public class ReportService {
                 ));
             });
 
-            log.debug("Montando template HTML final");
+
             String htmlResult = String.format("""
                 <!DOCTYPE html>
                 <html>
@@ -276,11 +268,11 @@ public class ReportService {
                     LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT))
             );
 
-            log.debug("HTML gerado com sucesso");
+
             return htmlResult;
 
         } catch (Exception e) {
-            log.error("Erro ao gerar HTML do relatório: {}", e.getMessage(), e);
+            log.error("[REPORT] Erro ao gerar HTML: {}", e.getMessage());
             throw new RuntimeException("Erro ao gerar HTML: " + e.getMessage(), e);
         }
     }
@@ -311,7 +303,7 @@ public class ReportService {
                 .mapToInt(api.work.profile.entity.Activity::getActualHours)
                 .sum();
         } catch (Exception e) {
-            log.error("Erro ao calcular total de horas: {}", e.getMessage());
+            log.warn("[REPORT] Erro ao calcular horas: {}", e.getMessage());
             return 0;
         }
     }
@@ -332,7 +324,7 @@ public class ReportService {
                 .sum();
             return sum / activities.size();
         } catch (Exception e) {
-            log.error("Erro ao calcular prioridade média: {}", e.getMessage());
+            log.warn("[REPORT] Erro ao calcular prioridade: {}", e.getMessage());
             return 0.0;
         }
     }
@@ -427,7 +419,7 @@ public class ReportService {
                 .sum();
             return totalProgress / goals.size();
         } catch (Exception e) {
-            log.error("Erro ao calcular progresso das metas: {}", e.getMessage());
+            log.warn("[REPORT] Erro ao calcular progresso: {}", e.getMessage());
             return 0.0;
         }
     }

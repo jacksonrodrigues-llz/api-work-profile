@@ -7,8 +7,7 @@ import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +26,8 @@ public class GoalController {
     private final UserService userService;
     
     @GetMapping
-    public String list(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = userService.findOrCreateUser(principal);
+    public String list(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         var goals = goalRepository.findByUserOrderByCreatedAtDesc(user);
         
         // Separar metas por status
@@ -54,24 +53,26 @@ public class GoalController {
     }
     
     @GetMapping("/new")
-    public String newGoal(Model model) {
+    public String newGoal(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         model.addAttribute("goal", new Goal());
+        model.addAttribute("user", user);
         return "goals/form";
     }
     
     @PostMapping
-    public String save(@AuthenticationPrincipal OAuth2User principal, @ModelAttribute Goal goal, RedirectAttributes redirectAttributes) {
+    public String save(Authentication authentication, @ModelAttribute Goal goal, RedirectAttributes redirectAttributes) {
         try {
-            User user = userService.findOrCreateUser(principal);
+            User user = getUserFromAuthentication(authentication);
             goal.setUser(user);
             goalRepository.save(goal);
             
-            log.info("Meta salva com sucesso: {} para usuário: {}", goal.getTitle(), user.getEmail());
+            log.info("[GOAL] Criada: {} (ID: {})", goal.getTitle(), goal.getId());
             redirectAttributes.addFlashAttribute("successMessage", "Meta salva com sucesso!");
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (Exception e) {
-            log.error("Erro ao salvar meta: {}", e.getMessage(), e);
+            log.error("[GOAL] Erro ao criar: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao salvar meta: " + e.getMessage());
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
@@ -80,12 +81,14 @@ public class GoalController {
     }
     
     @GetMapping("/{id}/edit")
-    public String edit(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         Goal goal = goalRepository.findById(id).orElse(null);
         if (goal == null) {
             return "redirect:/goals";
         }
         model.addAttribute("goal", goal);
+        model.addAttribute("user", user);
         return "goals/form";
     }
     
@@ -103,13 +106,13 @@ public class GoalController {
             existing.setCategory(goal.getCategory());
             
             goalRepository.save(existing);
-            log.info("Meta atualizada com sucesso: ID {}", id);
+            log.info("[GOAL] Atualizada: {} (ID: {})", existing.getTitle(), id);
             
             redirectAttributes.addFlashAttribute("successMessage", "Meta atualizada com sucesso!");
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (Exception e) {
-            log.error("Erro ao atualizar meta ID {}: {}", id, e.getMessage(), e);
+            log.error("[GOAL] Erro ao atualizar ID {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar meta: " + e.getMessage());
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
@@ -138,14 +141,23 @@ public class GoalController {
             }
             
             goalRepository.save(goal);
-            log.info("Status da meta {} atualizado para {}", id, newStatus);
+            log.debug("[GOAL] Status atualizado: ID {} -> {}", id, newStatus);
             
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Erro ao atualizar status da meta {}: {}", id, e.getMessage());
+            log.error("[GOAL] Erro ao atualizar status ID {}: {}", id, e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
     
-
+    private User getUserFromAuthentication(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            return userService.findOrCreateUser((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal());
+        } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
+            org.springframework.security.core.userdetails.User userDetails = 
+                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+            return userService.findByEmail(userDetails.getUsername());
+        }
+        throw new IllegalStateException("Tipo de autenticação não suportado");
+    }
 }

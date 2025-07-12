@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: ${RDS_HOSTNAME:jdbc:postgresql://localhost:5432/careertracker}
+    username: ${RDS_USERNAME:postgres}
+    password: ${RDS_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    api.work.profile: WARN
+    org.springframework.security: ERROR
+    org.springframework.web: ERROR
+    org.thymeleaf: ERROR
+    org.hibernate: ERROR
+    feign: ERROR
+  file:
+    name: /var/log/work-profile.log
+
+server:
+  port: ${PORT:8080}
+  compression:
+    enabled: true
+  http2:
+    enabled: true

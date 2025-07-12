@@ -27,6 +27,8 @@ public class DashboardService {
     private final GitHubConfig gitHubConfig;
     
     public Map<String, Object> getDashboardMetrics(User user) {
+        log.debug("[DASHBOARD] Calculando métricas para: {}", user.getEmail());
+        
         Map<String, Object> metrics = new HashMap<>();
         
         // Métricas do mês atual
@@ -45,11 +47,11 @@ public class DashboardService {
         
         if (user.getGithubUsername() != null) {
             pullRequests = gitHubService.getPullRequestCount(user.getGithubUsername());
-            log.info("GitHub stats para {}: {} PRs", user.getGithubUsername(), pullRequests);
+            log.debug("[DASHBOARD] GitHub: {} PRs para {}", pullRequests, user.getGithubUsername());
         }
         
-        // Débitos Técnicos
-        Long techDebts = techDebtRepository.countByUser(user);
+        // Débitos Técnicos - mostrar total geral
+        Long techDebts = techDebtRepository.countAll();
         
         metrics.put("completedActivities", completedActivities);
         metrics.put("averageHours", avgHours != null ? avgHours.intValue() : 0);
@@ -59,6 +61,8 @@ public class DashboardService {
         metrics.put("commits", 0);
         metrics.put("achievements", achievementRepository.findByUserOrderByAchievedAtDesc(user).size());
         metrics.put("techDebts", techDebts != null ? techDebts : 0);
+        
+
         
         return metrics;
     }

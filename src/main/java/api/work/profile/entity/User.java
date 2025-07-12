@@ -32,6 +32,18 @@ public class User {
     private String profilePhoto;
     private String avatar; // Avatar personalizado
     
+    // Campos de autenticação
+    private String password;
+    private Boolean enabled = true;
+    
+    // Perfil e permissões
+    @Enumerated(EnumType.STRING)
+    private api.work.profile.enums.UserRole role = api.work.profile.enums.UserRole.USER;
+    
+    // Reset de senha
+    private String passwordResetToken;
+    private LocalDateTime tokenExpiration;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     

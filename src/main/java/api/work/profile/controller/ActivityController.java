@@ -6,8 +6,7 @@ import api.work.profile.repository.ActivityRepository;
 import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +26,8 @@ public class ActivityController {
     private final UserService userService;
     
     @GetMapping
-    public String list(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = userService.findOrCreateUser(principal);
+    public String list(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         var activities = activityRepository.findByUserOrderByCreatedAtDesc(user);
         
         // Separar atividades por status
@@ -57,29 +56,31 @@ public class ActivityController {
     }
     
     @GetMapping("/new")
-    public String newActivity(Model model) {
+    public String newActivity(Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         model.addAttribute("activity", new Activity());
+        model.addAttribute("user", user);
         return "activities/form";
     }
     
     @PostMapping
-    public String save(@AuthenticationPrincipal OAuth2User principal, @ModelAttribute Activity activity, RedirectAttributes redirectAttributes) {
+    public String save(Authentication authentication, @ModelAttribute Activity activity, RedirectAttributes redirectAttributes) {
         try {
-            User user = userService.findOrCreateUser(principal);
+            User user = getUserFromAuthentication(authentication);
             activity.setUser(user);
             
             if (activity.getStatus() == Activity.ActivityStatus.DONE && activity.getCompletedAt() == null) {
                 activity.setCompletedAt(LocalDateTime.now());
             }
             
-            activityRepository.save(activity);
-            log.info("Atividade salva com sucesso: {} para usuário: {}", activity.getTitle(), user.getEmail());
+            Activity saved = activityRepository.save(activity);
+            log.info("[ACTIVITY] Criada: {} (ID: {})", saved.getTitle(), saved.getId());
             
             redirectAttributes.addFlashAttribute("successMessage", "Atividade salva com sucesso!");
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (Exception e) {
-            log.error("Erro ao salvar atividade: {}", e.getMessage(), e);
+            log.error("[ACTIVITY] Erro ao criar: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao salvar atividade: " + e.getMessage());
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
@@ -88,12 +89,14 @@ public class ActivityController {
     }
     
     @GetMapping("/{id}/edit")
-    public String edit(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Authentication authentication, Model model) {
+        User user = getUserFromAuthentication(authentication);
         Activity activity = activityRepository.findById(id).orElse(null);
         if (activity == null) {
             return "redirect:/activities";
         }
         model.addAttribute("activity", activity);
+        model.addAttribute("user", user);
         return "activities/form";
     }
     
@@ -116,14 +119,14 @@ public class ActivityController {
                 existing.setCompletedAt(LocalDateTime.now());
             }
             
-            activityRepository.save(existing);
-            log.info("Atividade atualizada com sucesso: ID {}", id);
+            Activity updated = activityRepository.save(existing);
+            log.info("[ACTIVITY] Atualizada: {} (ID: {})", updated.getTitle(), updated.getId());
             
             redirectAttributes.addFlashAttribute("successMessage", "Atividade atualizada com sucesso!");
             redirectAttributes.addFlashAttribute("messageType", "success");
             
         } catch (Exception e) {
-            log.error("Erro ao atualizar atividade ID {}: {}", id, e.getMessage(), e);
+            log.error("[ACTIVITY] Erro ao atualizar ID {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar atividade: " + e.getMessage());
             redirectAttributes.addFlashAttribute("messageType", "danger");
         }
@@ -151,14 +154,23 @@ public class ActivityController {
             }
             
             activityRepository.save(activity);
-            log.info("Status da atividade {} atualizado para {}", id, newStatus);
+            log.debug("[ACTIVITY] Status atualizado: ID {} -> {}", id, newStatus);
             
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Erro ao atualizar status da atividade {}: {}", id, e.getMessage());
+            log.error("[ACTIVITY] Erro ao atualizar status ID {}: {}", id, e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }
     
-
+    private User getUserFromAuthentication(Authentication authentication) {
+        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            return userService.findOrCreateUser((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal());
+        } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
+            org.springframework.security.core.userdetails.User userDetails = 
+                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+            return userService.findByEmail(userDetails.getUsername());
+        }
+        throw new IllegalStateException("Tipo de autenticação não suportado");
+    }
 }

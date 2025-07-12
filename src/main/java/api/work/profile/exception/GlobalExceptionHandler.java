@@ -23,11 +23,12 @@ public class GlobalExceptionHandler {
             return null; // Retorna 404 silenciosamente
         }
         
-        log.error("Erro não tratado na URI {}: {}", requestUri, e.getMessage(), e);
+        log.error("[ERROR] {} - {}", requestUri, e.getMessage());
         
-        // Log adicional para RuntimeException
-        if (e instanceof RuntimeException && e.getCause() != null) {
-            log.error("Causa raiz do erro: {}", e.getCause().getMessage(), e.getCause());
+        // Log causa raiz apenas se for diferente
+        if (e instanceof RuntimeException && e.getCause() != null && 
+            !e.getMessage().equals(e.getCause().getMessage())) {
+            log.error("[ERROR] Causa: {}", e.getCause().getMessage());
         }
         
         redirectAttributes.addFlashAttribute("errorMessage", 
@@ -39,7 +40,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public String handleIllegalArgument(IllegalArgumentException e, RedirectAttributes redirectAttributes) {
-        log.warn("Argumento inválido: {}", e.getMessage());
+        log.warn("[VALIDATION] {}", e.getMessage());
         
         redirectAttributes.addFlashAttribute("errorMessage", 
             "Dados inválidos: " + e.getMessage());

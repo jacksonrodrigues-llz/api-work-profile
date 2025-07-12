@@ -51,6 +51,15 @@ public class TechDebt {
     @Column(name = "criado_por")
     private String criadoPor;
     
+    @Column(name = "criado_por_id")
+    private Long criadoPorId;
+    
+    @Column(name = "alterado_por_id")
+    private Long alteradoPorId;
+    
+    @Column(name = "data_alteracao")
+    private LocalDateTime dataAlteracao;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -64,17 +73,51 @@ public class TechDebt {
     
     @PreUpdate
     protected void onUpdate() {
+        dataAlteracao = LocalDateTime.now();
         if (status == StatusDebito.DONE && dataResolucao == null) {
             dataResolucao = LocalDateTime.now();
         }
     }
     
     public enum TipoDebito {
-        BACKEND, FRONTEND, UI_UX, INFRA, NEGOCIO
+        BACKEND, FRONTEND, UI_UX, INFRA, NEGOCIO;
+        
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public static TipoDebito fromString(String value) {
+            if (value == null) return null;
+            String normalized = value.toUpperCase().trim();
+            
+            // Mapeamentos flexíveis
+            return switch (normalized) {
+                case "BACKEND", "BACK" -> BACKEND;
+                case "FRONTEND", "FRONT" -> FRONTEND;
+                case "UI_UX", "UI", "UX" -> UI_UX;
+                case "INFRA", "INFRAESTRUTURA" -> INFRA;
+                case "NEGOCIO", "BUSINESS" -> NEGOCIO;
+                default -> valueOf(normalized);
+            };
+        }
     }
     
     public enum StatusDebito {
-        TODO, IN_PROGRESS, PAUSE, CANCELLED, TEST, DEPLOY, DONE
+        TODO, IN_PROGRESS, PAUSE, CANCELLED, TEST, DEPLOY, DONE;
+        
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public static StatusDebito fromString(String value) {
+            if (value == null) return null;
+            String normalized = value.toUpperCase().trim().replace("-", "_");
+            
+            return switch (normalized) {
+                case "TODO", "TO_DO", "PENDENTE" -> TODO;
+                case "IN_PROGRESS", "INPROGRESS", "PROGRESSO" -> IN_PROGRESS;
+                case "PAUSE", "PAUSADO" -> PAUSE;
+                case "CANCELLED", "CANCELADO" -> CANCELLED;
+                case "TEST", "TESTE" -> TEST;
+                case "DEPLOY", "DEPLOYMENT" -> DEPLOY;
+                case "DONE", "CONCLUIDO", "FINALIZADO" -> DONE;
+                default -> valueOf(normalized);
+            };
+        }
     }
     
     public long getDiasEmAberto() {

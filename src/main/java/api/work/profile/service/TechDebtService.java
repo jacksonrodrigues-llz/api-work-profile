@@ -29,7 +29,16 @@ public class TechDebtService {
     private final TechDebtRepository techDebtRepository;
     
     public TechDebt save(TechDebt techDebt) {
-        return techDebtRepository.save(techDebt);
+        boolean isNew = techDebt.getId() == null;
+        TechDebt saved = techDebtRepository.save(techDebt);
+        
+        if (isNew) {
+            log.info("[TECH_DEBT] Criado: {} (ID: {}, P{})", saved.getProblema(), saved.getId(), saved.getPrioridade());
+        } else {
+            log.info("[TECH_DEBT] Atualizado: {} (ID: {})", saved.getProblema(), saved.getId());
+        }
+        
+        return saved;
     }
     
     public Page<TechDebt> findByUser(User user, Pageable pageable) {
@@ -47,7 +56,13 @@ public class TechDebtService {
     }
     
     public void delete(Long id) {
-        techDebtRepository.deleteById(id);
+        TechDebt debt = techDebtRepository.findById(id).orElse(null);
+        if (debt != null) {
+            log.info("[TECH_DEBT] Excluído: {} (ID: {})", debt.getProblema(), id);
+            techDebtRepository.deleteById(id);
+        } else {
+            log.warn("[TECH_DEBT] Tentativa de excluir inexistente: ID {}", id);
+        }
     }
     
     public List<TechDebt> importFromJson(List<TechDebtDTO> dtos, User user) {
@@ -159,6 +174,31 @@ public class TechDebtService {
     
     public Long countByUser(User user) {
         return techDebtRepository.countByUser(user);
+    }
+    
+    public Page<TechDebt> findAllWithFilters(TechDebt.StatusDebito status, 
+                                            Integer prioridade, TechDebt.TipoDebito tipo, 
+                                            Pageable pageable) {
+        return techDebtRepository.findAllWithFilters(status, prioridade, tipo, pageable);
+    }
+    
+    public Long countByStatus(TechDebt.StatusDebito status) {
+        return techDebtRepository.countByStatus(status);
+    }
+    
+    public Long countAll() {
+        return techDebtRepository.countAll();
+    }
+    
+    public Map<String, Object> getAllDashboardMetrics() {
+        Map<String, Object> metrics = new HashMap<>();
+        
+        metrics.put("total", techDebtRepository.countAll());
+        metrics.put("todo", techDebtRepository.countByStatus(TechDebt.StatusDebito.TODO));
+        metrics.put("inProgress", techDebtRepository.countByStatus(TechDebt.StatusDebito.IN_PROGRESS));
+        metrics.put("done", techDebtRepository.countByStatus(TechDebt.StatusDebito.DONE));
+        
+        return metrics;
     }
     
     public Map<String, Object> getDashboardMetrics(User user) {
