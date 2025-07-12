@@ -30,6 +30,7 @@ public class User {
     private String company;
     private String position;
     private String profilePhoto;
+    private String avatar; // Avatar personalizado
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -42,6 +43,9 @@ public class User {
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Achievement> achievements;
+    
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<TechDebt> techDebts;
     
     @PrePersist
     protected void onCreate() {

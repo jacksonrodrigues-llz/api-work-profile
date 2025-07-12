@@ -167,8 +167,8 @@
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <span th:text="${user.name}">Usuário</span>
+                        <img th:src="${user?.profilePhoto ?: (user?.avatar ?: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.name ?: 'default'))}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                        <span th:text="${user?.name ?: 'Usuário'}">Usuário</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
@@ -189,6 +189,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-white active" href="/dashboard">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
                             </a>
                         </li>
                         <li class="nav-item">
@@ -293,6 +298,23 @@
                         </a>
                     </div>
 
+                    <!-- Débitos Técnicos -->
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <a href="/tech-debts" class="text-decoration-none">
+                            <div class="card card-metric">
+                                <div class="card-body">
+                                    <div class="metric-content">
+                                        <div class="metric-title">Débitos Técnicos</div>
+                                        <div class="metric-value" th:text="${metrics.techDebts ?: 0}">0</div>
+                                    </div>
+                                    <div class="metric-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
                     <!-- GitHub Stats -->
                     <div class="col-lg-3 col-md-6 mb-4">
                         <a th:href="'https://github.com/' + ${user.githubUsername}" target="_blank" class="text-decoration-none">
@@ -337,6 +359,11 @@
                                     <div class="col-md-6 mb-3">
                                         <a href="/achievements/new" class="btn btn-outline-light w-100">
                                             <i class="fas fa-trophy me-2"></i>Nova Conquista
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/tech-debts/new" class="btn btn-outline-light w-100">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Novo Débito
                                         </a>
                                     </div>
                                     <div class="col-md-6 mb-3">

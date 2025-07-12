@@ -1,11 +1,11 @@
 package api.work.profile.controller;
 
 import api.work.profile.entity.User;
-import api.work.profile.repository.UserRepository;
 import api.work.profile.repository.ActivityRepository;
 import api.work.profile.repository.GoalRepository;
 import api.work.profile.repository.AchievementRepository;
 import api.work.profile.service.ReportService;
+import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ReportController {
     
     private final ReportService reportService;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ActivityRepository activityRepository;
     private final GoalRepository goalRepository;
     private final AchievementRepository achievementRepository;
@@ -33,7 +33,7 @@ public class ReportController {
     @GetMapping
     public String reports(@AuthenticationPrincipal OAuth2User principal, Model model) {
         try {
-            User user = getUser(principal);
+            User user = userService.findOrCreateUser(principal);
             log.info("Gerando relatório para usuário: {}", user.getEmail());
             
             model.addAttribute("user", user);
@@ -58,7 +58,7 @@ public class ReportController {
     
     @GetMapping("/pdf")
     public ResponseEntity<byte[]> downloadPdf(@AuthenticationPrincipal OAuth2User principal) {
-        User user = getUser(principal);
+        User user = userService.findOrCreateUser(principal);
         byte[] pdfBytes = reportService.generatePdfReport(user);
         
         HttpHeaders headers = new HttpHeaders();
@@ -70,13 +70,5 @@ public class ReportController {
                 .body(pdfBytes);
     }
     
-    private User getUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String githubUsername = principal.getAttribute("login");
-        
-        if (email == null || email.isEmpty()) {
-            return userRepository.findByGithubUsername(githubUsername).orElseThrow();
-        }
-        return userRepository.findByEmail(email).orElseThrow();
-    }
+
 }

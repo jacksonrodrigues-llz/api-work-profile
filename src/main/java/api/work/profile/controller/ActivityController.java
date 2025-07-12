@@ -3,7 +3,7 @@ package api.work.profile.controller;
 import api.work.profile.entity.Activity;
 import api.work.profile.entity.User;
 import api.work.profile.repository.ActivityRepository;
-import api.work.profile.repository.UserRepository;
+import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,11 +24,11 @@ import java.util.Map;
 public class ActivityController {
     
     private final ActivityRepository activityRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     
     @GetMapping
     public String list(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = getUser(principal);
+        User user = userService.findOrCreateUser(principal);
         var activities = activityRepository.findByUserOrderByCreatedAtDesc(user);
         
         // Separar atividades por status
@@ -51,6 +51,7 @@ public class ActivityController {
         model.addAttribute("testCount", testActivities.size());
         model.addAttribute("deployCount", deployActivities.size());
         model.addAttribute("doneCount", doneActivities.size());
+        model.addAttribute("user", user);
         
         return "activities/list";
     }
@@ -64,7 +65,7 @@ public class ActivityController {
     @PostMapping
     public String save(@AuthenticationPrincipal OAuth2User principal, @ModelAttribute Activity activity, RedirectAttributes redirectAttributes) {
         try {
-            User user = getUser(principal);
+            User user = userService.findOrCreateUser(principal);
             activity.setUser(user);
             
             if (activity.getStatus() == Activity.ActivityStatus.DONE && activity.getCompletedAt() == null) {
@@ -88,7 +89,10 @@ public class ActivityController {
     
     @GetMapping("/{id}/edit")
     public String edit(@PathVariable Long id, Model model) {
-        Activity activity = activityRepository.findById(id).orElseThrow();
+        Activity activity = activityRepository.findById(id).orElse(null);
+        if (activity == null) {
+            return "redirect:/activities";
+        }
         model.addAttribute("activity", activity);
         return "activities/form";
     }
@@ -156,15 +160,5 @@ public class ActivityController {
         }
     }
     
-    private User getUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String githubUsername = principal.getAttribute("login");
-        
-        if (email == null || email.isEmpty()) {
-            return userRepository.findByGithubUsername(githubUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-        }
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
-    }
+
 }

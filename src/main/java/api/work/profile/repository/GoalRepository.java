@@ -12,9 +12,9 @@ import java.util.List;
 public interface GoalRepository extends JpaRepository<Goal, Long> {
     List<Goal> findByUserOrderByCreatedAtDesc(User user);
     
-    @Query("SELECT COUNT(g) FROM Goal g WHERE g.user = ?1 AND g.status = 'COMPLETED'")
-    Long countCompletedGoals(User user);
+    @Query("SELECT COUNT(g) FROM Goal g WHERE g.user = ?1 AND g.status = ?2")
+    Long countCompletedGoals(User user, Goal.GoalStatus status);
     
-    @Query("SELECT COUNT(g) FROM Goal g WHERE g.user = ?1 AND g.status = 'ACTIVE'")
-    Long countActiveGoals(User user);
+    @Query("SELECT COUNT(g) FROM Goal g WHERE g.user = ?1 AND g.status = ?2")
+    Long countActiveGoals(User user, Goal.GoalStatus status);
 }

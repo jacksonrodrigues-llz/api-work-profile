@@ -13,19 +13,152 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-card: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-orange: #ff6b35;
+            --accent-orange-hover: #ff8c42;
+            --border-color: #4a4a4a;
+        }
+        
+        body {
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+        }
+        
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--accent-orange) 0%, #e55a2b 100%);
         }
+        
         .card-metric {
-            border-left: 4px solid #667eea;
-            transition: transform 0.2s;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-orange);
+            transition: all 0.3s ease;
+            color: var(--text-primary);
         }
+        
         .card-metric:hover {
-            transform: translateY(-2px);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
         }
+        
+        .navbar {
+            background: var(--bg-secondary) !important;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
         .navbar-brand {
             font-weight: 600;
+            color: var(--text-primary) !important;
+        }
+        
+        .bg-primary {
+            background-color: var(--accent-orange) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--accent-orange-hover);
+            border-color: var(--accent-orange-hover);
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .card-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .table-dark {
+            background: var(--bg-secondary);
+        }
+        
+        .table {
+            color: var(--text-primary);
+        }
+        
+        .table tbody tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+        
+        .form-control, .form-select {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-card);
+            border-color: var(--accent-orange);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: var(--accent-orange);
+            color: white;
+            border-color: var(--accent-orange);
+        }
+        
+        .tag-suggestion {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tag-suggestion:hover {
+            background-color: var(--accent-orange) !important;
+            color: white !important;
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        .btn-outline-primary {
+            color: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+        
+        .btn-outline-secondary {
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-outline-secondary:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
     </style>
 </head>
@@ -78,6 +211,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/achievements">
                                 <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
                             </a>
                         </li>
                         <li class="nav-item">

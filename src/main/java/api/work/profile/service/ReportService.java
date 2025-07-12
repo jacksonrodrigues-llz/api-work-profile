@@ -289,10 +289,10 @@ public class ReportService {
         Map<String, Object> report = new HashMap<>();
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
-        Long completedActivities = activityRepository.countCompletedActivitiesSince(user, startOfMonth);
-        Double avgHours = activityRepository.getAverageHoursPerActivity(user);
-        Long completedGoals = goalRepository.countCompletedGoals(user);
-        Long activeGoals = goalRepository.countActiveGoals(user);
+        Long completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
+        Double avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
+        Long completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
+        Long activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
         var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
         
         report.put("completedActivities", completedActivities != null ? completedActivities : 0);

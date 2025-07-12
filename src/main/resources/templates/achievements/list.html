@@ -30,9 +30,6 @@
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <button id="refreshBtn" class="btn btn-outline-light refresh-btn me-2" onclick="refreshAchievements()" title="Atualizar">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user me-1"></i>Usuário
@@ -55,6 +52,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/dashboard">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
                             </a>
                         </li>
                         <li class="nav-item">
@@ -87,9 +89,14 @@
                         <h1 class="h2">Conquistas e Marcos</h1>
                         <p class="text-muted">Timeline dos seus sucessos profissionais</p>
                     </div>
-                    <a href="/achievements/new" class="btn btn-warning">
-                        <i class="fas fa-plus me-2"></i>Nova Conquista
-                    </a>
+                    <div>
+                        <button id="refreshBtn" class="btn btn-outline-light me-2" onclick="refreshAchievements()" title="Atualizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <a href="/achievements/new" class="btn btn-warning">
+                            <i class="fas fa-plus me-2"></i>Nova Conquista
+                        </a>
+                    </div>
                 </div>
 
                 <div class="row">

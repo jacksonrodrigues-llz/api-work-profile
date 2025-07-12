@@ -3,7 +3,7 @@ package api.work.profile.controller;
 import api.work.profile.entity.Achievement;
 import api.work.profile.entity.User;
 import api.work.profile.repository.AchievementRepository;
-import api.work.profile.repository.UserRepository;
+import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,11 +20,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AchievementController {
     
     private final AchievementRepository achievementRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     
     @GetMapping
     public String list(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = getUser(principal);
+        User user = userService.findOrCreateUser(principal);
         model.addAttribute("achievements", achievementRepository.findByUserOrderByAchievedAtDesc(user));
         return "achievements/list";
     }
@@ -38,7 +38,7 @@ public class AchievementController {
     @PostMapping
     public String save(@AuthenticationPrincipal OAuth2User principal, @ModelAttribute Achievement achievement, RedirectAttributes redirectAttributes) {
         try {
-            User user = getUser(principal);
+            User user = userService.findOrCreateUser(principal);
             achievement.setUser(user);
             achievementRepository.save(achievement);
             
@@ -57,7 +57,10 @@ public class AchievementController {
     
     @GetMapping("/{id}/edit")
     public String edit(@PathVariable Long id, Model model) {
-        Achievement achievement = achievementRepository.findById(id).orElseThrow();
+        Achievement achievement = achievementRepository.findById(id).orElse(null);
+        if (achievement == null) {
+            return "redirect:/achievements";
+        }
         model.addAttribute("achievement", achievement);
         return "achievements/form";
     }
@@ -95,13 +98,5 @@ public class AchievementController {
         return update(id, achievement, redirectAttributes);
     }
     
-    private User getUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String githubUsername = principal.getAttribute("login");
-        
-        if (email == null || email.isEmpty()) {
-            return userRepository.findByGithubUsername(githubUsername).orElseThrow();
-        }
-        return userRepository.findByEmail(email).orElseThrow();
-    }
+
 }

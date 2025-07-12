@@ -20,7 +20,7 @@ target/
 *.ipr
 
 /logs
-
+/docs
 ### VS Code ###
 .vscode/
 .env

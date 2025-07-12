@@ -1,7 +1,7 @@
 package api.work.profile.controller;
 
 import api.work.profile.entity.User;
-import api.work.profile.repository.UserRepository;
+import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,13 +24,27 @@ import java.util.UUID;
 @Slf4j
 public class ProfileController {
     
-    private final UserRepository userRepository;
-    private static final String UPLOAD_DIR = "src/main/resources/static/uploads/";
+    private final UserService userService;
+    private static final String UPLOAD_DIR = "uploads/";
     
     @GetMapping
     public String profile(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = getUser(principal);
+        User user = userService.findOrCreateUser(principal);
         model.addAttribute("user", user);
+        
+        // Lista de avatars tecnológicos
+        String[] avatars = {
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev1",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev2",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev3",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev4",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev5",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev6",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev7",
+            "https://api.dicebear.com/7.x/avataaars/svg?seed=dev8"
+        };
+        model.addAttribute("avatars", avatars);
+        
         return "profile";
     }
     
@@ -39,12 +53,12 @@ public class ProfileController {
                                @ModelAttribute User userForm, 
                                RedirectAttributes redirectAttributes) {
         try {
-            User user = getUser(principal);
+            User user = userService.findOrCreateUser(principal);
             user.setName(userForm.getName());
             user.setCompany(userForm.getCompany());
             user.setPosition(userForm.getPosition());
             
-            userRepository.save(user);
+            userService.save(user);
             
             redirectAttributes.addFlashAttribute("successMessage", "Perfil atualizado com sucesso!");
             redirectAttributes.addFlashAttribute("messageType", "success");
@@ -69,7 +83,7 @@ public class ProfileController {
             }
             
             // Create upload directory if it doesn't exist
-            Path uploadPath = Paths.get(UPLOAD_DIR);
+            Path uploadPath = Paths.get("src/main/resources/static/" + UPLOAD_DIR);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
@@ -84,9 +98,9 @@ public class ProfileController {
             Files.copy(file.getInputStream(), filePath);
             
             // Update user profile
-            User user = getUser(principal);
+            User user = userService.findOrCreateUser(principal);
             user.setProfilePhoto("/uploads/" + filename);
-            userRepository.save(user);
+            userService.save(user);
             
             redirectAttributes.addFlashAttribute("successMessage", "Foto atualizada com sucesso!");
             redirectAttributes.addFlashAttribute("messageType", "success");
@@ -100,13 +114,24 @@ public class ProfileController {
         return "redirect:/profile";
     }
     
-    private User getUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String githubUsername = principal.getAttribute("login");
-        
-        if (email == null || email.isEmpty()) {
-            return userRepository.findByGithubUsername(githubUsername).orElseThrow();
+    @PostMapping("/avatar")
+    public String updateAvatar(@AuthenticationPrincipal OAuth2User principal,
+                              @RequestParam("avatar") String avatar,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            User user = userService.findOrCreateUser(principal);
+            user.setAvatar(avatar);
+            userService.save(user);
+            
+            redirectAttributes.addFlashAttribute("successMessage", "Avatar atualizado com sucesso!");
+            redirectAttributes.addFlashAttribute("messageType", "success");
+            
+        } catch (Exception e) {
+            log.error("Erro ao atualizar avatar: {}", e.getMessage(), e);
+            redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar avatar");
+            redirectAttributes.addFlashAttribute("messageType", "danger");
         }
-        return userRepository.findByEmail(email).orElseThrow();
+        
+        return "redirect:/profile";
     }
 }

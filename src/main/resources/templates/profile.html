@@ -89,19 +89,52 @@
                             </div>
                             <div class="card-body text-center">
                                 <div class="mb-3">
-                                    <img th:src="${user.profilePhoto != null ? user.profilePhoto : '/images/default-avatar.png'}" 
+                                    <img id="currentAvatar" th:src="${user.profilePhoto != null ? user.profilePhoto : (user.avatar != null ? user.avatar : 'https://api.dicebear.com/7.x/avataaars/svg?seed=default')}" 
                                          class="rounded-circle" width="150" height="150" 
                                          style="object-fit: cover; border: 3px solid var(--accent-orange);">
                                 </div>
-                                <form th:action="@{/profile/photo}" method="post" enctype="multipart/form-data">
+                                
+                                <!-- Galeria de Avatars -->
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-2">Escolha um Avatar:</h6>
+                                    <div class="row g-2">
+                                        <div class="col-3" th:each="avatar : ${avatars}">
+                                            <img th:src="${avatar}" class="img-thumbnail avatar-option" 
+                                                 width="60" height="60" style="cursor: pointer; border-radius: 50%;" 
+                                                 th:data-avatar="${avatar}" onclick="selectAvatar(this.dataset.avatar)"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <form th:action="@{/profile/avatar}" method="post" id="avatarForm">
+                                    <input type="hidden" name="avatar" id="selectedAvatar" th:value="${user.avatar}">
+                                    <button type="submit" class="btn btn-primary me-2">
+                                        <i class="fas fa-save me-2"></i>Salvar Avatar
+                                    </button>
+                                </form>
+                                
+                                <form th:action="@{/profile/photo}" method="post" enctype="multipart/form-data" class="mt-3">
                                     <div class="mb-3">
                                         <input type="file" class="form-control" name="photo" accept="image/*">
                                     </div>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-upload me-2"></i>Atualizar Foto
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-upload me-2"></i>Upload Personalizado
                                     </button>
                                 </form>
                             </div>
+                            
+                            <script>
+                            function selectAvatar(avatarUrl) {
+                                document.getElementById('currentAvatar').src = avatarUrl;
+                                document.getElementById('selectedAvatar').value = avatarUrl;
+                                
+                                // Destacar avatar selecionado
+                                document.querySelectorAll('.avatar-option').forEach(img => {
+                                    img.style.border = '2px solid transparent';
+                                });
+                                event.target.style.border = '2px solid var(--accent-orange)';
+                            }
+                            </script>
                         </div>
                     </div>
                     

@@ -1,8 +1,8 @@
 package api.work.profile.controller;
 
 import api.work.profile.entity.User;
-import api.work.profile.repository.UserRepository;
 import api.work.profile.service.DashboardService;
+import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,22 +19,12 @@ import java.util.Map;
 public class DashboardApiController {
     
     private final DashboardService dashboardService;
-    private final UserRepository userRepository;
+    private final UserService userService;
     
     @GetMapping("/metrics")
     public ResponseEntity<Map<String, Object>> getMetrics(@AuthenticationPrincipal OAuth2User principal) {
-        User user = getUser(principal);
+        User user = userService.findOrCreateUser(principal);
         Map<String, Object> metrics = dashboardService.getDashboardMetrics(user);
         return ResponseEntity.ok(metrics);
-    }
-    
-    private User getUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String githubUsername = principal.getAttribute("login");
-        
-        if (email == null || email.isEmpty()) {
-            return userRepository.findByGithubUsername(githubUsername).orElseThrow();
-        }
-        return userRepository.findByEmail(email).orElseThrow();
     }
 }

@@ -108,12 +108,10 @@
             </a>
             
             <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <button id="refreshBtn" class="btn btn-outline-light refresh-btn me-2" onclick="refreshActivities()" title="Atualizar">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user me-1"></i>Usuário
+                        <img th:src="${user?.profilePhoto ?: (user?.avatar ?: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.name ?: 'default'))}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                        <span th:text="${user?.name ?: 'Usuário'}">Usuário</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark">
                         <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
@@ -134,6 +132,11 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/dashboard">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
                             </a>
                         </li>
                         <li class="nav-item">
@@ -167,9 +170,14 @@
                         <h1 class="h2">Atividades</h1>
                         <p class="text-muted">Gerencie suas tarefas e projetos</p>
                     </div>
-                    <a href="/activities/new" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Nova Atividade
-                    </a>
+                    <div>
+                        <button id="refreshBtn" class="btn btn-outline-light me-2" onclick="refreshActivities()" title="Atualizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <a href="/activities/new" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Nova Atividade
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Kanban Board -->

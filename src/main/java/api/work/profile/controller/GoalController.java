@@ -3,7 +3,7 @@ package api.work.profile.controller;
 import api.work.profile.entity.Goal;
 import api.work.profile.entity.User;
 import api.work.profile.repository.GoalRepository;
-import api.work.profile.repository.UserRepository;
+import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,11 +24,11 @@ import java.util.Map;
 public class GoalController {
     
     private final GoalRepository goalRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     
     @GetMapping
     public String list(@AuthenticationPrincipal OAuth2User principal, Model model) {
-        User user = getUser(principal);
+        User user = userService.findOrCreateUser(principal);
         var goals = goalRepository.findByUserOrderByCreatedAtDesc(user);
         
         // Separar metas por status
@@ -48,6 +48,7 @@ public class GoalController {
         model.addAttribute("completedCount", completedGoals.size());
         model.addAttribute("pausedCount", pausedGoals.size());
         model.addAttribute("cancelledCount", cancelledGoals.size());
+        model.addAttribute("user", user);
         
         return "goals/list";
     }
@@ -61,7 +62,7 @@ public class GoalController {
     @PostMapping
     public String save(@AuthenticationPrincipal OAuth2User principal, @ModelAttribute Goal goal, RedirectAttributes redirectAttributes) {
         try {
-            User user = getUser(principal);
+            User user = userService.findOrCreateUser(principal);
             goal.setUser(user);
             goalRepository.save(goal);
             
@@ -80,7 +81,10 @@ public class GoalController {
     
     @GetMapping("/{id}/edit")
     public String edit(@PathVariable Long id, Model model) {
-        Goal goal = goalRepository.findById(id).orElseThrow();
+        Goal goal = goalRepository.findById(id).orElse(null);
+        if (goal == null) {
+            return "redirect:/goals";
+        }
         model.addAttribute("goal", goal);
         return "goals/form";
     }
@@ -143,13 +147,5 @@ public class GoalController {
         }
     }
     
-    private User getUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String githubUsername = principal.getAttribute("login");
-        
-        if (email == null || email.isEmpty()) {
-            return userRepository.findByGithubUsername(githubUsername).orElseThrow();
-        }
-        return userRepository.findByEmail(email).orElseThrow();
-    }
+
 }

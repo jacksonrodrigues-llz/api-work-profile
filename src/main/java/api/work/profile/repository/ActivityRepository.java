@@ -13,9 +13,9 @@ import java.util.List;
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findByUserOrderByCreatedAtDesc(User user);
     
-    @Query("SELECT COUNT(a) FROM Activity a WHERE a.user = ?1 AND a.status = 'DONE' AND a.completedAt >= ?2")
-    Long countCompletedActivitiesSince(User user, LocalDateTime since);
+    @Query("SELECT COUNT(a) FROM Activity a WHERE a.user = ?1 AND a.status = ?2 AND a.completedAt >= ?3")
+    Long countCompletedActivitiesSince(User user, Activity.ActivityStatus status, LocalDateTime since);
     
-    @Query("SELECT AVG(a.actualHours) FROM Activity a WHERE a.user = ?1 AND a.status = 'DONE' AND a.actualHours IS NOT NULL")
-    Double getAverageHoursPerActivity(User user);
+    @Query("SELECT AVG(a.actualHours) FROM Activity a WHERE a.user = ?1 AND a.status = ?2 AND a.actualHours IS NOT NULL")
+    Double getAverageHoursPerActivity(User user, Activity.ActivityStatus status);
 }

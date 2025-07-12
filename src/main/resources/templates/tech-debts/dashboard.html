@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Débitos Técnicos - Portal Profissional</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        .border-primary { border-color: var(--accent-orange) !important; }
+        .border-warning { border-color: #fd7e14 !important; }
+        .border-info { border-color: #0dcaf0 !important; }
+        .border-success { border-color: #198754 !important; }
+        .text-primary { color: var(--accent-orange) !important; }
+        .text-warning { color: #fd7e14 !important; }
+        .text-info { color: #0dcaf0 !important; }
+        .text-success { color: #198754 !important; }
+        .fa-2x { color: inherit; }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>Usuário
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-chart-line text-warning me-2"></i>Dashboard - Débitos Técnicos</h2>
+            <p class="text-muted mb-0">Visão geral dos débitos técnicos e métricas</p>
+        </div>
+        <a href="/tech-debts" class="btn btn-outline-light">
+            <i class="fas fa-list me-1"></i>Ver Lista
+        </a>
+    </div>
+
+    <!-- Métricas Principais -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card card-metric text-center border-primary">
+                <div class="card-body">
+                    <i class="fas fa-bug fa-2x text-primary mb-2"></i>
+                    <h3 class="text-primary" th:text="${metrics.total}">0</h3>
+                    <p class="mb-0">Total de Débitos</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-metric text-center border-warning">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h3 class="text-warning" th:text="${metrics.todo}">0</h3>
+                    <p class="mb-0">A Fazer</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-metric text-center border-info">
+                <div class="card-body">
+                    <i class="fas fa-cogs fa-2x text-info mb-2"></i>
+                    <h3 class="text-info" th:text="${metrics.inProgress}">0</h3>
+                    <p class="mb-0">Em Progresso</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card card-metric text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h3 class="text-success" th:text="${metrics.done}">0</h3>
+                    <p class="mb-0">Concluídos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Distribuição por Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Tempo Médio por Prioridade</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="priorityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Débitos Críticos -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Débitos Críticos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Problema</th>
+                            <th>Prioridade</th>
+                            <th>Status</th>
+                            <th>Dias em Aberto</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="debt : ${criticalDebts}">
+                            <td>
+                                <strong th:text="${debt.problema}"></strong>
+                                <br>
+                                <small class="text-muted" th:text="${#strings.abbreviate(debt.descricao, 50)}"></small>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Crítico
+                                </span>
+                            </td>
+                            <td>
+                                <span th:switch="${debt.status}" class="badge">
+                                    <span th:case="TODO" class="badge bg-secondary">A Fazer</span>
+                                    <span th:case="IN_PROGRESS" class="badge bg-primary">Em Progresso</span>
+                                    <span th:case="*" class="badge bg-warning" th:text="${debt.status}"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-outline-dark" th:text="${debt.diasEmAberto} + ' dias'"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/tech-debts/{id}/edit(id=${debt.id})}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(criticalDebts)}">
+                            <td colspan="5" class="text-center text-muted">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Nenhum débito crítico encontrado!
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gráfico de Status
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['A Fazer', 'Em Progresso', 'Concluídos'],
+                datasets: [{
+                    data: [
+                        [[${metrics.todo}]], 
+                        [[${metrics.inProgress}]], 
+                        [[${metrics.done}]]
+                    ],
+                    backgroundColor: ['#fd7e14', '#0dcaf0', '#198754'],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Tempo Médio por Prioridade
+        const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Crítico', 'Alto', 'Médio', 'Baixo'],
+                datasets: [{
+                    label: 'Dias Médios',
+                    data: [
+                        [[${metrics.tempoMedioPorPrioridade[1]}]] || 0,
+                        [[${metrics.tempoMedioPorPrioridade[2]}]] || 0,
+                        [[${metrics.tempoMedioPorPrioridade[3]}]] || 0,
+                        [[${metrics.tempoMedioPorPrioridade[4]}]] || 0
+                    ],
+                    backgroundColor: ['#dc3545', '#fd7e14', 'var(--accent-orange)', '#6c757d'],
+                    borderColor: ['#dc3545', '#fd7e14', 'var(--accent-orange)', '#6c757d'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Dias'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

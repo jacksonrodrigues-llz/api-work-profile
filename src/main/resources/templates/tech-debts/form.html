@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Débito Técnico - Portal Profissional</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        .form-check-input:checked {
+            background-color: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
+        .form-text {
+            color: var(--text-secondary) !important;
+        }
+        .card-header-tabs .nav-link {
+            color: var(--text-secondary);
+        }
+        .card-header-tabs .nav-link.active {
+            background: var(--accent-orange);
+            color: white;
+            border-color: var(--accent-orange);
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>Usuário
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content px-4">
+    <div class="pt-4 pb-2 mb-4 border-bottom d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="fas fa-exclamation-triangle text-warning me-3"></i>
+                <span th:text="${techDebt.id != null ? 'Editar' : 'Novo'} + ' Débito Técnico'"></span>
+            </h2>
+            <p class="text-muted mb-0">Registre e gerencie débitos técnicos do projeto</p>
+        </div>
+        <a href="/tech-debts" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#form-tab">
+                                <i class="fas fa-edit me-1"></i>Formulário
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#json-tab">
+                                <i class="fas fa-code me-1"></i>JSON
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <!-- Formulário Manual -->
+                        <div class="tab-pane active" id="form-tab">
+                            <form th:action="@{/tech-debts}" th:object="${techDebt}" method="post">
+                                <input type="hidden" th:field="*{id}">
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Problema *</label>
+                                    <input type="text" class="form-control" th:field="*{problema}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Descrição</label>
+                                    <textarea class="form-control" rows="4" th:field="*{descricao}"></textarea>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Prioridade *</label>
+                                            <select class="form-select" th:field="*{prioridade}" required>
+                                                <option value="">Selecione...</option>
+                                                <option value="1">1 - Crítico</option>
+                                                <option value="2">2 - Alto</option>
+                                                <option value="3">3 - Médio</option>
+                                                <option value="4">4 - Baixo</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select" th:field="*{status}">
+                                                <option th:each="status : ${statusOptions}" 
+                                                        th:value="${status}" 
+                                                        th:text="${status}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Tipos</label>
+                                    <div class="row">
+                                        <div class="col-md-4" th:each="tipo : ${tipoOptions}">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       th:field="*{tipos}" th:value="${tipo}">
+                                                <label class="form-check-label" th:text="${tipo}"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Tags</label>
+                                    <input type="text" class="form-control" id="tagsInput" 
+                                           placeholder="Digite as tags separadas por vírgula">
+                                    <div class="form-text">Exemplo: #refatoracao, #performance, #seguranca</div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Salvar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- JSON -->
+                        <div class="tab-pane" id="json-tab">
+                            <div class="mb-3">
+                                <label class="form-label">JSON do Débito Técnico</label>
+                                <textarea class="form-control" rows="15" id="jsonEditor" 
+                                          placeholder='{"problema": "Exemplo", "descricao": "Descrição detalhada", "prioridade": 2}'></textarea>
+                            </div>
+                            <button type="button" class="btn btn-success" onclick="importFromJson()">
+                                <i class="fas fa-download me-1"></i>Importar do JSON
+                            </button>
+                            
+                            <script>
+                            function importFromJson() {
+                                const jsonData = document.getElementById('jsonEditor').value;
+                                if (!jsonData.trim()) {
+                                    alert('Por favor, insira o JSON');
+                                    return;
+                                }
+                                
+                                try {
+                                    const data = JSON.parse(jsonData);
+                                    
+                                    // Preencher campos do formulário
+                                    if (data.problema) document.querySelector('[name="problema"]').value = data.problema;
+                                    if (data.descricao) document.querySelector('[name="descricao"]').value = data.descricao;
+                                    if (data.prioridade) document.querySelector('[name="prioridade"]').value = data.prioridade;
+                                    if (data.status) document.querySelector('[name="status"]').value = data.status.toUpperCase();
+                                    
+                                    // Preencher tipos se existir
+                                    if (data.tipos && Array.isArray(data.tipos)) {
+                                        document.querySelectorAll('[name="tipos"]').forEach(cb => cb.checked = false);
+                                        data.tipos.forEach(tipo => {
+                                            const checkbox = document.querySelector(`[name="tipos"][value="${tipo.toUpperCase()}"]`);
+                                            if (checkbox) checkbox.checked = true;
+                                        });
+                                    }
+                                    
+                                    // Preencher tags
+                                    if (data.tags && Array.isArray(data.tags)) {
+                                        document.getElementById('tagsInput').value = data.tags.join(', ');
+                                    }
+                                    
+                                    alert('Dados importados com sucesso!');
+                                } catch (error) {
+                                    alert('JSON inválido: ' + error.message);
+                                }
+                            }
+                            </script>
+                            <button type="button" class="btn btn-outline-info" onclick="exportToJson()">
+                                <i class="fas fa-upload me-1"></i>Exportar para JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-1"></i>Guia de Prioridades</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge bg-danger me-2">1 - Crítico</span>
+                        <small>Sistema inoperante, falha de segurança</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-warning me-2">2 - Alto</span>
+                        <small>Impacto significativo na performance</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-info me-2">3 - Médio</span>
+                        <small>Melhoria de código, refatoração</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-secondary me-2">4 - Baixo</span>
+                        <small>Otimizações menores, documentação</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-tags me-1"></i>Tags Sugeridas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#refatoracao')">#refatoracao</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#performance')">#performance</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#seguranca')">#seguranca</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#codigo-limpo')">#codigo-limpo</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#documentacao')">#documentacao</span>
+                        <span class="badge bg-light text-dark tag-suggestion" onclick="addTag('#testes')">#testes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addTag(tag) {
+            const input = document.getElementById('tagsInput');
+            const current = input.value;
+            if (current && !current.endsWith(', ')) {
+                input.value = current + ', ' + tag;
+            } else {
+                input.value = current + tag;
+            }
+        }
+
+        function exportToJson() {
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+            const json = {
+                problema: formData.get('problema'),
+                descricao: formData.get('descricao'),
+                prioridade: parseInt(formData.get('prioridade')),
+                tipos: formData.getAll('tipos'),
+                tags: document.getElementById('tagsInput').value.split(',').map(t => t.trim()),
+                status: formData.get('status')
+            };
+            document.getElementById('jsonEditor').value = JSON.stringify(json, null, 2);
+        }
+
+        function importFromJson() {
+            try {
+                const json = JSON.parse(document.getElementById('jsonEditor').value);
+                document.querySelector('[name="problema"]').value = json.problema || '';
+                document.querySelector('[name="descricao"]').value = json.descricao || '';
+                document.querySelector('[name="prioridade"]').value = json.prioridade || '';
+                document.querySelector('[name="status"]').value = json.status || 'TODO';
+                document.getElementById('tagsInput').value = (json.tags || []).join(', ');
+                
+                // Limpar checkboxes
+                document.querySelectorAll('[name="tipos"]').forEach(cb => cb.checked = false);
+                // Marcar tipos do JSON
+                if (json.tipos) {
+                    json.tipos.forEach(tipo => {
+                        const checkbox = document.querySelector(`[name="tipos"][value="${tipo}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+                
+                alert('Dados importados do JSON com sucesso!');
+            } catch (error) {
+                alert('Erro ao importar JSON: ' + error.message);
+            }
+        }
+
+        // Processar tags antes do submit
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const tagsInput = document.getElementById('tagsInput');
+            const tags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+            
+            // Criar campos hidden para as tags
+            tags.forEach(tag => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'tags';
+                input.value = tag;
+                this.appendChild(input);
+            });
+        });
+    </script>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
