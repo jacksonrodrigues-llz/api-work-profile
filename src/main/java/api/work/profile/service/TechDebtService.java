@@ -4,9 +4,11 @@ import api.work.profile.dto.TechDebtDTO;
 import api.work.profile.entity.TechDebt;
 import api.work.profile.entity.User;
 import api.work.profile.repository.TechDebtRepository;
+import api.work.profile.util.TechDebtQueryBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +32,16 @@ public class TechDebtService {
     
     public TechDebt save(TechDebt techDebt) {
         boolean isNew = techDebt.getId() == null;
+        
+        if (!isNew) {
+            TechDebt existing = techDebtRepository.findById(techDebt.getId()).orElse(null);
+            if (existing != null) {
+                techDebt.setCriadoPor(existing.getCriadoPor());
+                techDebt.setCriadoPorId(existing.getCriadoPorId());
+                techDebt.setDataCriacao(existing.getDataCriacao());
+            }
+        }
+        
         TechDebt saved = techDebtRepository.save(techDebt);
         
         if (isNew) {
@@ -177,9 +189,25 @@ public class TechDebtService {
     }
     
     public Page<TechDebt> findAllWithFilters(TechDebt.StatusDebito status, 
-                                            Integer prioridade, TechDebt.TipoDebito tipo, 
+                                            Integer prioridade, TechDebt.TipoDebito tipo,
+                                            String search, String taskNumber, String periodo,
                                             Pageable pageable) {
-        return techDebtRepository.findAllWithFilters(status, prioridade, tipo, pageable);
+        java.time.LocalDateTime periodoDate = null;
+        if (periodo != null && !periodo.isEmpty()) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            switch (periodo) {
+                case "semana" -> periodoDate = now.minusWeeks(1);
+                case "15dias" -> periodoDate = now.minusDays(15);
+                case "30dias" -> periodoDate = now.minusDays(30);
+                case "3meses" -> periodoDate = now.minusMonths(3);
+                case "6meses" -> periodoDate = now.minusMonths(6);
+                case "1ano" -> periodoDate = now.minusYears(1);
+            }
+        }
+        return techDebtRepository.findAll(
+            TechDebtQueryBuilder.buildSpecification(status, prioridade, tipo, search, taskNumber, periodoDate),
+            pageable
+        );
     }
     
     public Long countByStatus(TechDebt.StatusDebito status) {
@@ -218,5 +246,21 @@ public class TechDebtService {
         metrics.put("tempoMedioPorPrioridade", contadorPrioridade);
         
         return metrics;
+    }
+    
+    public List<api.work.profile.dto.TechDebtSearchDTO> searchByText(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return List.of();
+        }
+        return techDebtRepository.findByProblemaOrDescricaoContainingIgnoreCase(
+            text.trim(), PageRequest.of(0, 10));
+    }
+    
+    public List<api.work.profile.dto.TechDebtSearchDTO> searchByTaskNumber(String taskNumber) {
+        if (taskNumber == null || taskNumber.trim().isEmpty()) {
+            return List.of();
+        }
+        return techDebtRepository.findByTaskNumberExact(
+            taskNumber.trim(), PageRequest.of(0, 10));
     }
 }

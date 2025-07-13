@@ -19,7 +19,7 @@ public class TechDebt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String problema;
     
     @Column(columnDefinition = "TEXT")
@@ -48,7 +48,7 @@ public class TechDebt {
     @Column(name = "data_resolucao")
     private LocalDateTime dataResolucao;
     
-    @Column(name = "criado_por")
+    @Column(name = "criado_por", length = 255)
     private String criadoPor;
     
     @Column(name = "criado_por_id")
@@ -59,6 +59,12 @@ public class TechDebt {
     
     @Column(name = "data_alteracao")
     private LocalDateTime dataAlteracao;
+    
+    @Column(name = "task_number", length = 100)
+    private String taskNumber;
+    
+    @Column(name = "task_url", columnDefinition = "TEXT")
+    private String taskUrl;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

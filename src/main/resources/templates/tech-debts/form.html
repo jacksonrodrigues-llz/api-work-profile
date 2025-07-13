@@ -192,6 +192,25 @@
                                     </div>
                                 </div>
 
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Número da Tarefa</label>
+                                            <input type="text" class="form-control" th:field="*{taskNumber}" 
+                                                   placeholder="Ex: TASK-123, US-456">
+                                            <div class="form-text">Número da tarefa no Azure DevOps ou outra ferramenta</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">URL da Tarefa</label>
+                                            <input type="url" class="form-control" th:field="*{taskUrl}" 
+                                                   placeholder="https://dev.azure.com/...">
+                                            <div class="form-text">Link direto para a tarefa</div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label class="form-label">Tags</label>
                                     <input type="text" class="form-control" id="tagsInput" 
@@ -281,6 +300,8 @@
                                     "problema": "Refatorar método de autenticação",
                                     "descricao": "O método atual de autenticação está complexo e precisa ser refatorado para melhor manutenibilidade",
                                     "prioridade": 2,
+                                    "taskNumber": "PBI-12345 ou 12345",
+                                    "taskUrl": "https://taskurl.com.br/12345",
                                     "status": "TODO",
                                     "tipos": ["Backend", "Frontend"],
                                     "tags": ["#refatoracao", "#seguranca", "#melhoria"]

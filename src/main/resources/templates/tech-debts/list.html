@@ -170,7 +170,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select name="status" class="form-select">
                         <option value="">Todos os Status</option>
                         <option value="TODO">A Fazer</option>
@@ -182,7 +182,7 @@
                         <option value="DONE">Concluído</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select name="prioridade" class="form-select">
                         <option value="">Todas as Prioridades</option>
                         <option value="1">1 - Crítico</option>
@@ -191,12 +191,23 @@
                         <option value="4">4 - Baixo</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <select name="tipo" class="form-select">
                         <option value="">Todos os Tipos</option>
                         <option th:each="tipo : ${tipoOptions}" 
                                 th:value="${tipo}" 
                                 th:text="${tipo}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="periodo" class="form-select">
+                        <option value="">Todos os Períodos</option>
+                        <option value="semana">Abertos esta semana</option>
+                        <option value="15dias">Últimos 15 dias</option>
+                        <option value="30dias">Últimos 30 dias</option>
+                        <option value="3meses">Últimos 3 meses</option>
+                        <option value="6meses">6 meses</option>
+                        <option value="1ano">1 ano</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -207,10 +218,48 @@
                         <option value="50" th:selected="${param.size != null and param.size[0] == '50'}">50 por página</option>
                     </select>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-filter me-1"></i>Filtrar
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Campos de Busca Inteligente -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-5">
+                    <div class="input-group position-relative">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" id="searchText" name="search" class="form-control" 
+                               placeholder="Buscar por título ou descrição..." 
+                               th:value="${param.search != null ? param.search[0] : ''}">
+                        <div id="searchResults" class="position-absolute w-100 bg-dark border rounded mt-1" 
+                             style="top: 100%; z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group position-relative">
+                        <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                        <input type="text" id="taskNumberInput" name="taskNumber" class="form-control" 
+                               placeholder="Número da Tarefa" 
+                               th:value="${param.taskNumber != null ? param.taskNumber[0] : ''}">
+                        <div id="taskResults" class="position-absolute w-100 bg-dark border rounded mt-1" 
+                             style="top: 100%; z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search me-1"></i>Buscar
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <a href="/tech-debts" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-times me-1"></i>Limpar
+                    </a>
                 </div>
             </form>
         </div>
@@ -230,19 +279,25 @@
                                 Problema <i class="fas fa-sort" id="sort-1"></i>
                             </th>
                             <th onclick="sortTable(2)" style="cursor: pointer;">
-                                Prioridade <i class="fas fa-sort" id="sort-2"></i>
+                                Número Tarefa <i class="fas fa-sort" id="sort-2"></i>
                             </th>
                             <th onclick="sortTable(3)" style="cursor: pointer;">
-                                Status <i class="fas fa-sort" id="sort-3"></i>
+                                Prioridade <i class="fas fa-sort" id="sort-3"></i>
                             </th>
                             <th onclick="sortTable(4)" style="cursor: pointer;">
-                                Tipo <i class="fas fa-sort" id="sort-4"></i>
+                                Status <i class="fas fa-sort" id="sort-4"></i>
                             </th>
                             <th onclick="sortTable(5)" style="cursor: pointer;">
-                                Criado por <i class="fas fa-sort" id="sort-5"></i>
+                                Tipo <i class="fas fa-sort" id="sort-5"></i>
                             </th>
                             <th onclick="sortTable(6)" style="cursor: pointer;">
-                                Dias em Aberto <i class="fas fa-sort" id="sort-6"></i>
+                                Data Criação <i class="fas fa-sort" id="sort-6"></i>
+                            </th>
+                            <th onclick="sortTable(7)" style="cursor: pointer;">
+                                Criado por <i class="fas fa-sort" id="sort-7"></i>
+                            </th>
+                            <th onclick="sortTable(8)" style="cursor: pointer;">
+                                Dias em Aberto <i class="fas fa-sort" id="sort-8"></i>
                             </th>
                             <th>Ações</th>
                         </tr>
@@ -256,6 +311,20 @@
                                 <strong th:text="${debt.problema ?: 'N/A'}"></strong>
                                 <br>
                                 <small class="text-muted" th:text="${#strings.abbreviate(debt.descricao ?: '', 50)}"></small>
+                            </td>
+                            <td>
+                                <span th:if="${debt.taskNumber != null and !debt.taskNumber.isEmpty()}">
+                                    <a th:if="${debt.taskUrl != null and !debt.taskUrl.isEmpty()}" 
+                                       th:href="${debt.taskUrl}" target="_blank" 
+                                       class="badge bg-primary text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        <span th:text="${debt.taskNumber}"></span>
+                                    </a>
+                                    <span th:if="${debt.taskUrl == null or debt.taskUrl.isEmpty()}" 
+                                          class="badge bg-secondary" th:text="${debt.taskNumber}"></span>
+                                </span>
+                                <span th:if="${debt.taskNumber == null or debt.taskNumber.isEmpty()}" 
+                                      class="text-muted">-</span>
                             </td>
                             <td>
                                 <span th:switch="${debt.prioridade}" class="badge">
@@ -288,6 +357,11 @@
                             </td>
                             <td>
                                 <span th:each="tipo : ${debt.tipos}" class="badge bg-light text-dark me-1" th:text="${tipo}"></span>
+                            </td>
+                            <td>
+                                <small th:if="${debt.dataCriacao != null}" 
+                                       th:text="${#temporals.format(debt.dataCriacao, 'dd/MM/yyyy - HH:mm:ss')}"></small>
+                                <small th:if="${debt.dataCriacao == null}" class="text-muted">-</small>
                             </td>
                             <td th:text="${debt.criadoPor}"></td>
                             <td>
@@ -573,6 +647,102 @@
         function refreshTechDebts() {
             location.reload();
         }
+        
+        // Busca inteligente por texto
+        let searchTimeout;
+        document.getElementById('searchText').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length < 2) {
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                fetch(`/tech-debts/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultsDiv = document.getElementById('searchResults');
+                        if (data.length === 0) {
+                            resultsDiv.style.display = 'none';
+                            return;
+                        }
+                        
+                        resultsDiv.innerHTML = data.map(debt => `
+                            <div class="p-2 border-bottom search-result-item" style="cursor: pointer;" 
+                                 onclick="selectSearchResult('${debt.problema}', '${debt.id}')">
+                                <strong>${debt.problema}</strong>
+                                <br><small class="text-muted">${debt.descricao ? debt.descricao.substring(0, 50) + '...' : ''}</small>
+                            </div>
+                        `).join('');
+                        resultsDiv.style.display = 'block';
+                    })
+                    .catch(() => {
+                        document.getElementById('searchResults').style.display = 'none';
+                    });
+            }, 300);
+        });
+        
+        // Busca por número de tarefa
+        let taskTimeout;
+        document.getElementById('taskNumberInput').addEventListener('input', function(e) {
+            clearTimeout(taskTimeout);
+            const taskNumber = e.target.value.trim();
+            
+            if (taskNumber.length < 1) {
+                document.getElementById('taskResults').style.display = 'none';
+                return;
+            }
+            
+            taskTimeout = setTimeout(() => {
+                fetch(`/tech-debts/search-task?taskNumber=${encodeURIComponent(taskNumber)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultsDiv = document.getElementById('taskResults');
+                        if (data.length === 0) {
+                            resultsDiv.style.display = 'none';
+                            return;
+                        }
+                        
+                        resultsDiv.innerHTML = data.map(debt => `
+                            <div class="p-2 border-bottom search-result-item" style="cursor: pointer;" 
+                                 onclick="selectTaskResult('${debt.taskNumber}', '${debt.id}')">
+                                <strong>${debt.taskNumber}</strong> - ${debt.problema}
+                                <br><small class="text-muted">${debt.descricao ? debt.descricao.substring(0, 40) + '...' : ''}</small>
+                            </div>
+                        `).join('');
+                        resultsDiv.style.display = 'block';
+                    })
+                    .catch(() => {
+                        document.getElementById('taskResults').style.display = 'none';
+                    });
+            }, 300);
+        });
+        
+        function selectSearchResult(problema, id) {
+            document.getElementById('searchText').value = problema;
+            document.getElementById('searchResults').style.display = 'none';
+            // Opcional: redirecionar para o item específico
+            // window.location.href = `/tech-debts/${id}/edit`;
+        }
+        
+        function selectTaskResult(taskNumber, id) {
+            document.getElementById('taskNumberInput').value = taskNumber;
+            document.getElementById('taskResults').style.display = 'none';
+            // Opcional: redirecionar para o item específico
+            // window.location.href = `/tech-debts/${id}/edit`;
+        }
+        
+        // Fechar resultados ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#searchText') && !e.target.closest('#searchResults')) {
+                document.getElementById('searchResults').style.display = 'none';
+            }
+            if (!e.target.closest('#taskNumberInput') && !e.target.closest('#taskResults')) {
+                document.getElementById('taskResults').style.display = 'none';
+            }
+        });
         
 
     </script>

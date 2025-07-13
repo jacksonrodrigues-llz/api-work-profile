@@ -34,6 +34,7 @@ public class TechDebtController {
                       @RequestParam(required = false) String status,
                       @RequestParam(required = false) Integer prioridade,
                       @RequestParam(required = false) String tipo,
+                      jakarta.servlet.http.HttpServletRequest request,
                       Model model) {
         
         User user = getUserFromAuthentication(authentication);
@@ -57,7 +58,11 @@ public class TechDebtController {
             }
         }
         
-        Page<TechDebt> debts = techDebtService.findAllWithFilters(statusEnum, prioridade, tipoEnum, pageable);
+        String search = request.getParameter("search");
+        String taskNumber = request.getParameter("taskNumber");
+        String periodo = request.getParameter("periodo");
+        
+        Page<TechDebt> debts = techDebtService.findAllWithFilters(statusEnum, prioridade, tipoEnum, search, taskNumber, periodo, pageable);
         Map<String, Object> metrics = techDebtService.getAllDashboardMetrics();
         
         // Adicionar contadores específicos por status
@@ -94,9 +99,10 @@ public class TechDebtController {
                       Authentication authentication) {
         User user = getUserFromAuthentication(authentication);
         techDebt.setUser(user);
-        techDebt.setCriadoPor(user.getName());
-        techDebt.setCriadoPorId(user.getId());
-        if (techDebt.getId() != null) {
+        if (techDebt.getId() == null) {
+            techDebt.setCriadoPor(user.getName());
+            techDebt.setCriadoPorId(user.getId());
+        } else {
             techDebt.setAlteradoPorId(user.getId());
         }
         techDebtService.save(techDebt);
@@ -159,6 +165,18 @@ public class TechDebtController {
         model.addAttribute("title", "Dashboard - Débitos Técnicos");
         
         return "tech-debts/dashboard";
+    }
+    
+    @GetMapping("/search")
+    @ResponseBody
+    public List<api.work.profile.dto.TechDebtSearchDTO> searchByText(@RequestParam String q) {
+        return techDebtService.searchByText(q);
+    }
+    
+    @GetMapping("/search-task")
+    @ResponseBody
+    public List<api.work.profile.dto.TechDebtSearchDTO> searchByTaskNumber(@RequestParam String taskNumber) {
+        return techDebtService.searchByTaskNumber(taskNumber);
     }
     
     private User getUserFromAuthentication(Authentication authentication) {
