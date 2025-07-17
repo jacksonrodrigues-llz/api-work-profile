@@ -1,9 +1,11 @@
 package api.work.profile.entity;
 
+import api.work.profile.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import api.work.profile.enums.UserCategory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,7 +40,12 @@ public class User {
     
     // Perfil e permissões
     @Enumerated(EnumType.STRING)
-    private api.work.profile.enums.UserRole role = api.work.profile.enums.UserRole.USER;
+    private UserRole role = UserRole.USER;
+    
+    // Categoria profissional
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = true)
+    private UserCategory category;
     
     // Reset de senha
     private String passwordResetToken;

@@ -49,13 +49,14 @@ public class ProfileController {
     
     @PostMapping
     public String updateProfile(Authentication authentication, 
-                               @ModelAttribute User userForm, 
+                               @ModelAttribute User userForm,
                                RedirectAttributes redirectAttributes) {
         try {
             User user = getUserFromAuthentication(authentication);
             user.setName(userForm.getName());
             user.setCompany(userForm.getCompany());
             user.setPosition(userForm.getPosition());
+            user.setCategory(userForm.getCategory());
             
             userService.save(user);
             

@@ -125,18 +125,28 @@
                                     </div>
                                     
                                     <div class="row mb-3">
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label">Senha</label>
                                             <input type="password" class="form-control" th:field="*{password}" 
                                                    th:placeholder="${user.id != null ? 'Deixe em branco para manter atual' : 'Digite a senha'}">
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label">Perfil</label>
                                             <select class="form-select" th:field="*{role}">
                                                 <option th:each="role : ${T(api.work.profile.enums.UserRole).values()}" 
                                                         th:value="${role}" 
                                                         th:text="${role.description}"
                                                         th:selected="${role == user.role}"></option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Categoria</label>
+                                            <select class="form-select" th:field="*{category}">
+                                                <option value="">Selecione uma categoria</option>
+                                                <option th:each="category : ${T(api.work.profile.enums.UserCategory).values()}" 
+                                                        th:value="${category}" 
+                                                        th:text="${category}"
+                                                        th:selected="${category == user.category}"></option>
                                             </select>
                                         </div>
                                     </div>

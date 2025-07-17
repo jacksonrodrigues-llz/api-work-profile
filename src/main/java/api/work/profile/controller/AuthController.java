@@ -1,6 +1,7 @@
 package api.work.profile.controller;
 
 import api.work.profile.entity.User;
+import api.work.profile.service.RecaptchaService;
 import api.work.profile.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,30 +18,38 @@ public class AuthController {
     
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final RecaptchaService recaptchaService;
     
     @GetMapping("/register")
     public String register(Model model) {
         model.addAttribute("user", new User());
+        String siteKey = recaptchaService.getSiteKey();
+        model.addAttribute("recaptchaSiteKey", siteKey);
+        System.out.println("reCAPTCHA Site Key: " + siteKey);
         return "register";
     }
     
     @PostMapping("/register")
-    public String registerUser(@RequestParam String name, 
-                              @RequestParam String email, 
-                              @RequestParam String password, 
-                              RedirectAttributes redirectAttributes) {
+    public String registerUser(@ModelAttribute User user,
+                              @RequestParam(value = "g-recaptcha-response", required = false) String recaptchaResponse,
+                              RedirectAttributes redirectAttributes,
+                              Model model) {
         try {
+            // Validar reCAPTCHA
+            if (recaptchaResponse == null || recaptchaResponse.isEmpty() || !recaptchaService.validateRecaptcha(recaptchaResponse)) {
+                model.addAttribute("recaptchaSiteKey", recaptchaService.getSiteKey());
+                model.addAttribute("errorMessage", "Por favor, confirme que você não é um robô");
+                return "register";
+            }
+            
             // Validar se usuário já existe
-            if (userService.findByEmail(email) != null) {
+            if (userService.findByEmail(user.getEmail()) != null) {
                 redirectAttributes.addFlashAttribute("errorMessage", "E-mail já cadastrado!");
                 return "redirect:/login";
             }
             
-            // Criar novo usuário
-            User user = new User();
-            user.setName(name);
-            user.setEmail(email);
-            user.setPassword(passwordEncoder.encode(password));
+            // Configurar novo usuário
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setRole(api.work.profile.enums.UserRole.USER);
             user.setEnabled(true);
             userService.save(user);

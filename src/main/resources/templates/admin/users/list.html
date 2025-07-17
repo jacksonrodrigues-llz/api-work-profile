@@ -60,6 +60,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-white" href="/activities">
                                 <i class="fas fa-tasks me-2"></i>Atividades
                             </a>
@@ -75,18 +80,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white" href="/tech-debts">
-                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link text-white" href="/reports">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white active" href="/admin/users">
-                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Pessoas
                             </a>
                         </li>
                     </ul>
@@ -98,7 +98,7 @@
                     <div>
                         <h1 class="h2">
                             <i class="fas fa-users me-3" style="color: var(--accent-orange);"></i>
-                            Gestão de Usuários
+                            Gestão de Pessoas
                         </h1>
                     </div>
                     <a href="/admin/users/new" class="btn btn-primary">
@@ -118,6 +118,7 @@
                                         <th>Nome</th>
                                         <th>E-mail</th>
                                         <th>Perfil</th>
+                                        <th>Categoria</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
@@ -129,6 +130,10 @@
                                         <td>
                                             <span class="badge" th:classappend="${user.role?.name() == 'ADMIN'} ? 'bg-danger' : 'bg-primary'" 
                                                   th:text="${user.role?.description}">USER</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info" th:if="${user.category != null}" th:text="${user.category}">Categoria</span>
+                                            <span class="badge bg-secondary" th:if="${user.category == null}">Não definida</span>
                                         </td>
                                         <td>
                                             <span class="badge" th:classappend="${user.enabled} ? 'bg-success' : 'bg-secondary'" 

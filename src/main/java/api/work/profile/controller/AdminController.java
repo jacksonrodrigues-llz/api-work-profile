@@ -66,7 +66,9 @@ public class AdminController {
     }
     
     @PostMapping("/users")
-    public String saveUser(Authentication authentication, @ModelAttribute User user, RedirectAttributes redirectAttributes) {
+    public String saveUser(Authentication authentication, 
+                          @ModelAttribute User user,
+                          RedirectAttributes redirectAttributes) {
         User currentUser = getUserFromAuthentication(authentication);
         if (currentUser == null || currentUser.getRole() != api.work.profile.enums.UserRole.ADMIN) {
             return "redirect:/dashboard";
@@ -78,6 +80,7 @@ public class AdminController {
                 existing.setName(user.getName());
                 existing.setEmail(user.getEmail());
                 existing.setRole(user.getRole());
+                existing.setCategory(user.getCategory());
                 existing.setEnabled(user.getEnabled() != null ? user.getEnabled() : true);
                 if (user.getPassword() != null && !user.getPassword().isEmpty()) {
                     existing.setPassword(passwordEncoder.encode(user.getPassword()));
