@@ -31,18 +31,21 @@ public class TechDebtService {
     private final TechDebtRepository techDebtRepository;
     
     public TechDebt save(TechDebt techDebt) {
-        boolean isNew = techDebt.getId() == null;
+        var isNew = techDebt.getId() == null;
+        var toSave = techDebt;
         
         if (!isNew) {
-            TechDebt existing = techDebtRepository.findById(techDebt.getId()).orElse(null);
+            var existing = techDebtRepository.findById(techDebt.getId()).orElse(null);
             if (existing != null) {
-                techDebt.setCriadoPor(existing.getCriadoPor());
-                techDebt.setCriadoPorId(existing.getCriadoPorId());
-                techDebt.setDataCriacao(existing.getDataCriacao());
+                toSave = techDebt.toBuilder()
+                    .criadoPor(existing.getCriadoPor())
+                    .criadoPorId(existing.getCriadoPorId())
+                    .dataCriacao(existing.getDataCriacao())
+                    .build();
             }
         }
         
-        TechDebt saved = techDebtRepository.save(techDebt);
+        var saved = techDebtRepository.save(toSave);
         
         if (isNew) {
             log.info("[TECH_DEBT] Criado: {} (ID: {}, P{})", saved.getProblema(), saved.getId(), saved.getPrioridade());
@@ -67,6 +70,14 @@ public class TechDebtService {
         return techDebtRepository.findById(id).orElse(null);
     }
     
+    public List<TechDebt> findAll() {
+        return techDebtRepository.findAll();
+    }
+    
+    public List<TechDebt> findAllByUser(User user) {
+        return techDebtRepository.findByUserOrderByDataCriacaoDesc(user, PageRequest.of(0, 100)).getContent();
+    }
+    
     public void delete(Long id) {
         TechDebt debt = techDebtRepository.findById(id).orElse(null);
         if (debt != null) {
@@ -78,10 +89,11 @@ public class TechDebtService {
     }
     
     public List<TechDebt> importFromJson(List<TechDebtDTO> dtos, User user) {
-        List<TechDebt> debts = new ArrayList<>();
-        for (TechDebtDTO dto : dtos) {
-            TechDebt debt = dto.toEntity();
-            debt.setUser(user);
+        var debts = new ArrayList<TechDebt>();
+        for (var dto : dtos) {
+            var debt = dto.toEntity().toBuilder()
+                .user(user)
+                .build();
             debts.add(save(debt));
         }
         return debts;
@@ -105,12 +117,13 @@ public class TechDebtService {
                 }
                 String[] fields = line.split(",");
                 if (fields.length >= 4) {
-                    TechDebt debt = new TechDebt();
-                    debt.setProblema(fields[0].trim().replace("\"", ""));
-                    debt.setDescricao(fields[1].trim().replace("\"", ""));
-                    debt.setPrioridade(Integer.parseInt(fields[2].trim()));
-                    debt.setCriadoPor(fields[3].trim().replace("\"", ""));
-                    debt.setUser(user);
+                    var debt = TechDebt.builder()
+                        .problema(fields[0].trim().replace("\"", ""))
+                        .descricao(fields[1].trim().replace("\"", ""))
+                        .prioridade(Integer.parseInt(fields[2].trim()))
+                        .criadoPor(fields[3].trim().replace("\"", ""))
+                        .user(user)
+                        .build();
                     debts.add(save(debt));
                 }
             }
@@ -135,35 +148,35 @@ public class TechDebtService {
                 }
                 
                 if (row.getPhysicalNumberOfCells() >= 6) {
-                    TechDebt debt = new TechDebt();
-                    debt.setProblema(getCellValue(row.getCell(0))); // problema
-                    debt.setDescricao(getCellValue(row.getCell(1))); // descricao
-                    debt.setPrioridade((int) row.getCell(2).getNumericCellValue()); // prioridade
+                    var builder = TechDebt.builder()
+                        .problema(getCellValue(row.getCell(0)))
+                        .descricao(getCellValue(row.getCell(1)))
+                        .prioridade((int) row.getCell(2).getNumericCellValue())
+                        .criadoPor(getCellValue(row.getCell(5)))
+                        .user(user);
                     
                     // tipos (coluna 3)
-                    String tiposStr = getCellValue(row.getCell(3));
+                    var tiposStr = getCellValue(row.getCell(3));
                     if (tiposStr != null && !tiposStr.isEmpty()) {
-                        List<TechDebt.TipoDebito> tipos = new ArrayList<>();
-                        for (String tipo : tiposStr.split(",")) {
+                        var tipos = new ArrayList<TechDebt.TipoDebito>();
+                        for (var tipo : tiposStr.split(",")) {
                             try {
                                 tipos.add(TechDebt.TipoDebito.valueOf(tipo.trim().toUpperCase()));
                             } catch (Exception e) {
                                 // Ignorar tipos inválidos
                             }
                         }
-                        debt.setTipos(tipos);
+                        builder.tipos(tipos);
                     }
                     
                     // tags (coluna 4)
-                    String tagsStr = getCellValue(row.getCell(4));
+                    var tagsStr = getCellValue(row.getCell(4));
                     if (tagsStr != null && !tagsStr.isEmpty()) {
-                        List<String> tags = List.of(tagsStr.split(","));
-                        debt.setTags(tags.stream().map(String::trim).toList());
+                        var tags = List.of(tagsStr.split(","));
+                        builder.tags(tags.stream().map(String::trim).toList());
                     }
                     
-                    debt.setCriadoPor(getCellValue(row.getCell(5))); // criadoPor
-                    debt.setUser(user);
-                    debts.add(save(debt));
+                    debts.add(save(builder.build()));
                 }
             }
         }

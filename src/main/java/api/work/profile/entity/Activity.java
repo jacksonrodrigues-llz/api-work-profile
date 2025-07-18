@@ -1,15 +1,15 @@
 package api.work.profile.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "activities")
-@Data
+@Getter
+@Setter
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Activity {
@@ -25,10 +25,12 @@ public class Activity {
     private String description;
     
     @Enumerated(EnumType.STRING)
-    private ActivityStatus status;
+    @Builder.Default
+    private ActivityStatus status = ActivityStatus.TODO;
     
     @Enumerated(EnumType.STRING)
-    private Priority priority;
+    @Builder.Default
+    private Priority priority = Priority.MEDIUM;
     
     private String project;
     private String skills;
@@ -45,6 +47,12 @@ public class Activity {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
     
+    @Column(name = "task_number", length = 100)
+    private String taskNumber;
+    
+    @Column(name = "task_url", columnDefinition = "TEXT")
+    private String taskUrl;
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -55,7 +63,7 @@ public class Activity {
     }
     
     public enum ActivityStatus {
-        TODO, IN_PROGRESS, TEST, DEPLOY, DONE, CANCELLED
+        TODO, IN_PROGRESS, DEV, UAT, HML, PRD, DEPLOY, DONE, CANCELLED
     }
     
     public enum Priority {

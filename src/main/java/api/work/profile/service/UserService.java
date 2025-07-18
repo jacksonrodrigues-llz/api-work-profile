@@ -20,35 +20,33 @@ public class UserService {
     private final UserRepository userRepository;
 
     public User findOrCreateUser(OAuth2User principal) {
-        String email = principal.getAttribute("email");
-        String name = principal.getAttribute("name");
-        String githubUsername = principal.getAttribute("login");
-        String avatarUrl = principal.getAttribute("avatar_url");
+        var email = principal.<String>getAttribute("email");
+        var name = principal.<String>getAttribute("name");
+        var githubUsername = principal.<String>getAttribute("login");
+        var avatarUrl = principal.<String>getAttribute("avatar_url");
         
-        Optional<User> userOpt = userRepository.findByEmail(email);
+        var userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
-            User user = new User();
-            user.setEmail(email);
-            user.setName(name);
-            user.setGithubUsername(githubUsername);
-            user.setAvatar(avatarUrl);
-            // Primeiro usuário se torna admin automaticamente
-            long userCount = userRepository.count();
-            if (userCount == 0) {
-                user.setRole(UserRole.ADMIN);
-                log.info("[AUTH] Primeiro usuário registrado como ADMIN: {}", email);
-            } else {
-                user.setRole(UserRole.USER);
-            }
-            user.setEnabled(true);
-            user = userRepository.save(user);
-            log.info("[AUTH] Novo usuário criado: {} (Role: {})", email, user.getRole());
-            return user;
+            var userCount = userRepository.count();
+            var role = userCount == 0 ? UserRole.ADMIN : UserRole.USER;
+            
+            var user = User.builder()
+                .email(email)
+                .name(name)
+                .githubUsername(githubUsername)
+                .avatar(avatarUrl)
+                .role(role)
+                .enabled(true)
+                .build();
+            
+            var saved = userRepository.save(user);
+            log.info("[AUTH] Novo usuário criado: {} (Role: {})", email, saved.getRole());
+            return saved;
         }
         
-        User existingUser = userOpt.get();
-        // Atualizar informações do GitHub se necessário
-        boolean needsUpdate = false;
+        var existingUser = userOpt.get();
+        var needsUpdate = false;
+        
         if (githubUsername != null && !githubUsername.equals(existingUser.getGithubUsername())) {
             existingUser.setGithubUsername(githubUsername);
             needsUpdate = true;
@@ -57,6 +55,7 @@ public class UserService {
             existingUser.setAvatar(avatarUrl);
             needsUpdate = true;
         }
+        
         if (needsUpdate) {
             existingUser = userRepository.save(existingUser);
             log.debug("[AUTH] Dados do GitHub atualizados para: {}", email);
@@ -69,18 +68,20 @@ public class UserService {
             throw new IllegalArgumentException("Apenas administradores podem alterar roles");
         }
         
-        User user = findById(userId);
+        var user = findById(userId);
         if (user == null) {
             throw new IllegalArgumentException("Usuário não encontrado");
         }
         
-        user.setRole(newRole);
+        var updated = user.toBuilder()
+            .role(newRole)
+            .build();
         log.info("[ADMIN] Role alterada: {} -> {} (por: {})", user.getEmail(), newRole, adminUser.getEmail());
-        return userRepository.save(user);
+        return userRepository.save(updated);
     }
     
     public User findByEmail(String email) {
-        User user = userRepository.findByEmail(email).orElse(null);
+        var user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
             log.warn("[AUTH] Usuário não encontrado: {}", email);
         }

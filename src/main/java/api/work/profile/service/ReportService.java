@@ -278,13 +278,13 @@ public class ReportService {
     }
 
     public Map<String, Object> getMonthlyReport(User user) {
-        Map<String, Object> report = new HashMap<>();
-        LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        var report = new HashMap<String, Object>();
+        var startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
-        Long completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
-        Double avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
-        Long completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
-        Long activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
+        var completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
+        var avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
+        var completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
+        var activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
         var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
         
         report.put("completedActivities", completedActivities != null ? completedActivities : 0);
@@ -294,6 +294,17 @@ public class ReportService {
         report.put("achievements", achievements != null ? achievements.size() : 0);
         
         return report;
+    }
+    
+    public Map<String, Object> getReportData(User user) {
+        var data = new HashMap<String, Object>();
+        
+        data.put("monthlyReport", getMonthlyReport(user));
+        data.put("activities", activityRepository.findByUserOrderByCreatedAtDesc(user).stream().limit(5).toList());
+        data.put("goals", goalRepository.findByUserOrderByCreatedAtDesc(user).stream().limit(5).toList());
+        data.put("achievements", achievementRepository.findByUserOrderByAchievedAtDesc(user).stream().limit(5).toList());
+        
+        return data;
     }
     
     private int calculateTotalHours(java.util.List<api.work.profile.entity.Activity> activities) {

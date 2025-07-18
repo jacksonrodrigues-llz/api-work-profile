@@ -109,6 +109,21 @@
                                     <input type="hidden" th:if="${activity.id != null}" name="_method" value="PUT"/>
                                     
                                     <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="taskNumber" class="form-label">Número da Tarefa</label>
+                                            <input type="text" class="form-control" id="taskNumber" th:field="*{taskNumber}" 
+                                                   placeholder="Ex: PROJ-123">
+                                            <div class="form-text">Número da tarefa no sistema de gestão</div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="taskUrl" class="form-label">URL da Tarefa</label>
+                                            <input type="url" class="form-control" id="taskUrl" th:field="*{taskUrl}" 
+                                                   placeholder="https://...">
+                                            <div class="form-text">Link para a tarefa no sistema</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
                                         <div class="col-md-8">
                                             <label for="title" class="form-label">Título *</label>
                                             <input type="text" class="form-control" id="title" th:field="*{title}" required>
@@ -118,7 +133,10 @@
                                             <select class="form-select" id="status" th:field="*{status}">
                                                 <option value="TODO">A Fazer</option>
                                                 <option value="IN_PROGRESS">Em Progresso</option>
-                                                <option value="TEST">Teste</option>
+                                                <option value="DEV">Dev</option>
+                                                <option value="UAT">UAT</option>
+                                                <option value="HML">HML</option>
+                                                <option value="PRD">PRD</option>
                                                 <option value="DEPLOY">Deploy</option>
                                                 <option value="DONE">Concluído</option>
                                             </select>
@@ -153,7 +171,7 @@
                                         <div class="form-text">Separe as habilidades por vírgula</div>
                                     </div>
 
-                                    <div class="row mb-4">
+                                    <div class="row mb-3">
                                         <div class="col-md-6">
                                             <label for="estimatedHours" class="form-label">Horas Estimadas</label>
                                             <input type="number" class="form-control" id="estimatedHours" th:field="*{estimatedHours}" min="0">
@@ -163,6 +181,8 @@
                                             <input type="number" class="form-control" id="actualHours" th:field="*{actualHours}" min="0">
                                         </div>
                                     </div>
+
+
 
                                     <div class="d-flex gap-2">
                                         <button type="submit" class="btn btn-primary">

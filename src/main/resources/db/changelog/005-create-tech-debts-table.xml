@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="005-create-tech-debts-table" author="system">
+        <createTable tableName="tech_debts">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="problema" type="VARCHAR(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="descricao" type="TEXT"/>
+            <column name="prioridade" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="TODO"/>
+            <column name="data_criacao" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="data_resolucao" type="TIMESTAMP"/>
+            <column name="criado_por" type="VARCHAR(255)"/>
+            <column name="criado_por_id" type="BIGINT"/>
+            <column name="alterado_por_id" type="BIGINT"/>
+            <column name="data_alteracao" type="TIMESTAMP"/>
+            <column name="task_number" type="VARCHAR(100)"/>
+            <column name="task_url" type="TEXT"/>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <addForeignKeyConstraint
+            baseTableName="tech_debts"
+            baseColumnNames="user_id"
+            constraintName="fk_tech_debts_user"
+            referencedTableName="users"
+            referencedColumnNames="id"/>
+            
+        <createTable tableName="tech_debt_tipos">
+            <column name="tech_debt_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tipos" type="VARCHAR(20)"/>
+        </createTable>
+        
+        <addForeignKeyConstraint
+            baseTableName="tech_debt_tipos"
+            baseColumnNames="tech_debt_id"
+            constraintName="fk_tech_debt_tipos"
+            referencedTableName="tech_debts"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+            
+        <createTable tableName="tech_debt_tags">
+            <column name="tech_debt_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tags" type="VARCHAR(100)"/>
+        </createTable>
+        
+        <addForeignKeyConstraint
+            baseTableName="tech_debt_tags"
+            baseColumnNames="tech_debt_id"
+            constraintName="fk_tech_debt_tags"
+            referencedTableName="tech_debts"
+            referencedColumnNames="id"
+            onDelete="CASCADE"/>
+            
+        <createIndex tableName="tech_debts" indexName="idx_tech_debts_user_id">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="tech_debts" indexName="idx_tech_debts_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="tech_debts" indexName="idx_tech_debts_prioridade">
+            <column name="prioridade"/>
+        </createIndex>
+        <createIndex tableName="tech_debts" indexName="idx_tech_debts_data_criacao">
+            <column name="data_criacao"/>
+        </createIndex>
+        <createIndex tableName="tech_debts" indexName="idx_tech_debts_task_number">
+            <column name="task_number"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

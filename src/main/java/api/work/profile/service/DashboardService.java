@@ -35,23 +35,22 @@ public class DashboardService {
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
         // Atividades
-        Long completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
-        Double avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
+        var completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
+        var avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
         
         // Metas
-        Long completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
-        Long activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
+        var completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
+        var activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
         
         // GitHub dados
-        Integer pullRequests = 0;
-        
+        var pullRequests = 0;
         if (user.getGithubUsername() != null) {
             pullRequests = gitHubService.getPullRequestCount(user.getGithubUsername());
             log.debug("[DASHBOARD] GitHub: {} PRs para {}", pullRequests, user.getGithubUsername());
         }
         
         // Débitos Técnicos - mostrar total geral
-        Long techDebts = techDebtRepository.countAll();
+        var techDebts = techDebtRepository.countAll();
         
         metrics.put("completedActivities", completedActivities);
         metrics.put("averageHours", avgHours != null ? avgHours.intValue() : 0);

@@ -3,29 +3,17 @@ spring:
     url: jdbc:postgresql://localhost:54322/careertracker
     username: postgres
     password: postgres
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      idle-timeout: 300000
-      connection-timeout: 20000
-      auto-commit: true
-  
+    
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
-
+    
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    
 logging:
   level:
-    api.work.profile: INFO
-    org.springframework.security: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
-  file:
-    name: logs/work-profile-local.log
-
-server:
-  port: 8098
+    api.work.profile: DEBUG
+    liquibase: DEBUG

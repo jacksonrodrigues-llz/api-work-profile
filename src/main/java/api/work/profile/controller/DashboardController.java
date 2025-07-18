@@ -1,13 +1,10 @@
 package api.work.profile.controller;
 
-import api.work.profile.entity.User;
 import api.work.profile.service.DashboardService;
-import api.work.profile.service.UserService;
+import api.work.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Slf4j
 public class DashboardController {
     
-    private final UserService userService;
+    private final ProfileService profileService;
     private final DashboardService dashboardService;
     
     @GetMapping("/")
@@ -33,17 +30,7 @@ public class DashboardController {
     @GetMapping("/dashboard")
     public String dashboard(Authentication authentication, Model model) {
         try {
-            User user = null;
-            
-            if (authentication.getPrincipal() instanceof OAuth2User) {
-                OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal();
-                user = userService.findOrCreateUser(oauth2User);
-            } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
-                org.springframework.security.core.userdetails.User userDetails = 
-                    (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-                user = userService.findByEmail(userDetails.getUsername());
-            }
-            
+            var user = profileService.getUserFromAuthentication(authentication);
             if (user == null) {
                 log.error("[DASHBOARD] Usuário não encontrado: {}", authentication.getName());
                 return "redirect:/login";

@@ -28,6 +28,7 @@ Um sistema completo para gerenciar e acompanhar seu crescimento profissional den
 - **Backend**: Java 24, Spring Boot 3.5.3, Spring Security, Spring Data JPA
 - **Frontend**: Thymeleaf, Bootstrap 5, Font Awesome, Chart.js
 - **Banco**: PostgreSQL (produção), H2 (testes)
+- **Migrações**: Liquibase
 - **Integração**: GitHub API via OpenFeign
 - **Build**: Maven
 
@@ -61,6 +62,8 @@ cp .env .env
 
 # Execute com Docker Compose
 docker compose up -d
+
+# Migrações são gerenciadas pelo Liquibase automaticamente
 
 # Build da aplicação
 mvn clean package -DskipTests
@@ -171,6 +174,19 @@ src/main/resources/
 - [ ] Integração Jira/Azure Boards
 - [ ] Notificações por email
 - [ ] API REST para mobile
+
+## 🛠 Solução de Problemas
+
+### Gerenciamento de Banco de Dados
+O projeto usa **Liquibase** para gerenciar migrações do banco de dados.
+
+```bash
+# Para limpar banco e migrar do zero:
+./clean-database.sh
+
+# Liquibase executa migrações automaticamente na inicialização
+# Changesets estão em: src/main/resources/db/changelog/
+```
 
 ## 🤝 Contribuição
 
