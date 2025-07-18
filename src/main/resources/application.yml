@@ -13,10 +13,10 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: false
   
-  flyway:
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
+    drop-first: false
   
   security:
     oauth2:

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="007-add-tech-debts-constraints" author="system">
+        <sql>
+            ALTER TABLE tech_debts ADD CONSTRAINT chk_tech_debts_prioridade CHECK (prioridade BETWEEN 1 AND 4);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

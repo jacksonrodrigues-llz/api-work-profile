@@ -1,9 +1,7 @@
 package api.work.profile.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,6 +9,7 @@ import java.util.List;
 @Entity
 @Table(name = "tech_debts")
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class TechDebt {
@@ -40,6 +39,7 @@ public class TechDebt {
     private List<String> tags;
     
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private StatusDebito status = StatusDebito.TODO;
     
     @Column(name = "data_criacao")

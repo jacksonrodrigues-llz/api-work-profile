@@ -1,55 +1,32 @@
 package api.work.profile.controller;
 
 import api.work.profile.entity.Activity;
-import api.work.profile.entity.User;
-import api.work.profile.repository.ActivityRepository;
-import api.work.profile.service.UserService;
+import api.work.profile.service.ActivityService;
+import api.work.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.http.ResponseEntity;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Controller
 @RequestMapping("/activities")
 @RequiredArgsConstructor
-@Slf4j
 public class ActivityController {
     
-    private final ActivityRepository activityRepository;
-    private final UserService userService;
+    private final ActivityService activityService;
+    private final ProfileService profileService;
     
     @GetMapping
     public String list(Authentication authentication, Model model) {
-        User user = getUserFromAuthentication(authentication);
-        var activities = activityRepository.findByUserOrderByCreatedAtDesc(user);
+        var user = profileService.getUserFromAuthentication(authentication);
+        var kanbanData = activityService.getKanbanData(user);
         
-        // Separar atividades por status
-        var todoActivities = activities.stream().filter(a -> a.getStatus() == Activity.ActivityStatus.TODO).toList();
-        var inProgressActivities = activities.stream().filter(a -> a.getStatus() == Activity.ActivityStatus.IN_PROGRESS).toList();
-        var testActivities = activities.stream().filter(a -> a.getStatus() == Activity.ActivityStatus.TEST).toList();
-        var deployActivities = activities.stream().filter(a -> a.getStatus() == Activity.ActivityStatus.DEPLOY).toList();
-        var doneActivities = activities.stream().filter(a -> a.getStatus() == Activity.ActivityStatus.DONE).toList();
-        
-        model.addAttribute("activities", activities);
-        model.addAttribute("todoActivities", todoActivities);
-        model.addAttribute("inProgressActivities", inProgressActivities);
-        model.addAttribute("testActivities", testActivities);
-        model.addAttribute("deployActivities", deployActivities);
-        model.addAttribute("doneActivities", doneActivities);
-        
-        // Contadores
-        model.addAttribute("todoCount", todoActivities.size());
-        model.addAttribute("inProgressCount", inProgressActivities.size());
-        model.addAttribute("testCount", testActivities.size());
-        model.addAttribute("deployCount", deployActivities.size());
-        model.addAttribute("doneCount", doneActivities.size());
+        model.addAllAttributes(kanbanData);
         model.addAttribute("user", user);
         
         return "activities/list";
@@ -57,8 +34,8 @@ public class ActivityController {
     
     @GetMapping("/new")
     public String newActivity(Authentication authentication, Model model) {
-        User user = getUserFromAuthentication(authentication);
-        model.addAttribute("activity", new Activity());
+        var user = profileService.getUserFromAuthentication(authentication);
+        model.addAttribute("activity", Activity.builder().build());
         model.addAttribute("user", user);
         return "activities/form";
     }
@@ -66,35 +43,20 @@ public class ActivityController {
     @PostMapping
     public String save(Authentication authentication, @ModelAttribute Activity activity, RedirectAttributes redirectAttributes) {
         try {
-            User user = getUserFromAuthentication(authentication);
-            activity.setUser(user);
-            
-            if (activity.getStatus() == Activity.ActivityStatus.DONE && activity.getCompletedAt() == null) {
-                activity.setCompletedAt(LocalDateTime.now());
-            }
-            
-            Activity saved = activityRepository.save(activity);
-            log.info("[ACTIVITY] Criada: {} (ID: {})", saved.getTitle(), saved.getId());
-            
+            var user = profileService.getUserFromAuthentication(authentication);
+            activityService.saveActivity(activity, user);
             redirectAttributes.addFlashAttribute("successMessage", "Atividade salva com sucesso!");
-            redirectAttributes.addFlashAttribute("messageType", "success");
-            
         } catch (Exception e) {
-            log.error("[ACTIVITY] Erro ao criar: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao salvar atividade: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("messageType", "danger");
         }
-        
         return "redirect:/activities";
     }
     
     @GetMapping("/{id}/edit")
     public String edit(@PathVariable Long id, Authentication authentication, Model model) {
-        User user = getUserFromAuthentication(authentication);
-        Activity activity = activityRepository.findById(id).orElse(null);
-        if (activity == null) {
-            return "redirect:/activities";
-        }
+        var user = profileService.getUserFromAuthentication(authentication);
+        var activity = activityService.getActivityForEdit(id, user);
+        
         model.addAttribute("activity", activity);
         model.addAttribute("user", user);
         return "activities/form";
@@ -103,34 +65,11 @@ public class ActivityController {
     @PutMapping("/{id}")
     public String update(@PathVariable Long id, @ModelAttribute Activity activity, RedirectAttributes redirectAttributes) {
         try {
-            Activity existing = activityRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Atividade não encontrada com ID: " + id));
-            
-            existing.setTitle(activity.getTitle());
-            existing.setDescription(activity.getDescription());
-            existing.setStatus(activity.getStatus());
-            existing.setPriority(activity.getPriority());
-            existing.setProject(activity.getProject());
-            existing.setSkills(activity.getSkills());
-            existing.setEstimatedHours(activity.getEstimatedHours());
-            existing.setActualHours(activity.getActualHours());
-            
-            if (activity.getStatus() == Activity.ActivityStatus.DONE && existing.getCompletedAt() == null) {
-                existing.setCompletedAt(LocalDateTime.now());
-            }
-            
-            Activity updated = activityRepository.save(existing);
-            log.info("[ACTIVITY] Atualizada: {} (ID: {})", updated.getTitle(), updated.getId());
-            
+            activityService.updateActivity(id, activity);
             redirectAttributes.addFlashAttribute("successMessage", "Atividade atualizada com sucesso!");
-            redirectAttributes.addFlashAttribute("messageType", "success");
-            
         } catch (Exception e) {
-            log.error("[ACTIVITY] Erro ao atualizar ID {}: {}", id, e.getMessage());
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao atualizar atividade: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("messageType", "danger");
         }
-        
         return "redirect:/activities";
     }
     
@@ -143,34 +82,10 @@ public class ActivityController {
     @ResponseBody
     public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
-            Activity activity = activityRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Atividade não encontrada"));
-            
-            String newStatus = payload.get("status");
-            activity.setStatus(Activity.ActivityStatus.valueOf(newStatus));
-            
-            if (activity.getStatus() == Activity.ActivityStatus.DONE && activity.getCompletedAt() == null) {
-                activity.setCompletedAt(LocalDateTime.now());
-            }
-            
-            activityRepository.save(activity);
-            log.debug("[ACTIVITY] Status atualizado: ID {} -> {}", id, newStatus);
-            
+            activityService.updateActivityStatus(id, payload.get("status"));
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("[ACTIVITY] Erro ao atualizar status ID {}: {}", id, e.getMessage());
             return ResponseEntity.badRequest().build();
         }
-    }
-    
-    private User getUserFromAuthentication(Authentication authentication) {
-        if (authentication.getPrincipal() instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
-            return userService.findOrCreateUser((org.springframework.security.oauth2.core.user.OAuth2User) authentication.getPrincipal());
-        } else if (authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
-            org.springframework.security.core.userdetails.User userDetails = 
-                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-            return userService.findByEmail(userDetails.getUsername());
-        }
-        throw new IllegalStateException("Tipo de autenticação não suportado");
     }
 }

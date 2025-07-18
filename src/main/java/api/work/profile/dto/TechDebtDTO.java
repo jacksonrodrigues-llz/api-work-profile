@@ -22,25 +22,25 @@ public class TechDebtDTO {
     private String criadoPor;
     
     public TechDebt toEntity() {
-        TechDebt debt = new TechDebt();
-        debt.setProblema(this.problema);
-        debt.setDescricao(this.descricao);
-        debt.setPrioridade(this.prioridade);
-        debt.setTags(this.tags);
-        debt.setCriadoPor(this.criadoPor);
+        var builder = TechDebt.builder()
+            .problema(this.problema)
+            .descricao(this.descricao)
+            .prioridade(this.prioridade)
+            .tags(this.tags)
+            .criadoPor(this.criadoPor);
         
         if (this.tipos != null) {
-            debt.setTipos(this.tipos);
+            builder.tipos(this.tipos);
         }
         
         if (this.status != null) {
-            debt.setStatus(this.status);
+            builder.status(this.status);
         }
         
         if (this.dataCriacao != null) {
-            debt.setDataCriacao(LocalDateTime.parse(this.dataCriacao));
+            builder.dataCriacao(LocalDateTime.parse(this.dataCriacao));
         }
         
-        return debt;
+        return builder.build();
     }
 }

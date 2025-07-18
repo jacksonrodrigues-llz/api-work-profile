@@ -1,9 +1,7 @@
 package api.work.profile.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,6 +9,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "goals")
 @Data
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Goal {
@@ -29,10 +28,12 @@ public class Goal {
     private LocalDate targetDate;
     
     @Column(name = "progress_percentage")
+    @Builder.Default
     private Integer progressPercentage = 0;
     
     @Enumerated(EnumType.STRING)
-    private GoalStatus status;
+    @Builder.Default
+    private GoalStatus status = GoalStatus.ACTIVE;
     
     @Enumerated(EnumType.STRING)
     private GoalCategory category;

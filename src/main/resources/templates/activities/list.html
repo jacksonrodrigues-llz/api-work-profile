@@ -23,6 +23,8 @@
             border: 1px solid var(--border-color);
             min-height: 70vh;
             height: auto;
+            min-width: 280px;
+            flex-shrink: 0;
         }
         .kanban-header {
             padding: 1rem;
@@ -66,8 +68,18 @@
         }
         .card-header-small {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 0.5rem;
+        }
+        .task-link {
+            color: var(--accent-orange);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .task-link:hover {
+            text-decoration: underline;
         }
         .card-footer-small {
             display: flex;
@@ -196,9 +208,9 @@
                 </div>
                 
                 <div th:unless="${activities.empty}" class="kanban-board">
-                    <div class="row g-3">
+                    <div class="row g-2 flex-nowrap" style="overflow-x: auto;">
                         <!-- TODO Column -->
-                        <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="col">
                             <div class="kanban-column">
                                 <div class="kanban-header">
                                     <h6 class="mb-0">
@@ -214,6 +226,10 @@
                                          draggable="true"
                                          onclick="showActivityModal(this)">
                                         <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
                                             <span class="badge priority-badge"
                                                   th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
                                                   th:text="${activity.priority}">Priority</span>
@@ -232,6 +248,10 @@
                                             <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
                                             <span class="actual-hours" th:text="${activity.actualHours}"></span>
                                             <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
                                             <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
                                         </div>
                                     </div>
@@ -240,7 +260,7 @@
                         </div>
                         
                         <!-- IN_PROGRESS Column -->
-                        <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="col">
                             <div class="kanban-column">
                                 <div class="kanban-header">
                                     <h6 class="mb-0">
@@ -256,6 +276,10 @@
                                          draggable="true"
                                          onclick="showActivityModal(this)">
                                         <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
                                             <span class="badge priority-badge"
                                                   th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
                                                   th:text="${activity.priority}">Priority</span>
@@ -273,6 +297,8 @@
                                             <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
                                             <span class="actual-hours" th:text="${activity.actualHours}"></span>
                                             <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
                                             <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
                                         </div>
                                     </div>
@@ -281,22 +307,26 @@
                         </div>
                         
                         <!-- TEST Column -->
-                        <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="col">
                             <div class="kanban-column">
                                 <div class="kanban-header">
                                     <h6 class="mb-0">
                                         <i class="fas fa-circle text-info me-2"></i>
-                                        TESTE 
-                                        <span class="badge bg-info ms-2" th:text="${testCount}">0</span>
+                                        DEV 
+                                        <span class="badge bg-info ms-2" th:text="${devCount}">0</span>
                                     </h6>
                                 </div>
-                                <div class="kanban-cards" data-status="TEST">
-                                    <div th:each="activity : ${testActivities}" class="kanban-card draggable"
+                                <div class="kanban-cards" data-status="DEV">
+                                    <div th:each="activity : ${devActivities}" class="kanban-card draggable"
                                          th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
                                          th:data-id="${activity.id}"
                                          draggable="true"
                                          onclick="showActivityModal(this)">
                                         <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
                                             <span class="badge priority-badge"
                                                   th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
                                                   th:text="${activity.priority}">Priority</span>
@@ -314,6 +344,149 @@
                                             <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
                                             <span class="actual-hours" th:text="${activity.actualHours}"></span>
                                             <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- UAT Column -->
+                        <div class="col">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-warning me-2"></i>
+                                        UAT 
+                                        <span class="badge bg-warning ms-2" th:text="${uatCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="UAT">
+                                    <div th:each="activity : ${uatActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- HML Column -->
+                        <div class="col">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-primary me-2"></i>
+                                        HML 
+                                        <span class="badge bg-primary ms-2" th:text="${hmlCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="HML">
+                                    <div th:each="activity : ${hmlActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
+                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- PRD Column -->
+                        <div class="col">
+                            <div class="kanban-column">
+                                <div class="kanban-header">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-circle text-danger me-2"></i>
+                                        PRD 
+                                        <span class="badge bg-danger ms-2" th:text="${prdCount}">0</span>
+                                    </h6>
+                                </div>
+                                <div class="kanban-cards" data-status="PRD">
+                                    <div th:each="activity : ${prdActivities}" class="kanban-card draggable"
+                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
+                                         th:data-id="${activity.id}"
+                                         draggable="true"
+                                         onclick="showActivityModal(this)">
+                                        <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
+                                            <span class="badge priority-badge"
+                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:text="${activity.priority}">Priority</span>
+                                        </div>
+                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
+                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
+                                        <div class="card-footer-small">
+                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
+                                            <div class="drag-handle">
+                                                <i class="fas fa-grip-vertical text-muted"></i>
+                                            </div>
+                                        </div>
+                                        <div class="d-none">
+                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
+                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
+                                            <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
                                             <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
                                         </div>
                                     </div>
@@ -322,7 +495,7 @@
                         </div>
                         
                         <!-- DEPLOY Column -->
-                        <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="col">
                             <div class="kanban-column">
                                 <div class="kanban-header">
                                     <h6 class="mb-0">
@@ -338,6 +511,10 @@
                                          draggable="true"
                                          onclick="showActivityModal(this)">
                                         <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
                                             <span class="badge priority-badge"
                                                   th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
                                                   th:text="${activity.priority}">Priority</span>
@@ -355,6 +532,8 @@
                                             <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
                                             <span class="actual-hours" th:text="${activity.actualHours}"></span>
                                             <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
                                             <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
                                         </div>
                                     </div>
@@ -363,7 +542,7 @@
                         </div>
                         
                         <!-- DONE Column -->
-                        <div class="col-lg-2 col-md-4 col-sm-6">
+                        <div class="col">
                             <div class="kanban-column">
                                 <div class="kanban-header">
                                     <h6 class="mb-0">
@@ -379,6 +558,10 @@
                                          draggable="true"
                                          onclick="showActivityModal(this)">
                                         <div class="card-header-small">
+                                            <div th:if="${activity.taskNumber}">
+                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            </div>
                                             <span class="badge priority-badge"
                                                   th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
                                                   th:text="${activity.priority}">Priority</span>
@@ -396,6 +579,8 @@
                                             <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
                                             <span class="actual-hours" th:text="${activity.actualHours}"></span>
                                             <span class="skills" th:text="${activity.skills}"></span>
+                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
+                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
                                             <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
                                         </div>
                                     </div>
@@ -425,6 +610,12 @@
                             </div>
                             <div class="mb-2" id="modalSkillsDiv">
                                 <strong style="color: var(--accent-orange);">Habilidades:</strong> <span id="modalSkills">-</span>
+                            </div>
+                            <div class="mb-2" id="modalTaskNumberDiv">
+                                <strong style="color: var(--accent-orange);">Número da Tarefa:</strong> <span id="modalTaskNumber">-</span>
+                            </div>
+                            <div class="mb-2" id="modalTaskUrlDiv">
+                                <strong style="color: var(--accent-orange);">URL da Tarefa:</strong> <a id="modalTaskUrl" href="#" target="_blank">-</a>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -465,6 +656,8 @@
             const estimatedHours = card.querySelector('.estimated-hours') ? card.querySelector('.estimated-hours').textContent : '';
             const actualHours = card.querySelector('.actual-hours') ? card.querySelector('.actual-hours').textContent : '';
             const skills = card.querySelector('.skills') ? card.querySelector('.skills').textContent : '';
+            const taskNumber = card.querySelector('.task-number') ? card.querySelector('.task-number').textContent : '';
+            const taskUrl = card.querySelector('.task-url') ? card.querySelector('.task-url').textContent : '';
             const editUrl = card.querySelector('.edit-url') ? card.querySelector('.edit-url').textContent : '';
             
             document.getElementById('modalTitle').textContent = title;
@@ -476,16 +669,30 @@
             const estHours = estimatedHours && estimatedHours !== 'null' && estimatedHours !== '' ? estimatedHours + 'h' : '-';
             const actHours = actualHours && actualHours !== 'null' && actualHours !== '' ? actualHours + 'h' : '-';
             const skillsText = skills && skills !== 'null' && skills !== '' ? skills : '-';
+            const taskNumberText = taskNumber && taskNumber !== 'null' && taskNumber !== '' ? taskNumber : '-';
+            const taskUrlText = taskUrl && taskUrl !== 'null' && taskUrl !== '' ? taskUrl : '';
             
             document.getElementById('modalEstimated').textContent = estHours;
             document.getElementById('modalActual').textContent = actHours;
             document.getElementById('modalSkills').textContent = skillsText;
+            document.getElementById('modalTaskNumber').textContent = taskNumberText;
+            
+            if (taskUrlText) {
+                document.getElementById('modalTaskUrl').textContent = taskUrlText;
+                document.getElementById('modalTaskUrl').href = taskUrlText;
+            } else {
+                document.getElementById('modalTaskUrl').textContent = '-';
+                document.getElementById('modalTaskUrl').href = '#';
+            }
+            
             document.getElementById('modalEditBtn').href = editUrl;
             
             // Hide empty fields
             document.getElementById('modalSkillsDiv').style.display = skillsText === '-' ? 'none' : 'block';
             document.getElementById('modalEstimatedDiv').style.display = estHours === '-' ? 'none' : 'block';
             document.getElementById('modalActualDiv').style.display = actHours === '-' ? 'none' : 'block';
+            document.getElementById('modalTaskNumberDiv').style.display = taskNumberText === '-' ? 'none' : 'block';
+            document.getElementById('modalTaskUrlDiv').style.display = !taskUrlText ? 'none' : 'block';
             
             new bootstrap.Modal(document.getElementById('activityModal')).show();
         }

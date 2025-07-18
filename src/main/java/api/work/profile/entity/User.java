@@ -2,9 +2,7 @@ package api.work.profile.entity;
 
 import api.work.profile.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 import api.work.profile.enums.UserCategory;
 
 import java.time.LocalDateTime;
@@ -12,7 +10,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter
+@Setter
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -36,10 +36,13 @@ public class User {
     
     // Campos de autenticação
     private String password;
+    
+    @Builder.Default
     private Boolean enabled = true;
     
     // Perfil e permissões
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private UserRole role = UserRole.USER;
     
     // Categoria profissional
