@@ -203,7 +203,7 @@ public class TechDebtService {
     
     public Page<TechDebt> findAllWithFilters(TechDebt.StatusDebito status, 
                                             Integer prioridade, TechDebt.TipoDebito tipo,
-                                            String search, String taskNumber, String periodo,
+                                            String search, String taskNumber, String creator, String periodo,
                                             Pageable pageable) {
         java.time.LocalDateTime periodoDate = null;
         if (periodo != null && !periodo.isEmpty()) {
@@ -218,7 +218,7 @@ public class TechDebtService {
             }
         }
         return techDebtRepository.findAll(
-            TechDebtQueryBuilder.buildSpecification(status, prioridade, tipo, search, taskNumber, periodoDate),
+            TechDebtQueryBuilder.buildSpecification(status, prioridade, tipo, search, taskNumber, creator, periodoDate),
             pageable
         );
     }
@@ -275,5 +275,12 @@ public class TechDebtService {
         }
         return techDebtRepository.findByTaskNumberExact(
             taskNumber.trim(), PageRequest.of(0, 10));
+    }
+    
+    public List<java.util.Map<String, Object>> searchByCreator(String creator) {
+        if (creator == null || creator.trim().isEmpty()) {
+            return List.of();
+        }
+        return techDebtRepository.findCreatorsByName(creator.trim());
     }
 }
