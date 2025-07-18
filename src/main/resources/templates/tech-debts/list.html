@@ -241,13 +241,23 @@
                              style="top: 100%; z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="input-group position-relative">
                         <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
                         <input type="text" id="taskNumberInput" name="taskNumber" class="form-control" 
                                placeholder="Número da Tarefa" 
                                th:value="${param.taskNumber != null ? param.taskNumber[0] : ''}">
                         <div id="taskResults" class="position-absolute w-100 bg-dark border rounded mt-1" 
+                             style="top: 100%; z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group position-relative">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" id="creatorInput" name="creator" class="form-control" 
+                               placeholder="Criado por..." 
+                               th:value="${param.creator != null ? param.creator[0] : ''}">
+                        <div id="creatorResults" class="position-absolute w-100 bg-dark border rounded mt-1" 
                              style="top: 100%; z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
                     </div>
                 </div>
@@ -720,6 +730,42 @@
             }, 300);
         });
         
+        // Busca por criador
+        let creatorTimeout;
+        document.getElementById('creatorInput').addEventListener('input', function(e) {
+            clearTimeout(creatorTimeout);
+            const creator = e.target.value.trim();
+            
+            if (creator.length < 2) {
+                document.getElementById('creatorResults').style.display = 'none';
+                return;
+            }
+            
+            creatorTimeout = setTimeout(() => {
+                fetch(`/tech-debts/search-creator?creator=${encodeURIComponent(creator)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultsDiv = document.getElementById('creatorResults');
+                        if (data.length === 0) {
+                            resultsDiv.style.display = 'none';
+                            return;
+                        }
+                        
+                        resultsDiv.innerHTML = data.map(creator => `
+                            <div class="p-2 border-bottom search-result-item" style="cursor: pointer;" 
+                                 onclick="selectCreatorResult('${creator.name}')">
+                                <i class="fas fa-user me-2"></i><strong>${creator.name}</strong>
+                                <br><small class="text-muted">${creator.count} débito(s) criado(s)</small>
+                            </div>
+                        `).join('');
+                        resultsDiv.style.display = 'block';
+                    })
+                    .catch(() => {
+                        document.getElementById('creatorResults').style.display = 'none';
+                    });
+            }, 300);
+        });
+        
         function selectSearchResult(problema, id) {
             document.getElementById('searchText').value = problema;
             document.getElementById('searchResults').style.display = 'none';
@@ -734,6 +780,11 @@
             // window.location.href = `/tech-debts/${id}/edit`;
         }
         
+        function selectCreatorResult(creatorName) {
+            document.getElementById('creatorInput').value = creatorName;
+            document.getElementById('creatorResults').style.display = 'none';
+        }
+        
         // Fechar resultados ao clicar fora
         document.addEventListener('click', function(e) {
             if (!e.target.closest('#searchText') && !e.target.closest('#searchResults')) {
@@ -741,6 +792,9 @@
             }
             if (!e.target.closest('#taskNumberInput') && !e.target.closest('#taskResults')) {
                 document.getElementById('taskResults').style.display = 'none';
+            }
+            if (!e.target.closest('#creatorInput') && !e.target.closest('#creatorResults')) {
+                document.getElementById('creatorResults').style.display = 'none';
             }
         });
         

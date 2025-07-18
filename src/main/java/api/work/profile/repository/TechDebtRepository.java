@@ -52,4 +52,7 @@ public interface TechDebtRepository extends JpaRepository<TechDebt, Long>, JpaSp
     
     @Query("SELECT new api.work.profile.dto.TechDebtSearchDTO(t.id, t.problema, t.descricao, t.taskNumber) FROM TechDebt t WHERE t.taskNumber = :taskNumber ORDER BY t.dataCriacao DESC")
     List<api.work.profile.dto.TechDebtSearchDTO> findByTaskNumberExact(@Param("taskNumber") String taskNumber, Pageable pageable);
+    
+    @Query("SELECT t.criadoPor as name, COUNT(t) as count FROM TechDebt t WHERE LOWER(t.criadoPor) LIKE LOWER(CONCAT('%', :creator, '%')) GROUP BY t.criadoPor ORDER BY COUNT(t) DESC")
+    List<java.util.Map<String, Object>> findCreatorsByName(@Param("creator") String creator);
 }

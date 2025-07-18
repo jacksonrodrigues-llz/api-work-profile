@@ -40,9 +40,10 @@ public class TechDebtController {
         var tipoEnum = parseTipo(tipo);
         var search = request.getParameter("search");
         var taskNumber = request.getParameter("taskNumber");
+        var creator = request.getParameter("creator");
         var periodo = request.getParameter("periodo");
         
-        var debts = techDebtService.findAllWithFilters(statusEnum, prioridade, tipoEnum, search, taskNumber, periodo, pageable);
+        var debts = techDebtService.findAllWithFilters(statusEnum, prioridade, tipoEnum, search, taskNumber, creator, periodo, pageable);
         var metrics = techDebtService.getAllDashboardMetrics();
         
         // Adicionar contadores específicos por status
@@ -159,6 +160,12 @@ public class TechDebtController {
     @ResponseBody
     public List<api.work.profile.dto.TechDebtSearchDTO> searchByTaskNumber(@RequestParam String taskNumber) {
         return techDebtService.searchByTaskNumber(taskNumber);
+    }
+    
+    @GetMapping("/search-creator")
+    @ResponseBody
+    public List<java.util.Map<String, Object>> searchByCreator(@RequestParam String creator) {
+        return techDebtService.searchByCreator(creator);
     }
     
     private TechDebt.StatusDebito parseStatus(String status) {

@@ -15,6 +15,7 @@ public class TechDebtQueryBuilder {
             TechDebt.TipoDebito tipo,
             String search,
             String taskNumber,
+            String creator,
             LocalDateTime periodo) {
         
         return (root, query, criteriaBuilder) -> {
@@ -45,6 +46,12 @@ public class TechDebtQueryBuilder {
                 String taskPattern = "%" + taskNumber.toLowerCase() + "%";
                 predicates.add(criteriaBuilder.like(
                     criteriaBuilder.lower(root.get("taskNumber")), taskPattern));
+            }
+            
+            if (creator != null && !creator.trim().isEmpty()) {
+                String creatorPattern = "%" + creator.toLowerCase() + "%";
+                predicates.add(criteriaBuilder.like(
+                    criteriaBuilder.lower(root.get("criadoPor")), creatorPattern));
             }
             
             if (periodo != null) {

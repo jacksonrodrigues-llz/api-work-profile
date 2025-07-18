@@ -22,7 +22,7 @@ public class ReportController {
     private final ReportService reportService;
     private final ProfileService profileService;
     
-    @GetMapping
+    @GetMapping({"", "/"})
     public String reports(Authentication authentication, Model model) {
         try {
             var user = profileService.getUserFromAuthentication(authentication);
