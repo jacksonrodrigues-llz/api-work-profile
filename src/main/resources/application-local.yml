@@ -12,8 +12,15 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
+    show-summary: false
+    show-summary-output: LOG
     
 logging:
   level:
     api.work.profile: DEBUG
-    liquibase: DEBUG
+    liquibase: ERROR
+    liquibase.database: ERROR
+    liquibase.executor: ERROR
+    liquibase.changelog: ERROR
+    liquibase.hub: OFF
+    liquibase.analytics: OFF
