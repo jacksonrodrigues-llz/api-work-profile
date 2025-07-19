@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DT Report - Portal Profissional</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .chart-container { position: relative; height: 350px; }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <img th:src="${user?.profilePhoto ?: (user?.avatar ?: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.name ?: 'default'))}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                        <span th:text="${user?.name ?: 'Usuário'}">Usuário</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user?.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2"><i class="fas fa-exclamation-triangle me-3" style="color: var(--accent-orange);"></i>DT Report</h1>
+                        <p class="text-muted">Análise detalhada de débitos técnicos</p>
+                    </div>
+                    <div>
+                        <a href="/reports" class="btn btn-outline-light me-2">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button id="refreshBtn" class="btn btn-outline-light" onclick="updateDTReport()" title="Atualizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filtro de Período -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="dtFilterForm" class="row g-3" onsubmit="return false;">
+                            <div class="col-md-3">
+                                <label for="periodoSelect" class="form-label">Período</label>
+                                <select name="periodo" id="periodoSelect" class="form-select" onchange="updateDTReport()">
+                                    <option value="">Todos os Períodos</option>
+                                    <option value="semana">Esta semana</option>
+                                    <option value="15dias">Últimos 15 dias</option>
+                                    <option value="30dias">Últimos 30 dias</option>
+                                    <option value="3meses">Últimos 3 meses</option>
+                                    <option value="6meses">6 meses</option>
+                                    <option value="1ano">1 ano</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="updateDTReport()">
+                                        <i class="fas fa-filter me-1"></i>Filtrar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light" onclick="clearDTFilters()">
+                                        <i class="fas fa-times me-1"></i>Limpar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Métricas Resumo DT -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-danger shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Críticos Abertos</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">8</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Tempo Médio</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">32 dias</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-clock fa-2x text-warning"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Resolvidos</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">15</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-info shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Taxa Resolução</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">68%</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-chart-line fa-2x text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos DT -->
+                <div class="row mb-4">
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Débitos por Criador</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="creatorChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Débitos por Status</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="statusChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Prioridade vs Dias Abertos</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="priorityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Análises Adicionais -->
+                <div class="row mb-4">
+                    <div class="col-xl-6 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Tendência Mensal</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="trendChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Tipos de Débito</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="typeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        // Configuração global para tema escuro
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = '#4a4a4a';
+        Chart.defaults.backgroundColor = 'rgba(255, 107, 53, 0.1)';
+        
+        let creatorChart, statusChart, priorityChart;
+        
+        function loadDTCharts() {
+            if (creatorChart) {
+                creatorChart.destroy();
+                statusChart.destroy();
+                priorityChart.destroy();
+            }
+            
+            // Gráfico por Criador
+            const creatorCtx = document.getElementById('creatorChart').getContext('2d');
+            creatorChart = new Chart(creatorCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Lima', 'Carlos Oliveira'],
+                    datasets: [{
+                        data: [15, 12, 8, 6, 4],
+                        backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#6f42c1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                color: '#ffffff',
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico por Status (Radar)
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['TODO', 'EM PROGRESSO', 'TESTE', 'DEPLOY', 'CONCLUÍDO'],
+                    datasets: [{
+                        label: 'Quantidade de Débitos',
+                        data: [18, 12, 8, 5, 15],
+                        borderColor: '#ff6b35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                        pointBackgroundColor: '#ff6b35',
+                        pointBorderColor: '#ff8c42',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 5
+                            },
+                            grid: {
+                                color: '#4a4a4a'
+                            },
+                            angleLines: {
+                                color: '#4a4a4a'
+                            },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico Prioridade vs Dias (Principal Indicador)
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+            priorityChart = new Chart(priorityCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Crítico (1)',
+                        data: [
+                            {x: 1, y: 45}, {x: 1, y: 30}, {x: 1, y: 60}, 
+                            {x: 1, y: 25}, {x: 1, y: 50}
+                        ],
+                        backgroundColor: '#dc3545',
+                        pointRadius: 8
+                    }, {
+                        label: 'Alto (2)',
+                        data: [
+                            {x: 2, y: 25}, {x: 2, y: 40}, {x: 2, y: 15}, 
+                            {x: 2, y: 35}, {x: 2, y: 20}
+                        ],
+                        backgroundColor: '#ffc107',
+                        pointRadius: 6
+                    }, {
+                        label: 'Médio (3)',
+                        data: [
+                            {x: 3, y: 20}, {x: 3, y: 35}, {x: 3, y: 10}, 
+                            {x: 3, y: 28}, {x: 3, y: 15}
+                        ],
+                        backgroundColor: '#17a2b8',
+                        pointRadius: 5
+                    }, {
+                        label: 'Baixo (4)',
+                        data: [
+                            {x: 4, y: 5}, {x: 4, y: 12}, {x: 4, y: 8}, 
+                            {x: 4, y: 18}, {x: 4, y: 3}
+                        ],
+                        backgroundColor: '#28a745',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + ' dias abertos';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Prioridade',
+                                color: '#ffffff'
+                            },
+                            min: 0.5,
+                            max: 4.5,
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const labels = ['', 'Crítico', 'Alto', 'Médio', 'Baixo'];
+                                    return labels[value];
+                                }
+                            },
+                            grid: { color: '#4a4a4a' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Dias Abertos',
+                                color: '#ffffff'
+                            },
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateDTReport() {
+            const periodo = document.getElementById('periodoSelect').value;
+            console.log('Atualizando DT Report para período:', periodo);
+            
+            const refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            fetch(`/reports/dt-data?periodo=${encodeURIComponent(periodo || '')}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateChartsWithData(data);
+                    updateMetrics(data);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar dados:', error);
+                    loadDTCharts(); // Fallback para dados estáticos
+                })
+                .finally(() => {
+                    if (refreshBtn) {
+                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    }
+                });
+        }
+        
+        function updateMetrics(data) {
+            // Atualizar métricas do cabeçalho se existirem
+            if (data.criticalOpen !== undefined) {
+                const criticalElement = document.querySelector('.border-left-danger .h5');
+                if (criticalElement) criticalElement.textContent = data.criticalOpen;
+            }
+            if (data.averageTime !== undefined) {
+                const avgTimeElement = document.querySelector('.border-left-warning .h5');
+                if (avgTimeElement) avgTimeElement.textContent = data.averageTime + ' dias';
+            }
+            if (data.resolved !== undefined) {
+                const resolvedElement = document.querySelector('.border-left-success .h5');
+                if (resolvedElement) resolvedElement.textContent = data.resolved;
+            }
+            if (data.resolutionRate !== undefined) {
+                const rateElement = document.querySelector('.border-left-info .h5');
+                if (rateElement) rateElement.textContent = data.resolutionRate + '%';
+            }
+        }
+        
+        function updateChartsWithData(data) {
+            // Atualizar gráfico de criador
+            if (data.creatorData && creatorChart) {
+                creatorChart.data.labels = data.creatorData.labels;
+                creatorChart.data.datasets[0].data = data.creatorData.data;
+                creatorChart.update();
+            }
+            
+            // Atualizar gráfico de status
+            if (data.statusData && statusChart) {
+                statusChart.data.labels = data.statusData.labels;
+                statusChart.data.datasets[0].data = data.statusData.data;
+                statusChart.update();
+            }
+            
+            // Atualizar gráfico de tendência
+            if (data.trendData && trendChart) {
+                trendChart.data.labels = data.trendData.labels;
+                trendChart.data.datasets[0].data = data.trendData.created;
+                trendChart.data.datasets[1].data = data.trendData.resolved;
+                trendChart.update();
+            }
+            
+            // Atualizar gráfico de tipos
+            if (data.typeData && typeChart) {
+                typeChart.data.labels = data.typeData.labels;
+                typeChart.data.datasets[0].data = data.typeData.data;
+                typeChart.update();
+            }
+        }
+        
+        function loadDTCharts() {
+            if (creatorChart) {
+                creatorChart.destroy();
+                statusChart.destroy();
+                priorityChart.destroy();
+                if (trendChart) trendChart.destroy();
+                if (typeChart) typeChart.destroy();
+            }
+            
+            // Gráfico por Criador
+            const creatorCtx = document.getElementById('creatorChart').getContext('2d');
+            creatorChart = new Chart(creatorCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Lima', 'Carlos Oliveira'],
+                    datasets: [{
+                        data: [15, 12, 8, 6, 4],
+                        backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#6f42c1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { 
+                                color: '#ffffff',
+                                padding: 15
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico por Status (Radar)
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['TODO', 'EM PROGRESSO', 'TESTE', 'DEPLOY', 'CONCLUÍDO'],
+                    datasets: [{
+                        label: 'Quantidade de Débitos',
+                        data: [18, 12, 8, 5, 15],
+                        borderColor: '#ff6b35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                        pointBackgroundColor: '#ff6b35',
+                        pointBorderColor: '#ff8c42',
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 5
+                            },
+                            grid: {
+                                color: '#4a4a4a'
+                            },
+                            angleLines: {
+                                color: '#4a4a4a'
+                            },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico Prioridade vs Dias (Principal Indicador)
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+            priorityChart = new Chart(priorityCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Crítico (1)',
+                        data: [
+                            {x: 1, y: 45}, {x: 1, y: 30}, {x: 1, y: 60}, 
+                            {x: 1, y: 25}, {x: 1, y: 50}
+                        ],
+                        backgroundColor: '#dc3545',
+                        pointRadius: 8
+                    }, {
+                        label: 'Alto (2)',
+                        data: [
+                            {x: 2, y: 25}, {x: 2, y: 40}, {x: 2, y: 15}, 
+                            {x: 2, y: 35}, {x: 2, y: 20}
+                        ],
+                        backgroundColor: '#ffc107',
+                        pointRadius: 6
+                    }, {
+                        label: 'Médio (3)',
+                        data: [
+                            {x: 3, y: 20}, {x: 3, y: 35}, {x: 3, y: 10}, 
+                            {x: 3, y: 28}, {x: 3, y: 15}
+                        ],
+                        backgroundColor: '#17a2b8',
+                        pointRadius: 5
+                    }, {
+                        label: 'Baixo (4)',
+                        data: [
+                            {x: 4, y: 5}, {x: 4, y: 12}, {x: 4, y: 8}, 
+                            {x: 4, y: 18}, {x: 4, y: 3}
+                        ],
+                        backgroundColor: '#28a745',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + ' dias abertos';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Prioridade',
+                                color: '#ffffff'
+                            },
+                            min: 0.5,
+                            max: 4.5,
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 1,
+                                callback: function(value) {
+                                    const labels = ['', 'Crítico', 'Alto', 'Médio', 'Baixo'];
+                                    return labels[value];
+                                }
+                            },
+                            grid: { color: '#4a4a4a' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Dias Abertos',
+                                color: '#ffffff'
+                            },
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Tendência Mensal
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                    datasets: [{
+                        label: 'Criados',
+                        data: [12, 15, 8, 18, 10, 14],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Resolvidos',
+                        data: [8, 12, 10, 15, 12, 16],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Tipos de Débito
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            typeChart = new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Performance', 'Segurança', 'Código', 'Arquitetura', 'Documentação'],
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: [12, 8, 15, 6, 4],
+                        backgroundColor: ['#ff6b35', '#17a2b8', '#28a745', '#ffc107', '#6f42c1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#b0b0b0',
+                                maxRotation: 45
+                            },
+                            grid: { color: '#4a4a4a' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        let trendChart, typeChart;
+        
+        function clearDTFilters() {
+            document.getElementById('periodoSelect').value = '';
+            updateDTReport();
+        }
+        
+        // Carregar gráficos na inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDTCharts();
+        });
+    </script>
+</body>
+</html>

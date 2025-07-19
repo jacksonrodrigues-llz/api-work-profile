@@ -173,22 +173,22 @@
                 <div class="col-md-2">
                     <select name="status" class="form-select">
                         <option value="">Todos os Status</option>
-                        <option value="TODO">A Fazer</option>
-                        <option value="IN_PROGRESS">Em Progresso</option>
-                        <option value="PAUSE">Pausado</option>
-                        <option value="CANCELLED">Cancelado</option>
-                        <option value="TEST">Teste</option>
-                        <option value="DEPLOY">Deploy</option>
-                        <option value="DONE">Concluído</option>
+                        <option value="TODO" th:selected="${param.status != null and param.status[0] == 'TODO'}">A Fazer</option>
+                        <option value="IN_PROGRESS" th:selected="${param.status != null and param.status[0] == 'IN_PROGRESS'}">Em Progresso</option>
+                        <option value="PAUSE" th:selected="${param.status != null and param.status[0] == 'PAUSE'}">Pausado</option>
+                        <option value="CANCELLED" th:selected="${param.status != null and param.status[0] == 'CANCELLED'}">Cancelado</option>
+                        <option value="TEST" th:selected="${param.status != null and param.status[0] == 'TEST'}">Teste</option>
+                        <option value="DEPLOY" th:selected="${param.status != null and param.status[0] == 'DEPLOY'}">Deploy</option>
+                        <option value="DONE" th:selected="${param.status != null and param.status[0] == 'DONE'}">Concluído</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <select name="prioridade" class="form-select">
                         <option value="">Todas as Prioridades</option>
-                        <option value="1">1 - Crítico</option>
-                        <option value="2">2 - Alto</option>
-                        <option value="3">3 - Médio</option>
-                        <option value="4">4 - Baixo</option>
+                        <option value="1" th:selected="${param.prioridade != null and param.prioridade[0] == '1'}">1 - Crítico</option>
+                        <option value="2" th:selected="${param.prioridade != null and param.prioridade[0] == '2'}">2 - Alto</option>
+                        <option value="3" th:selected="${param.prioridade != null and param.prioridade[0] == '3'}">3 - Médio</option>
+                        <option value="4" th:selected="${param.prioridade != null and param.prioridade[0] == '4'}">4 - Baixo</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -196,18 +196,19 @@
                         <option value="">Todos os Tipos</option>
                         <option th:each="tipo : ${tipoOptions}" 
                                 th:value="${tipo}" 
-                                th:text="${tipo}"></option>
+                                th:text="${tipo}"
+                                th:selected="${param.tipo != null and param.tipo[0] == tipo.toString()}"></option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <select name="periodo" class="form-select">
                         <option value="">Todos os Períodos</option>
-                        <option value="semana">Abertos esta semana</option>
-                        <option value="15dias">Últimos 15 dias</option>
-                        <option value="30dias">Últimos 30 dias</option>
-                        <option value="3meses">Últimos 3 meses</option>
-                        <option value="6meses">6 meses</option>
-                        <option value="1ano">1 ano</option>
+                        <option value="semana" th:selected="${param.periodo != null and param.periodo[0] == 'semana'}">Abertos esta semana</option>
+                        <option value="15dias" th:selected="${param.periodo != null and param.periodo[0] == '15dias'}">Últimos 15 dias</option>
+                        <option value="30dias" th:selected="${param.periodo != null and param.periodo[0] == '30dias'}">Últimos 30 dias</option>
+                        <option value="3meses" th:selected="${param.periodo != null and param.periodo[0] == '3meses'}">Últimos 3 meses</option>
+                        <option value="6meses" th:selected="${param.periodo != null and param.periodo[0] == '6meses'}">6 meses</option>
+                        <option value="1ano" th:selected="${param.periodo != null and param.periodo[0] == '1ano'}">1 ano</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -231,6 +232,13 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
+                <!-- Campos ocultos para manter filtros -->
+                <input type="hidden" name="status" th:value="${param.status != null ? param.status[0] : ''}">
+                <input type="hidden" name="prioridade" th:value="${param.prioridade != null ? param.prioridade[0] : ''}">
+                <input type="hidden" name="tipo" th:value="${param.tipo != null ? param.tipo[0] : ''}">
+                <input type="hidden" name="periodo" th:value="${param.periodo != null ? param.periodo[0] : ''}">
+                <input type="hidden" name="size" th:value="${param.size != null ? param.size[0] : '10'}">
+                
                 <div class="col-md-5">
                     <div class="input-group position-relative">
                         <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -261,14 +269,14 @@
                              style="top: 100%; z-index: 1000; display: none; max-height: 300px; overflow-y: auto;"></div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-search me-1"></i>Buscar
+                        <i class="fas fa-search"></i>
                     </button>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <a href="/tech-debts" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-times me-1"></i>Limpar
+                        <i class="fas fa-times"></i>
                     </a>
                 </div>
             </form>
