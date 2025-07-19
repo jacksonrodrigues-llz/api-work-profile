@@ -17,6 +17,8 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
     drop-first: false
+    show-summary: false
+    show-summary-output: LOG
   
   security:
     oauth2:
@@ -57,3 +59,9 @@ logging:
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
     feign: WARN
+    liquibase: ERROR
+    liquibase.database: ERROR
+    liquibase.executor: ERROR
+    liquibase.changelog: ERROR
+    liquibase.hub: OFF
+    liquibase.analytics: OFF
