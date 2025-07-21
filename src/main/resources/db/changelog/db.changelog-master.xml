@@ -13,5 +13,6 @@
     <include file="db/changelog/006-add-user-category.xml"/>
     <include file="db/changelog/007-add-tech-debts-constraints.xml"/>
     <include file="db/changelog/008-add-task-fields-to-activities.xml"/>
+    <include file="db/changelog/009-create-daily-reports-table.xml"/>
 
 </databaseChangeLog>

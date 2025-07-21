@@ -1,6 +1,7 @@
 package api.work.profile.controller;
 
 import api.work.profile.service.DashboardService;
+import api.work.profile.service.DailyReportService;
 import api.work.profile.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ public class DashboardController {
     
     private final ProfileService profileService;
     private final DashboardService dashboardService;
+    private final DailyReportService dailyReportService;
     
     @GetMapping("/")
     public String home() {
@@ -38,6 +40,7 @@ public class DashboardController {
             
             model.addAttribute("user", user);
             model.addAttribute("metrics", dashboardService.getDashboardMetrics(user));
+            model.addAttribute("dailyReports", dailyReportService.getRecentReports(user));
             
             return "dashboard";
         } catch (Exception e) {
