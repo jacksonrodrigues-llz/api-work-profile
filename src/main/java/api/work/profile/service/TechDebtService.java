@@ -117,10 +117,22 @@ public class TechDebtService {
                 }
                 String[] fields = line.split(",");
                 if (fields.length >= 4) {
+                    // Obter e validar a prioridade
+                    int prioridade;
+                    try {
+                        prioridade = Integer.parseInt(fields[2].trim());
+                        // Garantir que a prioridade esteja entre 1 e 4
+                        if (prioridade < 1 || prioridade > 4) {
+                            prioridade = 1; // Valor padrão seguro
+                        }
+                    } catch (Exception e) {
+                        prioridade = 1; // Valor padrão em caso de erro
+                    }
+                    
                     var debt = TechDebt.builder()
                         .problema(fields[0].trim().replace("\"", ""))
                         .descricao(fields[1].trim().replace("\"", ""))
-                        .prioridade(Integer.parseInt(fields[2].trim()))
+                        .prioridade(prioridade)
                         .criadoPor(fields[3].trim().replace("\"", ""))
                         .user(user)
                         .build();
@@ -148,10 +160,22 @@ public class TechDebtService {
                 }
                 
                 if (row.getPhysicalNumberOfCells() >= 6) {
+                    // Obter e validar a prioridade
+                    int prioridade;
+                    try {
+                        prioridade = (int) row.getCell(2).getNumericCellValue();
+                        // Garantir que a prioridade esteja entre 1 e 4
+                        if (prioridade < 1 || prioridade > 4) {
+                            prioridade = 1; // Valor padrão seguro
+                        }
+                    } catch (Exception e) {
+                        prioridade = 1; // Valor padrão em caso de erro
+                    }
+                    
                     var builder = TechDebt.builder()
                         .problema(getCellValue(row.getCell(0)))
                         .descricao(getCellValue(row.getCell(1)))
-                        .prioridade((int) row.getCell(2).getNumericCellValue())
+                        .prioridade(prioridade)
                         .criadoPor(getCellValue(row.getCell(5)))
                         .user(user);
                     

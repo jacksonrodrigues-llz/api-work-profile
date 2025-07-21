@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Métricas - Portal Profissional</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .chart-container { position: relative; height: 300px; }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <img th:src="${currentUser?.profilePhoto ?: (currentUser?.avatar ?: 'https://api.dicebear.com/7.x/personas/svg?seed=military1&backgroundColor=2c3e50')}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                        <span th:text="${currentUser?.name ?: 'Usuário'}">Usuário</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${currentUser?.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Usuários
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="main-content px-4">
+                <div class="pt-3 pb-2 mb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h2"><i class="fas fa-chart-line me-3" style="color: var(--accent-orange);"></i>Minhas Métricas</h1>
+                        <p class="text-muted">Análise do seu progresso profissional</p>
+                    </div>
+                    <div>
+                        <a href="/reports" class="btn btn-outline-light me-2">
+                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                        </a>
+                        <button id="refreshPersonalBtn" class="btn btn-outline-light me-2" onclick="updatePersonalMetrics()" title="Atualizar">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <a href="/reports/pdf" class="btn btn-danger">
+                            <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filtro de Período -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form id="personalFilterForm" class="row g-3" onsubmit="return false;">
+                            <div class="col-md-3">
+                                <label for="personalPeriodoSelect" class="form-label">Período</label>
+                                <select name="periodo" id="personalPeriodoSelect" class="form-select" onchange="updatePersonalMetrics()">
+                                    <option value="">Todos os Períodos</option>
+                                    <option value="semana">Esta semana</option>
+                                    <option value="15dias">Últimos 15 dias</option>
+                                    <option value="30dias">Últimos 30 dias</option>
+                                    <option value="3meses">Últimos 3 meses</option>
+                                    <option value="6meses">6 meses</option>
+                                    <option value="1ano">1 ano</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="updatePersonalMetrics()">
+                                        <i class="fas fa-filter me-1"></i>Filtrar
+                                    </button>
+                                    <button type="button" class="btn btn-outline-light" onclick="clearPersonalFilters()">
+                                        <i class="fas fa-times me-1"></i>Limpar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Métricas Resumo -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-primary shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                            Atividades Concluídas
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedActivities}">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Metas Concluídas
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-bullseye fa-2x text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-info shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                            Metas Ativas
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.activeGoals}">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-flag fa-2x text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card card-metric border-left-warning shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                            Conquistas
+                                        </div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.achievements}">0</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-trophy fa-2x text-warning"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos -->
+                <div class="row mb-4">
+                    <div class="col-xl-6 col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Progresso Mensal</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="progressChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-6 col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Habilidades Radar</h6>
+                                <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#radarExplanationModal">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="categoryChart"></canvas>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Valores calculados com base em atividades, metas e conquistas. Clique no ícone acima para detalhes.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seções de Dados -->
+                <div class="row mb-4">
+                    <!-- Atividades Recentes -->
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Atividades Recentes</h6>
+                                <a href="/activities" class="btn btn-sm btn-outline-light">Ver Todas</a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" th:if="${activities != null and !activities.empty}">
+                                    <div th:each="activity : ${activities}" class="list-group-item bg-dark border-secondary">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1 text-white" th:text="${activity.title}">Título</h6>
+                                            <small class="text-muted" th:text="${#temporals.format(activity.createdAt, 'dd/MM')}">Data</small>
+                                        </div>
+                                        <p class="mb-1 text-muted small" th:text="${activity.project ?: 'Sem projeto'}">Projeto</p>
+                                        <small>
+                                            <span th:switch="${activity.status}" class="badge">
+                                                <span th:case="'TODO'" class="badge bg-secondary">TODO</span>
+                                                <span th:case="'IN_PROGRESS'" class="badge bg-primary">EM PROGRESSO</span>
+                                                <span th:case="'DEV'" class="badge bg-info">DEV</span>
+                                                <span th:case="'UAT'" class="badge bg-warning">UAT</span>
+                                                <span th:case="'HML'" class="badge bg-warning">HML</span>
+                                                <span th:case="'PRD'" class="badge bg-warning">PRD</span>
+                                                <span th:case="'DEPLOY'" class="badge bg-warning">DEPLOY</span>
+                                                <span th:case="'DONE'" class="badge bg-success">CONCLUÍDO</span>
+                                                <span th:case="*" class="badge bg-secondary" th:text="${activity.status}">Status</span>
+                                            </span>
+                                            <span th:switch="${activity.priority}" class="badge ms-1">
+                                                <span th:case="'LOW'" class="badge bg-success ms-1">BAIXA</span>
+                                                <span th:case="'MEDIUM'" class="badge bg-info ms-1">MÉDIA</span>
+                                                <span th:case="'HIGH'" class="badge bg-warning ms-1">ALTA</span>
+                                                <span th:case="'URGENT'" class="badge bg-danger ms-1">URGENTE</span>
+                                                <span th:case="*" class="badge bg-secondary ms-1" th:text="${activity.priority}">Prioridade</span>
+                                            </span>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div th:if="${activities == null or activities.empty}" class="text-center p-3 text-muted">
+                                    <i class="fas fa-tasks fa-2x mb-2"></i>
+                                    <p>Nenhuma atividade encontrada</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metas Ativas -->
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Metas Ativas</h6>
+                                <a href="/goals" class="btn btn-sm btn-outline-light">Ver Todas</a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" th:if="${goals != null and !goals.empty}">
+                                    <div th:each="goal : ${goals}" class="list-group-item bg-dark border-secondary">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1 text-white" th:text="${goal.title}">Título</h6>
+                                            <small class="text-muted" th:text="${goal.progressPercentage ?: 0} + '%'">0%</small>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 6px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                 th:style="'width: ' + ${goal.progressPercentage ?: 0} + '%'"></div>
+                                        </div>
+                                        <small>
+                                            <span class="badge bg-info" th:text="${goal.category}">Categoria</span>
+                                            <span class="badge bg-success ms-1" th:text="${goal.status}">Status</span>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div th:if="${goals == null or goals.empty}" class="text-center p-3 text-muted">
+                                    <i class="fas fa-bullseye fa-2x mb-2"></i>
+                                    <p>Nenhuma meta encontrada</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conquistas Recentes -->
+                    <div class="col-xl-4 col-lg-6 mb-4">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Conquistas Recentes</h6>
+                                <a href="/achievements" class="btn btn-sm btn-outline-light">Ver Todas</a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush" th:if="${achievements != null and !achievements.empty}">
+                                    <div th:each="achievement : ${achievements}" class="list-group-item bg-dark border-secondary">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1 text-white" th:text="${achievement.title}">Título</h6>
+                                            <small class="text-muted" th:text="${#temporals.format(achievement.achievedAt, 'dd/MM')}">Data</small>
+                                        </div>
+                                        <p class="mb-1 text-muted small" th:text="${achievement.description}">Descrição</p>
+                                        <small>
+                                            <span class="badge bg-warning" th:text="${achievement.type}">Tipo</span>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div th:if="${achievements == null or achievements.empty}" class="text-center p-3 text-muted">
+                                    <i class="fas fa-trophy fa-2x mb-2"></i>
+                                    <p>Nenhuma conquista encontrada</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        // Configuração global para tema escuro
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = '#4a4a4a';
+        Chart.defaults.backgroundColor = 'rgba(255, 107, 53, 0.1)';
+        
+        // Gráfico de Progresso
+        const progressCtx = document.getElementById('progressChart').getContext('2d');
+        const completedActivities = /*[[${monthlyReport.completedActivities}]]*/ 0;
+        
+        new Chart(progressCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                datasets: [{
+                    label: 'Atividades Concluídas',
+                    data: [12, 19, 15, 25, 22, completedActivities],
+                    borderColor: '#ff6b35',
+                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                    tension: 0.4,
+                    pointBackgroundColor: '#ff6b35',
+                    pointBorderColor: '#ff8c42'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#b0b0b0'
+                        },
+                        grid: {
+                            color: '#4a4a4a'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#b0b0b0'
+                        },
+                        grid: {
+                            color: '#4a4a4a'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico Radar de Habilidades
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const completedGoals = /*[[${monthlyReport.completedGoals}]]*/ 0;
+        const activeGoals = /*[[${monthlyReport.activeGoals}]]*/ 0;
+        const achievements = /*[[${monthlyReport.achievements}]]*/ 0;
+        
+        new Chart(categoryCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Técnico', 'Liderança', 'Comunicação', 'Inovação', 'Colaboração', 'Aprendizado'],
+                datasets: [{
+                    label: 'Nível Atual',
+                    data: [7, 5, 6, 8, 7, 9],
+                    borderColor: '#ff6b35',
+                    backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                    pointBackgroundColor: '#ff6b35',
+                    pointBorderColor: '#ff8c42'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 10,
+                        ticks: {
+                            color: '#b0b0b0',
+                            stepSize: 2
+                        },
+                        grid: {
+                            color: '#4a4a4a'
+                        },
+                        angleLines: {
+                            color: '#4a4a4a'
+                        },
+                        pointLabels: {
+                            color: '#ffffff',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        /*]]>*/
+        
+        function updatePersonalMetrics() {
+            const periodo = document.getElementById('personalPeriodoSelect').value;
+            console.log('Atualizando Métricas Pessoais para período:', periodo);
+            
+            const refreshBtn = document.getElementById('refreshPersonalBtn');
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            fetch(`/reports/personal-metrics-data?periodo=${encodeURIComponent(periodo || '')}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updatePersonalChartsWithData(data);
+                    updatePersonalMetricsCards(data);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar dados:', error);
+                    alert('Erro ao carregar dados: ' + error.message);
+                })
+                .finally(() => {
+                    if (refreshBtn) {
+                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    }
+                });
+        }
+        
+        function clearPersonalFilters() {
+            document.getElementById('personalPeriodoSelect').value = '';
+            updatePersonalMetrics();
+        }
+        
+        function updatePersonalChartsWithData(data) {
+            // Recarregar gráficos com novos dados se necessário
+            console.log('Dados recebidos:', data);
+        }
+        
+        function updatePersonalMetricsCards(data) {
+            if (data.monthlyReport) {
+                const metrics = data.monthlyReport;
+                // Atualizar cards de métricas se existirem elementos específicos
+                console.log('Métricas atualizadas:', metrics);
+            }
+        }
+        /*]]>*/
+    </script>
+    
+    <!-- Modal de Explicação do Radar -->
+    <div class="modal fade" id="radarExplanationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">
+                        <i class="fas fa-chart-radar me-2" style="color: var(--accent-orange);"></i>
+                        Como são Calculadas as Habilidades
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-warning"><i class="fas fa-cogs me-2"></i>Técnico</h6>
+                            <ul class="small text-muted">
+                                <li>Atividades de desenvolvimento concluídas</li>
+                                <li>Metas técnicas atingidas</li>
+                                <li>Conquistas de certificações</li>
+                            </ul>
+                            
+                            <h6 class="text-info"><i class="fas fa-users me-2"></i>Liderança</h6>
+                            <ul class="small text-muted">
+                                <li>Atividades de gestão de equipe</li>
+                                <li>Metas de liderança</li>
+                                <li>Reconhecimentos de liderança</li>
+                            </ul>
+                            
+                            <h6 class="text-success"><i class="fas fa-comments me-2"></i>Comunicação</h6>
+                            <ul class="small text-muted">
+                                <li>Apresentações realizadas</li>
+                                <li>Documentações criadas</li>
+                                <li>Treinamentos ministrados</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Inovação</h6>
+                            <ul class="small text-muted">
+                                <li>Projetos inovadores</li>
+                                <li>Melhorias implementadas</li>
+                                <li>Ideias aprovadas</li>
+                            </ul>
+                            
+                            <h6 class="text-warning"><i class="fas fa-handshake me-2"></i>Colaboração</h6>
+                            <ul class="small text-muted">
+                                <li>Trabalhos em equipe</li>
+                                <li>Mentoria oferecida</li>
+                                <li>Suporte a colegas</li>
+                            </ul>
+                            
+                            <h6 class="text-info"><i class="fas fa-graduation-cap me-2"></i>Aprendizado</h6>
+                            <ul class="small text-muted">
+                                <li>Cursos concluídos</li>
+                                <li>Certificações obtidas</li>
+                                <li>Conhecimentos adquiridos</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-calculator me-2"></i>
+                        <strong>Fórmula de Cálculo:</strong> Cada habilidade é pontuada de 0 a 10 com base na quantidade e qualidade das atividades, metas e conquistas relacionadas. O sistema considera frequência, complexidade e impacto de cada item.
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

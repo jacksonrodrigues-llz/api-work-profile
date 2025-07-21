@@ -41,18 +41,18 @@ public class TechDebt {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private StatusDebito status = StatusDebito.TODO;
-    
-    @Column(name = "data_criacao")
-    private LocalDateTime dataCriacao;
-    
-    @Column(name = "data_resolucao")
-    private LocalDateTime dataResolucao;
-    
+
     @Column(name = "criado_por", length = 255)
     private String criadoPor;
     
     @Column(name = "criado_por_id")
     private Long criadoPorId;
+
+    @Column(name = "data_criacao")
+    private LocalDateTime dataCriacao;
+
+    @Column(name = "data_resolucao")
+    private LocalDateTime dataResolucao;
     
     @Column(name = "alterado_por_id")
     private Long alteradoPorId;
@@ -86,7 +86,7 @@ public class TechDebt {
     }
     
     public enum TipoDebito {
-        BACKEND, FRONTEND, UI_UX, INFRA, NEGOCIO;
+        BACKEND, FRONTEND, UI_UX, INFRA, NEGOCIO, SECURITY, DATABASE;
         
         @com.fasterxml.jackson.annotation.JsonCreator
         public static TipoDebito fromString(String value) {
@@ -100,6 +100,8 @@ public class TechDebt {
                 case "UI_UX", "UI", "UX" -> UI_UX;
                 case "INFRA", "INFRAESTRUTURA" -> INFRA;
                 case "NEGOCIO", "BUSINESS" -> NEGOCIO;
+                case "SEGURANCA", "LGPD" -> SECURITY;
+                case "BANCO", "DB", "BASE DE DADOS", "DATABASE" -> DATABASE;
                 default -> valueOf(normalized);
             };
         }
@@ -115,7 +117,7 @@ public class TechDebt {
             
             return switch (normalized) {
                 case "TODO", "TO_DO", "PENDENTE" -> TODO;
-                case "IN_PROGRESS", "INPROGRESS", "PROGRESSO" -> IN_PROGRESS;
+                case "IN_PROGRESS", "INPROGRESS", "PROGRESSO", "PROGRESS" -> IN_PROGRESS;
                 case "PAUSE", "PAUSADO" -> PAUSE;
                 case "CANCELLED", "CANCELADO" -> CANCELLED;
                 case "TEST", "TESTE" -> TEST;

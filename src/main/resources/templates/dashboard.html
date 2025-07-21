@@ -149,6 +149,28 @@
             text-transform: uppercase;
             font-weight: 600;
         }
+        
+        /* Daily Report Styles */
+        .accordion-item {
+            background-color: var(--bg-card) !important;
+            border: 1px solid var(--border-color);
+        }
+        
+        .accordion-button {
+            background-color: var(--bg-secondary) !important;
+            color: var(--text-primary) !important;
+            border: none;
+            box-shadow: none;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background-color: var(--accent-orange) !important;
+            color: white !important;
+        }
+        
+        .accordion-button::after {
+            filter: brightness(10);
+        }
     </style>
 </head>
 <body>
@@ -340,6 +362,41 @@
                     </div>
                 </div>
 
+                <!-- Cards de Relatórios -->
+                <div class="row mb-4">
+                    <div class="col-lg-6 col-md-6 mb-4">
+                        <a href="/reports/personal-metrics" class="text-decoration-none">
+                            <div class="card card-metric">
+                                <div class="card-body">
+                                    <div class="metric-content">
+                                        <div class="metric-title">Minhas Métricas</div>
+                                        <div class="h6 mb-0 text-muted">Progresso pessoal e conquistas</div>
+                                    </div>
+                                    <div class="metric-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-6 col-md-6 mb-4">
+                        <a href="/reports/dt" class="text-decoration-none">
+                            <div class="card card-metric">
+                                <div class="card-body">
+                                    <div class="metric-content">
+                                        <div class="metric-title">DT Report</div>
+                                        <div class="h6 mb-0 text-muted">Análise de débitos técnicos</div>
+                                    </div>
+                                    <div class="metric-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Ações Rápidas -->
                 <div class="row">
                     <div class="col-lg-6">
@@ -352,8 +409,18 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <a href="/activities/new" class="btn btn-primary w-100">
+                                        <a href="/daily-reports/new" class="btn btn-primary w-100">
+                                            <i class="fas fa-calendar-check me-2"></i>Daily Report
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/activities/new" class="btn btn-outline-light w-100">
                                             <i class="fas fa-plus me-2"></i>Nova Atividade
+                                        </a>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <a href="/tech-debts/new" class="btn btn-outline-light w-100">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>Novo Débito
                                         </a>
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -364,11 +431,6 @@
                                     <div class="col-md-6 mb-3">
                                         <a href="/achievements/new" class="btn btn-outline-light w-100">
                                             <i class="fas fa-trophy me-2"></i>Nova Conquista
-                                        </a>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <a href="/tech-debts/new" class="btn btn-outline-light w-100">
-                                            <i class="fas fa-exclamation-triangle me-2"></i>Novo Débito
                                         </a>
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -409,6 +471,75 @@
                                     <a href="/auth/github" class="btn btn-primary">
                                         <i class="fab fa-github me-2"></i>Conectar GitHub
                                     </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Reports -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
+                                    <i class="fas fa-calendar-check me-2"></i>Daily Reports
+                                </h6>
+                                <a href="/daily-reports/new" class="btn btn-sm btn-outline-light">
+                                    <i class="fas fa-plus me-1"></i>Novo
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <div th:if="${dailyReports != null and !dailyReports.empty}">
+                                    <div class="row">
+                                        <div th:each="report, reportStat : ${dailyReports}" class="col-md-6 mb-3">
+                                            <div class="card h-100" th:classappend="${report.reportDate.equals(#temporals.createToday()) ? 'border-warning' : ''}">
+                                                <div class="card-header d-flex justify-content-between align-items-center">
+                                                    <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
+                                                        <i class="fas fa-calendar-day me-2"></i>
+                                                        <span th:text="${report.reportDate.equals(#temporals.createToday()) ? 'Hoje' : 'Ontem'}">Data</span>
+                                                        <span class="text-muted small ms-2" th:text="'(' + ${#temporals.format(report.reportDate, 'dd/MM/yyyy')} + ')'"></span>
+                                                    </h6>
+                                                    <span th:if="${report.remoteWork}" class="badge bg-info">Remoto</span>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="mb-3">
+                                                        <h6 style="color: var(--accent-orange);">O que fez ontem:</h6>
+                                                        <p class="text-muted" th:text="${report.yesterdayTasks}">Tarefas de ontem</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <h6 style="color: var(--accent-orange);">O que fará hoje:</h6>
+                                                        <p class="text-muted" th:text="${report.todayTasks}">Tarefas de hoje</p>
+                                                    </div>
+                                                    <div th:if="${report.impediments}" class="mb-0">
+                                                        <h6 style="color: var(--accent-orange);">Impedimentos:</h6>
+                                                        <p class="text-muted mb-0" th:text="${report.impediments}">Impedimentos</p>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer bg-transparent border-top border-secondary text-end">
+                                                    <a th:href="@{/daily-reports/new}" class="btn btn-sm btn-outline-light">
+                                                        <i class="fas fa-edit me-1"></i>Editar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div th:if="${dailyReports == null or dailyReports.empty}" class="text-center p-4">
+                                    <div class="row justify-content-center">
+                                        <div class="col-md-6">
+                                            <div class="card">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                                                    <h5 class="text-white">Comece seu dia com um Daily Report!</h5>
+                                                    <p class="text-muted mb-4">Registre suas atividades e planejamento diário</p>
+                                                    <a href="/daily-reports/new" class="btn btn-primary">
+                                                        <i class="fas fa-plus me-2"></i>Criar Primeiro Daily Report
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

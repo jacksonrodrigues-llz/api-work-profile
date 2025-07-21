@@ -102,88 +102,47 @@
                     </div>
                 </div>
 
-                <!-- Métricas Resumo -->
+                <!-- Cards de Relatórios -->
                 <div class="row mb-4">
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <a href="/activities" class="text-decoration-none">
-                            <div class="card card-metric border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Atividades Concluídas
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedActivities}">0</div>
+                    <div class="col-xl-6 col-md-6 mb-4">
+                        <div class="card card-metric shadow h-100 py-3" style="cursor: pointer; border-left: 4px solid var(--accent-orange);" onclick="showMyMetrics()">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: var(--accent-orange);">
+                                            Minhas Métricas
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-check-circle fa-2x text-success"></i>
-                                        </div>
+                                        <div class="h6 mb-0 text-muted">Progresso pessoal e conquistas</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-chart-line fa-2x" style="color: var(--accent-orange);"></i>
                                     </div>
                                 </div>
                             </div>
-                        </a>
+                        </div>
                     </div>
 
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <a href="/goals" class="text-decoration-none">
-                            <div class="card card-metric border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Metas Concluídas
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
+                    <div class="col-xl-6 col-md-6 mb-4">
+                        <div class="card card-metric shadow h-100 py-3" style="cursor: pointer; border-left: 4px solid var(--accent-orange);" onclick="showDTReport()">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: var(--accent-orange);">
+                                            DT Report
                                         </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-bullseye fa-2x text-success"></i>
-                                        </div>
+                                        <div class="h6 mb-0 text-muted">Análise de débitos técnicos</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-exclamation-triangle fa-2x" style="color: var(--accent-orange);"></i>
                                     </div>
                                 </div>
                             </div>
-                        </a>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <a href="/goals" class="text-decoration-none">
-                            <div class="card card-metric border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                Metas Ativas
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.activeGoals}">0</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-flag fa-2x text-info"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <a href="/achievements" class="text-decoration-none">
-                            <div class="card card-metric border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Conquistas
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.achievements}">0</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-trophy fa-2x text-warning"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Conteúdo dos Relatórios -->
+                <div id="myMetricsReport" style="display: block;">
 
                 <!-- Gráficos -->
                 <div class="row mb-4">
@@ -294,6 +253,75 @@
                                 <div th:if="${achievements.empty}" class="text-center text-muted py-3">
                                     <i class="fas fa-trophy fa-2x mb-2"></i>
                                     <p>Nenhuma conquista encontrada</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DT Report -->
+                <div id="dtReport" style="display: none;">
+                    <!-- Filtro de Período -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form id="dtFilterForm" class="row g-3">
+                                <div class="col-md-3">
+                                    <select name="periodo" id="periodoSelect" class="form-select">
+                                        <option value="">Todos os Períodos</option>
+                                        <option value="semana">Esta semana</option>
+                                        <option value="15dias">Últimos 15 dias</option>
+                                        <option value="30dias">Últimos 30 dias</option>
+                                        <option value="3meses">Últimos 3 meses</option>
+                                        <option value="6meses">6 meses</option>
+                                        <option value="1ano">1 ano</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-primary" onclick="updateDTReport()">
+                                        <i class="fas fa-filter me-1"></i>Filtrar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráficos DT -->
+                    <div class="row mb-4">
+                        <div class="col-xl-4 col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Débitos por Criador</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="creatorChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-4 col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Débitos por Status</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-4 col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Prioridade vs Dias Abertos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="priorityChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -428,8 +456,163 @@
         });
         /*]]>*/
         
+        // Detectar parâmetro view na URL
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const view = urlParams.get('view');
+            if (view === 'dt') {
+                showDTReport();
+            }
+        });
+        
         function refreshReports() {
             location.reload();
+        }
+        
+        function showMyMetrics() {
+            document.getElementById('myMetricsReport').style.display = 'block';
+            document.getElementById('dtReport').style.display = 'none';
+        }
+        
+        function showDTReport() {
+            document.getElementById('myMetricsReport').style.display = 'none';
+            document.getElementById('dtReport').style.display = 'block';
+            loadDTCharts();
+        }
+        
+        let creatorChart, statusChart, priorityChart;
+        
+        function loadDTCharts() {
+            if (creatorChart) {
+                creatorChart.destroy();
+                statusChart.destroy();
+                priorityChart.destroy();
+            }
+            
+            // Gráfico por Criador
+            const creatorCtx = document.getElementById('creatorChart').getContext('2d');
+            creatorChart = new Chart(creatorCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Lima'],
+                    datasets: [{
+                        data: [12, 8, 6, 4],
+                        backgroundColor: ['#ff6b35', '#ff8c42', '#ffa726', '#ffb74d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#ffffff' }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico por Status
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['TODO', 'EM PROGRESSO', 'TESTE', 'DEPLOY', 'CONCLUÍDO'],
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: [15, 8, 5, 3, 12],
+                        backgroundColor: '#ff6b35'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico Prioridade vs Dias
+            const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+            priorityChart = new Chart(priorityCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Crítico',
+                        data: [{x: 1, y: 45}, {x: 1, y: 30}, {x: 1, y: 60}],
+                        backgroundColor: '#dc3545'
+                    }, {
+                        label: 'Alto',
+                        data: [{x: 2, y: 25}, {x: 2, y: 40}, {x: 2, y: 15}],
+                        backgroundColor: '#ffc107'
+                    }, {
+                        label: 'Médio',
+                        data: [{x: 3, y: 20}, {x: 3, y: 35}, {x: 3, y: 10}],
+                        backgroundColor: '#17a2b8'
+                    }, {
+                        label: 'Baixo',
+                        data: [{x: 4, y: 5}, {x: 4, y: 12}, {x: 4, y: 8}],
+                        backgroundColor: '#28a745'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Prioridade',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#b0b0b0',
+                                callback: function(value) {
+                                    const labels = ['', 'Crítico', 'Alto', 'Médio', 'Baixo'];
+                                    return labels[value];
+                                }
+                            },
+                            grid: { color: '#4a4a4a' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Dias Abertos',
+                                color: '#ffffff'
+                            },
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateDTReport() {
+            const periodo = document.getElementById('periodoSelect').value;
+            // Aqui seria feita a chamada AJAX para atualizar os dados
+            console.log('Atualizando DT Report para período:', periodo);
+            loadDTCharts(); // Recarrega os gráficos
         }
     </script>
 </body>

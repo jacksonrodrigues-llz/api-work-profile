@@ -104,7 +104,27 @@ public class TechDebtApiController {
         TechDebtDTO dto = new TechDebtDTO();
         dto.setProblema((String) data.get("problema"));
         dto.setDescricao((String) data.get("descricao"));
-        dto.setPrioridade((Integer) data.get("prioridade"));
+        
+        // Obter e validar a prioridade
+        Integer prioridade = null;
+        try {
+            if (data.get("prioridade") instanceof Integer) {
+                prioridade = (Integer) data.get("prioridade");
+            } else if (data.get("prioridade") instanceof Number) {
+                prioridade = ((Number) data.get("prioridade")).intValue();
+            } else if (data.get("prioridade") instanceof String) {
+                prioridade = Integer.parseInt((String) data.get("prioridade"));
+            }
+            
+            // Garantir que a prioridade esteja entre 1 e 4
+            if (prioridade == null || prioridade < 1 || prioridade > 4) {
+                prioridade = 1; // Valor padrão seguro
+            }
+        } catch (Exception e) {
+            prioridade = 1; // Valor padrão em caso de erro
+        }
+        
+        dto.setPrioridade(prioridade);
         dto.setCriadoPor((String) data.get("criadoPor"));
         
         if (data.get("status") != null) {
