@@ -1,18 +1,29 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
-  
-  h2:
-    console:
-      enabled: true
-  
+  # Desabilitar JPA para testes unitários
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  
+  # Desabilitar Liquibase para testes unitários
+  liquibase:
+    enabled: false
+  
+  # Configuração de segurança para testes
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: test-client-id
+            client-secret: test-client-secret
+
+# Configurações de logging para testes
+logging:
+  level:
+    root: ERROR
+    api.work.profile: INFO
+    org.springframework: ERROR
+    org.hibernate: ERROR
