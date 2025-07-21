@@ -144,6 +144,26 @@
                             <form th:action="@{/tech-debts}" th:object="${techDebt}" method="post">
                                 <input type="hidden" th:field="*{id}">
                                 
+                                <!-- Campos de tarefa no topo -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Número da Tarefa</label>
+                                            <input type="text" class="form-control" th:field="*{taskNumber}" 
+                                                   placeholder="Ex: TASK-123, US-456">
+                                            <div class="form-text">Número da tarefa no Azure DevOps ou outra ferramenta</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">URL da Tarefa</label>
+                                            <input type="url" class="form-control" th:field="*{taskUrl}" 
+                                                   placeholder="https://dev.azure.com/...">
+                                            <div class="form-text">Link direto para a tarefa</div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label class="form-label">Problema *</label>
                                     <input type="text" class="form-control" th:field="*{problema}" required>
@@ -188,25 +208,6 @@
                                                        th:field="*{tipos}" th:value="${tipo}">
                                                 <label class="form-check-label" th:text="${tipo}"></label>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">Número da Tarefa</label>
-                                            <input type="text" class="form-control" th:field="*{taskNumber}" 
-                                                   placeholder="Ex: TASK-123, US-456">
-                                            <div class="form-text">Número da tarefa no Azure DevOps ou outra ferramenta</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">URL da Tarefa</label>
-                                            <input type="url" class="form-control" th:field="*{taskUrl}" 
-                                                   placeholder="https://dev.azure.com/...">
-                                            <div class="form-text">Link direto para a tarefa</div>
                                         </div>
                                     </div>
                                 </div>
@@ -392,13 +393,17 @@
                         <span class="badge bg-warning me-1">INFRA</span>
                         <small class="text-muted">Infraestrutura</small>
                     </div>
-                    <div class="mb-0">
+                    <div class="mb-2">
+                        <span class="badge bg-danger me-1">SECURITY</span>
+                        <small class="text-muted">Segurança</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge bg-purple me-1" style="background-color: #6f42c1;">DATABASE</span>
+                        <small class="text-muted">Banco de Dados</small>
+                    </div>
+                    <div class="mb-2">
                         <span class="badge bg-secondary me-1">NEGOCIO</span>
                         <small class="text-muted">Business</small>
-                    </div>
-                    <div class="mb-0">
-                        <span class="badge bg-secondary me-1">SEGURANÇA</span>
-                        <small class="text-muted">Segurança</small>
                     </div>
                 </div>
             </div>
