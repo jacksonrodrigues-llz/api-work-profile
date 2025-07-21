@@ -22,10 +22,13 @@ public class TechDebtDTO {
     private String criadoPor;
     
     public TechDebt toEntity() {
+        // Garantir que a prioridade esteja entre 1 e 4
+        int validPrioridade = (this.prioridade == null || this.prioridade < 1 || this.prioridade > 4) ? 1 : this.prioridade;
+        
         var builder = TechDebt.builder()
             .problema(this.problema)
             .descricao(this.descricao)
-            .prioridade(this.prioridade)
+            .prioridade(validPrioridade)
             .tags(this.tags)
             .criadoPor(this.criadoPor);
         

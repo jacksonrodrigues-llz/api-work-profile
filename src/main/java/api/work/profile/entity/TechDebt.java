@@ -41,18 +41,18 @@ public class TechDebt {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private StatusDebito status = StatusDebito.TODO;
-    
-    @Column(name = "data_criacao")
-    private LocalDateTime dataCriacao;
-    
-    @Column(name = "data_resolucao")
-    private LocalDateTime dataResolucao;
-    
+
     @Column(name = "criado_por", length = 255)
     private String criadoPor;
     
     @Column(name = "criado_por_id")
     private Long criadoPorId;
+
+    @Column(name = "data_criacao")
+    private LocalDateTime dataCriacao;
+
+    @Column(name = "data_resolucao")
+    private LocalDateTime dataResolucao;
     
     @Column(name = "alterado_por_id")
     private Long alteradoPorId;
