@@ -39,7 +39,7 @@ logging:
     max-history: 30
 
 server:
-  port: ${PORT:5000}
+  port: ${PORT:8080}
   compression:
     enabled: true
   http2:

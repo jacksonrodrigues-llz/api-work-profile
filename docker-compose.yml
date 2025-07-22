@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "8098:8098"
+      - "8080:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/careertracker
       - SPRING_DATASOURCE_USERNAME=postgres

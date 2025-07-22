@@ -2,7 +2,7 @@ spring:
   application:
     name: work-profile-portal
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+    active: ${SPRING_PROFILES_ACTIVE:railway}
   
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -38,8 +38,18 @@ spring:
           filter:
             enabled: true
 
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info
+    endpoint:
+      health:
+        show-details: when-authorized
+
+
 server:
-  port: 8098
+  port: 8080
 
 github:
   token: ${GITHUB_TOKEN}
