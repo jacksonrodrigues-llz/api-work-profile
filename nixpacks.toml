@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["openjdk21", "maven"]
+
+[phases.build]
+cmds = ["mvn clean package -DskipTests"]
+
+[start]
+cmd = "java -Dserver.port=8080 -Dspring.profiles.active=railway -jar target/*.jar"
