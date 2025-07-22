@@ -8,12 +8,24 @@ spring:
       ddl-auto: validate
     show-sql: false
   
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+  
   security:
     oauth2:
       client:
         registration:
           github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            scope: user:email,repo
             redirect-uri: "${RAILWAY_STATIC_URL}/login/oauth2/code/github"
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
 
 server:
   port: ${PORT:8080}
@@ -39,6 +51,15 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+github:
+  token: ${GITHUB_TOKEN}
+  base-url: https://api.github.com
+
+recaptcha:
+  site-key: ${RECAPTCHA_SITE_KEY:}
+  secret-key: ${RECAPTCHA_SECRET_KEY:}
+  verify-url: https://www.google.com/recaptcha/api/siteverify
+
 app:
   api:
-    key: ${API_KEY}
+    key: ${API_KEY:}
