@@ -10,7 +10,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copia o JAR final do build para o container
-COPY --from=build /app/target/api-work-profile-*.jar app.jar
+COPY --from=build /app/target/app-*.jar app.jar
 
 # Expõe a porta usada pelo Railway (via variável de ambiente)
 EXPOSE 8080

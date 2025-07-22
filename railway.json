@@ -4,7 +4,7 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar target/*.jar",
+    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar app.jar",
     "healthcheckPath": "/actuator/health",
     "healthcheckTimeout": 300
   }
