@@ -63,7 +63,7 @@ cd api-work-profile
 # 4. Deploy automático
 
 # Para desenvolvimento local:
-export DATABASE_URL=jdbc:postgresql://localhost:5432/careertracker
+export SPRING_PROFILES_ACTIVE=local
 export GITHUB_CLIENT_ID=seu_client_id
 export GITHUB_CLIENT_SECRET=seu_client_secret
 
