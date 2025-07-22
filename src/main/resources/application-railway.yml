@@ -76,3 +76,12 @@ recaptcha:
 app:
   api:
     key: ${API_KEY:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized

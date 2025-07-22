@@ -37,6 +37,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/register", "/reset-password", "/css/**", "/js/**", "/images/**", "/uploads/**", "/h2-console/**", "/.well-known/**", "/favicon.ico", "/error").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 .requestMatchers("/api/tech-debts/webhook").permitAll() // Apenas webhook específico
                 .anyRequest().authenticated()
             )
