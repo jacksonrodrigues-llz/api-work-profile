@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 @Configuration
 @EnableWebSecurity
@@ -36,7 +37,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/register", "/reset-password", "/css/**", "/js/**", "/images/**", "/uploads/**", "/h2-console/**", "/.well-known/**", "/favicon.ico", "/error").permitAll()
-                .requestMatchers("/activities/*/status", "/goals/*/status").permitAll()
+                .requestMatchers("/api/tech-debts/webhook").permitAll() // Apenas webhook específico
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -51,11 +52,26 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED)
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+            )
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers("/api/tech-debts/webhook", "/h2-console/**")
+            )
             .headers(headers -> headers
-                .frameOptions().sameOrigin()
+                .frameOptions().deny()
+                .contentTypeOptions().and()
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .maxAgeInSeconds(31536000)
+                    .includeSubDomains(true)
+                )
             );
         
         return http.build();

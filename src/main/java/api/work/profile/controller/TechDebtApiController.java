@@ -21,26 +21,38 @@ public class TechDebtApiController {
     
     private final TechDebtService techDebtService;
     private final UserService userService;
+    private final api.work.profile.config.ApiSecurityConfig apiSecurityConfig;
     
-    @PostMapping("/import")
-    public ResponseEntity<?> importFromWebhook(@RequestBody TechDebtDTO dto) {
+    @PostMapping("/webhook")
+    public ResponseEntity<?> importFromWebhook(
+            @RequestHeader("X-API-Key") String apiKey,
+            @RequestBody TechDebtDTO dto) {
         try {
-            // Para webhook, criar usuário genérico ou usar o criadoPor
-            User user = userService.findByEmail(dto.getCriadoPor() + "@webhook.com");
-            if (user == null) {
-                user = new User();
-                user.setEmail(dto.getCriadoPor() + "@webhook.com");
-                user.setName(dto.getCriadoPor());
-                user = userService.save(user);
+            apiSecurityConfig.validateApiKey(apiKey);
+            
+            if (dto.getCriadoPor() == null || dto.getCriadoPor().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Campo 'criadoPor' é obrigatório");
+            }
+            
+            // Sanitizar entrada
+            dto.setCriadoPor(dto.getCriadoPor().trim());
+            
+            // Para webhook, usar usuário sistema
+            User systemUser = userService.findByEmail("system@webhook.internal");
+            if (systemUser == null) {
+                return ResponseEntity.badRequest().body("Usuário sistema não configurado");
             }
             
             TechDebt debt = dto.toEntity();
-            debt.setUser(user);
+            debt.setUser(systemUser);
             techDebtService.save(debt);
             
             return ResponseEntity.ok().body("Débito técnico importado com sucesso");
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                .body("Não autorizado");
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao importar: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erro ao processar solicitação");
         }
     }
     
