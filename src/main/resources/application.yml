@@ -39,7 +39,8 @@ spring:
             enabled: true
 
 server:
-  port: 8098
+  port: ${PORT:8080}
+
 
 github:
   token: ${GITHUB_TOKEN}
