@@ -45,9 +45,13 @@ github:
   token: ${GITHUB_TOKEN}
   base-url: https://api.github.com
 
+app:
+  api:
+    key: ${API_KEY:}
+
 recaptcha:
-  site-key: ${RECAPTCHA_SITE_KEY:6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI}
-  secret-key: ${RECAPTCHA_SECRET_KEY:6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe}
+  site-key: ${RECAPTCHA_SITE_KEY:}
+  secret-key: ${RECAPTCHA_SECRET_KEY:}
   verify-url: https://www.google.com/recaptcha/api/siteverify
 
 logging:

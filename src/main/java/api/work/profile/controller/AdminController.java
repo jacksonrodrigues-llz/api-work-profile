@@ -93,7 +93,7 @@ public class AdminController {
             var currentUser = profileService.getUserFromAuthentication(authentication);
             var token = adminService.generatePasswordResetToken(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", 
-                "Token de reset gerado. Link: /reset-password?token=" + token);
+                "Token de reset de senha gerado e enviado com sucesso.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Erro ao gerar token: " + e.getMessage());
         }
