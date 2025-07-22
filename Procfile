@@ -1,0 +1,1 @@
+web: java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/api-work-profile-0.0.1-SNAPSHOT.jar
