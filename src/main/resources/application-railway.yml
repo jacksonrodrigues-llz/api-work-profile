@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DATABASE_URL}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
     driver-class-name: org.postgresql.Driver
   
   jpa:
@@ -13,6 +13,9 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
+    drop-first: false
+    contexts: railway
+    default-schema: public
   
   security:
     oauth2:
@@ -55,6 +58,9 @@ logging:
     api.work.profile: INFO
     org.springframework.security: WARN
     org.hibernate: WARN
+    liquibase: INFO
+    liquibase.database: INFO
+    liquibase.changelog: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 

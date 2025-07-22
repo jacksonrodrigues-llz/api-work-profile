@@ -1,1 +1,1 @@
-web: java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar target/*.jar
+web: java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar target/app.jar
