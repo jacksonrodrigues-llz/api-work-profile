@@ -49,27 +49,25 @@ Um sistema completo para gerenciar e acompanhar seu crescimento profissional den
    - **Authorization callback URL**: `http://localhost:8098/login/oauth2/code/github`
 3. Copie o Client ID e Client Secret
 
-### Executando com Docker
+### Executando com Railway
 
 ```bash
 # Clone o repositório
 git clone <seu-repositorio>
 cd api-work-profile
 
-# Configure as variáveis de ambiente
-cp .env .env
-# Edite o arquivo .env com suas credenciais GitHub
+# Configure no Railway:
+# 1. Conecte o repositório GitHub
+# 2. Adicione PostgreSQL service
+# 3. Configure variáveis de ambiente
+# 4. Deploy automático
 
-# Execute com Docker Compose
-docker compose up -d
+# Para desenvolvimento local:
+export DATABASE_URL=jdbc:postgresql://localhost:5432/careertracker
+export GITHUB_CLIENT_ID=seu_client_id
+export GITHUB_CLIENT_SECRET=seu_client_secret
 
-# Migrações são gerenciadas pelo Liquibase automaticamente
-
-# Build da aplicação
-mvn clean package -DskipTests
-
-# Execute a aplicação
-docker-compose up --build
+mvn spring-boot:run
 ```
 
 ### Executando Localmente
@@ -81,12 +79,17 @@ docker compose up db -d
 # Configure as variáveis de ambiente
 export GITHUB_CLIENT_ID=seu_client_id
 export GITHUB_CLIENT_SECRET=seu_client_secret
+export DATABASE_URL=jdbc:postgresql://localhost:54322/careertracker
 
 # Execute a aplicação
 mvn spring-boot:run
 ```
 
 A aplicação estará disponível em: `http://localhost:8098`
+
+### Deploy em Produção (Railway)
+
+Veja documentação completa em `docs/RAILWAY-DEPLOYMENT.md`
 
 ## 📊 Funcionalidades Detalhadas
 
@@ -175,6 +178,12 @@ src/main/resources/
 - [ ] Notificações por email
 - [ ] API REST para mobile
 
+## 📚 Documentação de Deploy
+
+- **Railway Deploy**: `docs/RAILWAY-DEPLOYMENT.md`
+- **Segurança**: `docs/SECURITY-ANALYSIS.md`
+- **Troubleshooting**: `docs/RAILWAY-TROUBLESHOOTING.md`
+
 ## 🛠 Solução de Problemas
 
 ### Gerenciamento de Banco de Dados
@@ -200,27 +209,24 @@ O projeto usa **Liquibase** para gerenciar migrações do banco de dados.
 
 Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
 
-## 🚀 Deploy na AWS
+## 🚀 Deploy no Railway
 
 ### Configuração para Produção
 
 ```bash
 # Variáveis de ambiente necessárias
-SPRING_PROFILES_ACTIVE=prod
-RDS_HOSTNAME=jdbc:postgresql://seu-rds.amazonaws.com:5432/careertracker
-RDS_USERNAME=seu_usuario
-RDS_PASSWORD=sua_senha
+DATABASE_URL=postgresql://user:pass@host:port/db
 GITHUB_CLIENT_ID=seu_client_id
 GITHUB_CLIENT_SECRET=seu_client_secret
+GITHUB_TOKEN=seu_token
+RAILWAY_STATIC_URL=https://seu-app.railway.app
 ```
 
-### Serviços AWS Recomendados
+### Serviços Railway
 
-- **Elastic Beanstalk**: Deploy da aplicação
-- **RDS PostgreSQL**: Banco de dados
-- **CloudFront**: CDN para assets estáticos
-- **Route 53**: DNS
-- **Certificate Manager**: SSL/TLS
+- **Railway App**: Deploy da aplicação
+- **Railway PostgreSQL**: Banco de dados
+- **Domínio customizado**: SSL/TLS automático
 
 ---
 
