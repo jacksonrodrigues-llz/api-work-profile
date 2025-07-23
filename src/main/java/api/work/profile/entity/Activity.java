@@ -24,13 +24,16 @@ public class Activity {
     @Column(columnDefinition = "TEXT")
     private String description;
     
-    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private ActivityStatus status = ActivityStatus.TODO;
+    private String status = "TODO";
     
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private Priority priority = Priority.MEDIUM;
+    
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private TaskType taskType = TaskType.CORE;
     
     private String project;
     private String skills;
@@ -55,6 +58,7 @@ public class Activity {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User user;
     
     @PrePersist
@@ -68,5 +72,9 @@ public class Activity {
     
     public enum Priority {
         LOW, MEDIUM, HIGH, URGENT
+    }
+    
+    public enum TaskType {
+        CORE, BUG, ANALYSIS
     }
 }

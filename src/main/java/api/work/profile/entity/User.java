@@ -20,11 +20,11 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(unique = true, nullable = false)
+
+    @jakarta.persistence.Column(unique = true, nullable = false)
     private String email;
-    
-    @Column(nullable = false)
+
+    @jakarta.persistence.Column(nullable = false)
     private String name;
     
     private String githubUsername;
@@ -40,6 +40,9 @@ public class User {
     @Builder.Default
     private Boolean enabled = true;
     
+    @Builder.Default
+    private Boolean active = true;
+    
     // Perfil e permissões
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -47,14 +50,14 @@ public class User {
     
     // Categoria profissional
     @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = true)
+    @jakarta.persistence.Column(name = "category", nullable = true)
     private UserCategory category;
     
     // Reset de senha
     private String passwordResetToken;
     private LocalDateTime tokenExpiration;
-    
-    @Column(name = "created_at")
+
+    @jakarta.persistence.Column(name = "created_at")
     private LocalDateTime createdAt;
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)

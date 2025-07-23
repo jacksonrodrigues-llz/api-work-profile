@@ -15,7 +15,7 @@ public class InsightService {
         StringBuilder insights = new StringBuilder();
         
         // Análise de atividades
-        long completedActivities = activities.stream().filter(a -> a.getStatus().name().equals("DONE")).count();
+        long completedActivities = activities.stream().filter(a -> a.getStatus().equals("DONE")).count();
         double completionRate = activities.isEmpty() ? 0 : (completedActivities * 100.0) / activities.size();
         
         if (completionRate > 80) {
