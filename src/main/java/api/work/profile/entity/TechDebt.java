@@ -17,53 +17,53 @@ public class TechDebt {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(nullable = false, length = 500)
+
+    @jakarta.persistence.Column(nullable = false, length = 500)
     private String problema;
-    
-    @Column(columnDefinition = "TEXT")
+
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String descricao;
-    
-    @Column(nullable = false)
+
+    @jakarta.persistence.Column(nullable = false)
     private Integer prioridade; // 1-Crítico, 2-Alto, 3-Médio, 4-Baixo
     
     @ElementCollection(targetClass = TipoDebito.class)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "tech_debt_tipos", joinColumns = @JoinColumn(name = "tech_debt_id"))
-    @Column(name = "tipos")
+    @jakarta.persistence.Column(name = "tipos")
     private List<TipoDebito> tipos;
     
     @ElementCollection
     @CollectionTable(name = "tech_debt_tags", joinColumns = @JoinColumn(name = "tech_debt_id"))
-    @Column(name = "tags")
+    @jakarta.persistence.Column(name = "tags")
     private List<String> tags;
     
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private StatusDebito status = StatusDebito.TODO;
 
-    @Column(name = "criado_por", length = 255)
+    @jakarta.persistence.Column(name = "criado_por", length = 255)
     private String criadoPor;
-    
-    @Column(name = "criado_por_id")
+
+    @jakarta.persistence.Column(name = "criado_por_id")
     private Long criadoPorId;
 
-    @Column(name = "data_criacao")
+    @jakarta.persistence.Column(name = "data_criacao")
     private LocalDateTime dataCriacao;
 
-    @Column(name = "data_resolucao")
+    @jakarta.persistence.Column(name = "data_resolucao")
     private LocalDateTime dataResolucao;
-    
-    @Column(name = "alterado_por_id")
+
+    @jakarta.persistence.Column(name = "alterado_por_id")
     private Long alteradoPorId;
-    
-    @Column(name = "data_alteracao")
+
+    @jakarta.persistence.Column(name = "data_alteracao")
     private LocalDateTime dataAlteracao;
-    
-    @Column(name = "task_number", length = 100)
+
+    @jakarta.persistence.Column(name = "task_number", length = 100)
     private String taskNumber;
-    
-    @Column(name = "task_url", columnDefinition = "TEXT")
+
+    @jakarta.persistence.Column(name = "task_url", columnDefinition = "TEXT")
     private String taskUrl;
     
     @ManyToOne(fetch = FetchType.LAZY)

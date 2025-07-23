@@ -80,12 +80,12 @@ public class ActivityController {
     
     @PatchMapping("/{id}/status")
     @ResponseBody
-    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, String>> updateStatus(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
             activityService.updateActivityStatus(id, payload.get("status"));
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Status atualizado"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", e.getMessage()));
         }
     }
 }

@@ -1,5 +1,7 @@
 package api.work.profile.service;
 
+import api.work.profile.entity.Activity;
+import api.work.profile.entity.Goal;
 import api.work.profile.entity.User;
 import api.work.profile.repository.ActivityRepository;
 import api.work.profile.repository.GoalRepository;
@@ -76,15 +78,15 @@ public class ReportService {
             var radarData = insightService.calculateRadarData(activities, goals, achievements);
             StringBuilder activitiesHtml = new StringBuilder();
             activities.stream().limit(MAX_ACTIVITIES_TO_SHOW).forEach(activity -> {
-                String statusIcon = getStatusIcon(activity.getStatus().name());
+                String statusIcon = getStatusIcon(activity.getStatus());
                 String categoryTag = getCategoryTag(activity.getProject());
                 activitiesHtml.append(String.format(
                         "<tr><td>%s</td><td>%s</td><td class='status-%s'>%s %s</td><td class='priority-%s'>%s</td><td>%s</td><td>%s</td></tr>",
                         sanitizeHtml(activity.getTitle()),
                         sanitizeHtml(activity.getProject() != null ? activity.getProject() : "-"),
-                        activity.getStatus().name().toLowerCase(),
+                        activity.getStatus().toLowerCase(),
                         statusIcon,
-                        translateStatus(activity.getStatus().name()),
+                        translateStatus(activity.getStatus()),
                         activity.getPriority().name().toLowerCase(),
                         translatePriority(activity.getPriority().name()),
                         activity.getActualHours() != null ? activity.getActualHours() + "h" : "-",
@@ -283,10 +285,10 @@ public class ReportService {
         var report = new HashMap<String, Object>();
         var startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
-        var completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
-        var avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
-        var completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
-        var activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
+        var completedActivities = activityRepository.countCompletedActivitiesSince(user, String.valueOf(Activity.ActivityStatus.DONE), startOfMonth);
+        var avgHours = activityRepository.getAverageHoursPerActivity(user, String.valueOf(Activity.ActivityStatus.DONE));
+        var completedGoals = goalRepository.countCompletedGoals(user, Goal.GoalStatus.COMPLETED);
+        var activeGoals = goalRepository.countActiveGoals(user, Goal.GoalStatus.ACTIVE);
         var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
         
         report.put("completedActivities", completedActivities != null ? completedActivities : 0);
@@ -384,10 +386,10 @@ public class ReportService {
         var report = new HashMap<String, Object>();
         var startDate = since != null ? since : LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
-        var completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startDate);
-        var avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
-        var completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
-        var activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
+        var completedActivities = activityRepository.countCompletedActivitiesSince(user, String.valueOf(Activity.ActivityStatus.DONE), startDate);
+        var avgHours = activityRepository.getAverageHoursPerActivity(user, String.valueOf(Activity.ActivityStatus.DONE));
+        var completedGoals = goalRepository.countCompletedGoals(user, Goal.GoalStatus.COMPLETED);
+        var activeGoals = goalRepository.countActiveGoals(user, Goal.GoalStatus.ACTIVE);
         var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
         
         report.put("completedActivities", completedActivities != null ? completedActivities : 0);
@@ -412,7 +414,7 @@ public class ReportService {
                 map.put("id", a.getId());
                 map.put("title", a.getTitle());
                 map.put("project", a.getProject() != null ? a.getProject() : "");
-                map.put("status", a.getStatus().name());
+                map.put("status", a.getStatus());
                 map.put("priority", a.getPriority().name());
                 map.put("createdAt", a.getCreatedAt());
                 return map;

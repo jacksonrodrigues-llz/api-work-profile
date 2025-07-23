@@ -1,12 +1,12 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
+    "builder": "DOCKERFILE",
     "buildCommand": "mvn clean package -DskipTests"
   },
   "deploy": {
-    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=prod -jar target/api-work-profile-0.0.1-SNAPSHOT.jar",
+    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar target/api-work-profile-0.0.1-SNAPSHOT.jar",
     "healthcheckPath": "/actuator/health",
-    "healthcheckTimeout": 300
+    "healthcheckTimeout": 100
   }
 }

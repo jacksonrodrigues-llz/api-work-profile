@@ -149,17 +149,27 @@
                                     </div>
 
                                     <div class="row mb-3">
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label for="project" class="form-label">Projeto</label>
                                             <input type="text" class="form-control" id="project" th:field="*{project}">
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label for="priority" class="form-label">Prioridade</label>
                                             <select class="form-select" id="priority" th:field="*{priority}">
                                                 <option value="LOW">Baixa</option>
                                                 <option value="MEDIUM">Média</option>
                                                 <option value="HIGH">Alta</option>
                                                 <option value="URGENT">Urgente</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="taskType" class="form-label">Tipo de Tarefa 
+                                                <i class="fas fa-info-circle text-info" data-bs-toggle="modal" data-bs-target="#taskTypeModal" style="cursor: pointer;"></i>
+                                            </label>
+                                            <select class="form-select" id="taskType" th:field="*{taskType}">
+                                                <option value="CORE">Core</option>
+                                                <option value="BUG">Bug</option>
+                                                <option value="ANALYSIS">Análise</option>
                                             </select>
                                         </div>
                                     </div>
@@ -227,6 +237,35 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Modal Tipos de Tarefa -->
+    <div class="modal fade" id="taskTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">Tipos de Tarefa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <div class="mb-3">
+                        <h6 style="color: var(--accent-orange);"><i class="fas fa-cog me-2"></i>Core</h6>
+                        <p>Tarefas relacionadas ao negócio principal da aplicação. Inclui desenvolvimento de funcionalidades, melhorias e implementações de requisitos.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 style="color: var(--accent-orange);"><i class="fas fa-bug me-2"></i>Bug</h6>
+                        <p>Correções de defeitos, problemas ou comportamentos inesperados no sistema. Inclui hotfixes e patches.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 style="color: var(--accent-orange);"><i class="fas fa-search me-2"></i>Análise</h6>
+                        <p>Atividades de investigação, pesquisa, documentação e planejamento. Inclui estudos de viabilidade e levantamento de requisitos.</p>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+                </div>
+            </div>
         </div>
     </div>
 

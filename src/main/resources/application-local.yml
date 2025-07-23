@@ -3,24 +3,7 @@ spring:
     url: jdbc:postgresql://localhost:54322/careertracker
     username: postgres
     password: postgres
-    
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: true
-    show-summary: false
-    show-summary-output: LOG
-    
+
 logging:
   level:
     api.work.profile: DEBUG
-    liquibase: ERROR
-    liquibase.database: ERROR
-    liquibase.executor: ERROR
-    liquibase.changelog: ERROR
-    liquibase.hub: OFF
-    liquibase.analytics: OFF
