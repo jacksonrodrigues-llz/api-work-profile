@@ -40,6 +40,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         
         // Atualizar informações do GitHub
         user.setGithubUsername(login);
+        user.setAvatar(avatarUrl);
         user.setAvatarUrl(avatarUrl);
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
@@ -54,6 +55,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             .email(email)
             .name(name)
             .githubUsername(login)
+            .avatar(avatarUrl)
             .avatarUrl(avatarUrl)
             .role(UserRole.USER)
             .enabled(true)
