@@ -9,5 +9,6 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 COPY --from=build /app/target/api-work-profile-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE $PORT
-ENTRYPOINT ["java", "-Dspring.profiles.active=railway", "-jar", "app.jar"]
+ENV SPRING_PROFILES_ACTIVE=railway
+EXPOSE 8080
+ENTRYPOINT ["java", "-Dserver.port=8080", "-Dspring.profiles.active=railway", "-jar", "app.jar"]
