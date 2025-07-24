@@ -103,7 +103,7 @@ class DailyReportServiceTest {
     @Test
     void getTodaysReport_ExistingReport_ShouldReturnReport() {
         // Arrange
-        when(dailyReportRepository.findByUserAndReportDate(testUser, today)).thenReturn(Optional.of(testReport));
+        when(dailyReportRepository.findByUserAndReportDate(testUser, today)).thenReturn(List.of(testReport));
 
         // Act
         Optional<DailyReport> result = dailyReportService.getTodaysReport(testUser);
@@ -118,7 +118,7 @@ class DailyReportServiceTest {
     @Test
     void getTodaysReport_NoReport_ShouldReturnEmpty() {
         // Arrange
-        when(dailyReportRepository.findByUserAndReportDate(testUser, today)).thenReturn(Optional.empty());
+        when(dailyReportRepository.findByUserAndReportDate(testUser, today)).thenReturn(List.of());
 
         // Act
         Optional<DailyReport> result = dailyReportService.getTodaysReport(testUser);
