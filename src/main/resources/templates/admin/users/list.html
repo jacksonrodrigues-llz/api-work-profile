@@ -111,97 +111,148 @@
                     </a>
                 </div>
 
+                <!-- Abas -->
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="active-tab" data-bs-toggle="tab" href="#active-users">
+                            <i class="fas fa-users me-2"></i>Usuários Ativos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="inactive-tab" data-bs-toggle="tab" href="#inactive-users">
+                            <i class="fas fa-user-slash me-2"></i>Usuários Inativos
+                        </a>
+                    </li>
+                </ul>
+
                 <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
                 <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-                <div class="mb-3">
-                    <button id="bulkDisableBtn" class="btn btn-outline-danger" onclick="confirmBulkDisable()" disabled>
-                        <i class="fas fa-trash me-2"></i>Desabilitar Selecionados
-                    </button>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th><input type="checkbox" id="selectAll" onchange="toggleAll()"></th>
-                                        <th>Nome</th>
-                                        <th>E-mail</th>
-                                        <th>Perfil</th>
-                                        <th>Categoria</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="user : ${users.content}">
-                                        <td><input type="checkbox" class="user-checkbox" th:value="${user.id}"></td>
-                                        <td th:text="${user.name}">Nome</td>
-                                        <td th:text="${user.email}">email@example.com</td>
-                                        <td>
-                                            <span class="badge" th:classappend="${user.role?.name() == 'ADMIN'} ? 'bg-danger' : 'bg-primary'" 
-                                                  th:text="${user.role?.description}">USER</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info" th:if="${user.category != null}" th:text="${user.category}">Categoria</span>
-                                            <span class="badge bg-secondary" th:if="${user.category == null}">Não definida</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge" th:classappend="${user.active != null and user.active} ? 'bg-success' : 'bg-secondary'" 
-                                                  th:text="${user.active != null and user.active ? 'Ativo' : 'Inativo'}">Ativo</span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
-                                                <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="btn btn-outline-primary">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form th:action="@{/admin/users/{id}/reset-password(id=${user.id})}" method="post" class="d-inline">
-                                                    <button type="submit" class="btn btn-outline-warning" title="Reset Senha">
-                                                        <i class="fas fa-key"></i>
+                <div class="tab-content">
+                    <!-- Aba Usuários Ativos -->
+                    <div class="tab-pane fade show active" id="active-users">
+                        <div class="mb-3">
+                            <button id="bulkDisableBtn" class="btn btn-outline-danger" onclick="confirmBulkDisable()" disabled>
+                                <i class="fas fa-trash me-2"></i>Desabilitar Selecionados
+                            </button>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th><input type="checkbox" id="selectAll" onchange="toggleAll()"></th>
+                                                <th>Nome</th>
+                                                <th>E-mail</th>
+                                                <th>Perfil</th>
+                                                <th>Categoria</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="user : ${users.content}" th:if="${user.active == null or user.active}">
+                                                <td><input type="checkbox" class="user-checkbox" th:value="${user.id}"></td>
+                                                <td th:text="${user.name}">Nome</td>
+                                                <td th:text="${user.email}">email@example.com</td>
+                                                <td>
+                                                    <span class="badge" th:classappend="${user.role?.name() == 'ADMIN'} ? 'bg-danger' : 'bg-primary'" 
+                                                          th:text="${user.role?.description}">USER</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info" th:if="${user.category != null}" th:text="${user.category}">Categoria</span>
+                                                    <span class="badge bg-secondary" th:if="${user.category == null}">Não definida</span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a th:href="@{/admin/users/{id}/edit(id=${user.id})}" class="btn btn-outline-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <form th:action="@{/admin/users/{id}/reset-password(id=${user.id})}" method="post" class="d-inline">
+                                                            <button type="submit" class="btn btn-outline-warning" title="Reset Senha">
+                                                                <i class="fas fa-key"></i>
+                                                            </button>
+                                                        </form>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Alterar Role">
+                                                                <i class="fas fa-user-cog"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                <li>
+                                                                    <form th:action="@{/admin/users/{id}/change-role(id=${user.id})}" method="post" class="d-inline">
+                                                                        <input type="hidden" name="role" value="USER">
+                                                                        <button type="submit" class="dropdown-item" th:disabled="${user.role?.name() == 'USER'}">
+                                                                            <i class="fas fa-user me-2"></i>Usuário
+                                                                        </button>
+                                                                    </form>
+                                                                </li>
+                                                                <li>
+                                                                    <form th:action="@{/admin/users/{id}/change-role(id=${user.id})}" method="post" class="d-inline">
+                                                                        <input type="hidden" name="role" value="ADMIN">
+                                                                        <button type="submit" class="dropdown-item" th:disabled="${user.role?.name() == 'ADMIN'}">
+                                                                            <i class="fas fa-user-shield me-2"></i>Administrador
+                                                                        </button>
+                                                                    </form>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                        <button type="button" class="btn btn-outline-danger" 
+                                                                th:data-user-id="${user.id}" th:data-user-name="${user.name}"
+                                                                onclick="confirmDisableUser(this.dataset.userId, this.dataset.userName)"
+                                                                title="Desabilitar Usuário">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aba Usuários Inativos -->
+                    <div class="tab-pane fade" id="inactive-users">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>E-mail</th>
+                                                <th>Perfil</th>
+                                                <th>Categoria</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="user : ${users.content}" th:if="${user.active != null and !user.active}">
+                                                <td th:text="${user.name}">Nome</td>
+                                                <td th:text="${user.email}">email@example.com</td>
+                                                <td>
+                                                    <span class="badge" th:classappend="${user.role?.name() == 'ADMIN'} ? 'bg-danger' : 'bg-primary'" 
+                                                          th:text="${user.role?.description}">USER</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info" th:if="${user.category != null}" th:text="${user.category}">Categoria</span>
+                                                    <span class="badge bg-secondary" th:if="${user.category == null}">Não definida</span>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-outline-success btn-sm" 
+                                                            th:data-user-id="${user.id}"
+                                                            onclick="enableUser(this.dataset.userId)"
+                                                            title="Reativar Usuário">
+                                                        <i class="fas fa-undo me-1"></i>Reativar
                                                     </button>
-                                                </form>
-                                                <div class="btn-group btn-group-sm">
-                                                    <button type="button" class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown" title="Alterar Role">
-                                                        <i class="fas fa-user-cog"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu">
-                                                        <li>
-                                                            <form th:action="@{/admin/users/{id}/change-role(id=${user.id})}" method="post" class="d-inline">
-                                                                <input type="hidden" name="role" value="USER">
-                                                                <button type="submit" class="dropdown-item" th:disabled="${user.role?.name() == 'USER'}">
-                                                                    <i class="fas fa-user me-2"></i>Usuário
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                        <li>
-                                                            <form th:action="@{/admin/users/{id}/change-role(id=${user.id})}" method="post" class="d-inline">
-                                                                <input type="hidden" name="role" value="ADMIN">
-                                                                <button type="submit" class="dropdown-item" th:disabled="${user.role?.name() == 'ADMIN'}">
-                                                                    <i class="fas fa-user-shield me-2"></i>Administrador
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                                <button type="button" class="btn btn-outline-danger" 
-                                                        th:data-user-id="${user.id}" th:data-user-name="${user.name}"
-                                                        onclick="confirmDisableUser(this.dataset.userId, this.dataset.userName)"
-                                                        th:if="${user.active == null or user.active}" title="Desabilitar Usuário">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-outline-success" 
-                                                        th:data-user-id="${user.id}"
-                                                        onclick="enableUser(this.dataset.userId)"
-                                                        th:if="${user.active != null and !user.active}" title="Reativar Usuário">
-                                                    <i class="fas fa-undo"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

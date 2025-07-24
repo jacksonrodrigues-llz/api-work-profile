@@ -70,7 +70,7 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/api/tech-debts/webhook", "/h2-console/**", "/daily-reports/*/delete")
+                .ignoringRequestMatchers("/api/tech-debts/webhook", "/h2-console/**", "/daily-reports/*/delete", "/admin/users/bulk-disable", "/admin/users/*/disable", "/admin/users/*/enable")
             )
             .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.deny())
