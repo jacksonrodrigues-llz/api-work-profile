@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,53 +17,61 @@ import java.util.Map;
 public class ActivityService {
 
     private final ActivityRepository activityRepository;
+    private final BoardColumnService boardColumnService;
 
     public Map<String, Object> getKanbanData(User user) {
         var activities = activityRepository.findByUserOrderByCreatedAtDesc(user);
+        var columns = boardColumnService.getUserColumns(user);
         
-        var todoActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.TODO)
-            .toList();
-        var inProgressActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.IN_PROGRESS)
-            .toList();
-        var devActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.DEV)
-            .toList();
-        var uatActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.UAT)
-            .toList();
-        var hmlActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.HML)
-            .toList();
-        var prdActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.PRD)
-            .toList();
-        var deployActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.DEPLOY)
-            .toList();
-        var doneActivities = activities.stream()
-            .filter(a -> a.getStatus() == Activity.ActivityStatus.DONE)
-            .toList();
+        var activitiesByStatus = activities.stream()
+            .collect(Collectors.groupingBy(Activity::getStatus));
         
         var result = new java.util.HashMap<String, Object>();
         result.put("activities", activities);
-        result.put("todoActivities", todoActivities);
-        result.put("inProgressActivities", inProgressActivities);
-        result.put("devActivities", devActivities);
-        result.put("uatActivities", uatActivities);
-        result.put("hmlActivities", hmlActivities);
-        result.put("prdActivities", prdActivities);
-        result.put("deployActivities", deployActivities);
-        result.put("doneActivities", doneActivities);
-        result.put("todoCount", todoActivities.size());
-        result.put("inProgressCount", inProgressActivities.size());
-        result.put("devCount", devActivities.size());
-        result.put("uatCount", uatActivities.size());
-        result.put("hmlCount", hmlActivities.size());
-        result.put("prdCount", prdActivities.size());
-        result.put("deployCount", deployActivities.size());
-        result.put("doneCount", doneActivities.size());
+        result.put("columns", columns);
+        
+        // Manter compatibilidade com template atual
+        for (var column : columns) {
+            var columnActivities = activitiesByStatus.getOrDefault(column.getStatus(), java.util.List.of());
+            var statusKey = column.getStatus().toLowerCase() + "Activities";
+            var countKey = column.getStatus().toLowerCase() + "Count";
+            
+            // Mapear status específicos para compatibilidade
+            switch (column.getStatus()) {
+                case "TODO" -> {
+                    result.put("todoActivities", columnActivities);
+                    result.put("todoCount", columnActivities.size());
+                }
+                case "IN_PROGRESS" -> {
+                    result.put("inProgressActivities", columnActivities);
+                    result.put("inProgressCount", columnActivities.size());
+                }
+                case "DEV" -> {
+                    result.put("devActivities", columnActivities);
+                    result.put("devCount", columnActivities.size());
+                }
+                case "UAT" -> {
+                    result.put("uatActivities", columnActivities);
+                    result.put("uatCount", columnActivities.size());
+                }
+                case "HML" -> {
+                    result.put("hmlActivities", columnActivities);
+                    result.put("hmlCount", columnActivities.size());
+                }
+                case "PRD" -> {
+                    result.put("prdActivities", columnActivities);
+                    result.put("prdCount", columnActivities.size());
+                }
+                case "DEPLOY" -> {
+                    result.put("deployActivities", columnActivities);
+                    result.put("deployCount", columnActivities.size());
+                }
+                case "DONE" -> {
+                    result.put("doneActivities", columnActivities);
+                    result.put("doneCount", columnActivities.size());
+                }
+            }
+        }
         
         return result;
     }
@@ -72,7 +81,7 @@ public class ActivityService {
             .user(user)
             .build();
         
-        if (activityToSave.getStatus() == Activity.ActivityStatus.DONE && 
+        if ("DONE".equals(activityToSave.getStatus()) && 
             activityToSave.getCompletedAt() == null) {
             activityToSave = activityToSave.toBuilder()
                 .completedAt(LocalDateTime.now())
@@ -105,7 +114,7 @@ public class ActivityService {
             .actualHours(activity.getActualHours())
             .build();
         
-        if (activity.getStatus() == Activity.ActivityStatus.DONE && 
+        if ("DONE".equals(activity.getStatus()) && 
             existing.getCompletedAt() == null) {
             updated = updated.toBuilder()
                 .completedAt(LocalDateTime.now())
@@ -121,12 +130,11 @@ public class ActivityService {
         var activity = activityRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Atividade não encontrada"));
         
-        var newStatus = Activity.ActivityStatus.valueOf(status);
         var updated = activity.toBuilder()
-            .status(newStatus)
+            .status(status)
             .build();
         
-        if (newStatus == Activity.ActivityStatus.DONE && activity.getCompletedAt() == null) {
+        if ("DONE".equals(status) && activity.getCompletedAt() == null) {
             updated = updated.toBuilder()
                 .completedAt(LocalDateTime.now())
                 .build();

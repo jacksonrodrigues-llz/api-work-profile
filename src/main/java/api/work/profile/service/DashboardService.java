@@ -1,5 +1,7 @@
 package api.work.profile.service;
 
+import api.work.profile.entity.Activity;
+import api.work.profile.entity.Goal;
 import api.work.profile.entity.User;
 import api.work.profile.config.GitHubConfig;
 import api.work.profile.repository.ActivityRepository;
@@ -35,12 +37,12 @@ public class DashboardService {
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
         // Atividades
-        var completedActivities = activityRepository.countCompletedActivitiesSince(user, api.work.profile.entity.Activity.ActivityStatus.DONE, startOfMonth);
-        var avgHours = activityRepository.getAverageHoursPerActivity(user, api.work.profile.entity.Activity.ActivityStatus.DONE);
+        var completedActivities = activityRepository.countCompletedActivitiesSince(user, String.valueOf(Activity.ActivityStatus.DONE), startOfMonth);
+        var avgHours = activityRepository.getAverageHoursPerActivity(user, String.valueOf(Activity.ActivityStatus.DONE));
         
         // Metas
-        var completedGoals = goalRepository.countCompletedGoals(user, api.work.profile.entity.Goal.GoalStatus.COMPLETED);
-        var activeGoals = goalRepository.countActiveGoals(user, api.work.profile.entity.Goal.GoalStatus.ACTIVE);
+        var completedGoals = goalRepository.countCompletedGoals(user, Goal.GoalStatus.COMPLETED);
+        var activeGoals = goalRepository.countActiveGoals(user, Goal.GoalStatus.ACTIVE);
         
         // GitHub dados
         var pullRequests = 0;

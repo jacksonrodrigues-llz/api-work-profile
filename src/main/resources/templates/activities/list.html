@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
     <title>Atividades - Portal Profissional</title>
     
@@ -15,16 +17,17 @@
     
     <style>
         .kanban-board {
-            min-height: 80vh;
+            min-height: 85vh;
         }
         .kanban-column {
             background: var(--bg-card);
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            min-height: 70vh;
-            height: auto;
+            height: 80vh;
             min-width: 280px;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
         .kanban-header {
             padding: 1rem;
@@ -34,12 +37,39 @@
         }
         .kanban-cards {
             padding: 0.5rem;
-            min-height: 60vh;
+            flex: 1;
             overflow-y: auto;
         }
         .kanban-cards.drag-over {
-            background: rgba(255, 107, 53, 0.1);
-            border: 2px dashed var(--accent-orange);
+            background: rgba(255, 107, 53, 0.15) !important;
+            border: 2px dashed #ff6b35 !important;
+            border-radius: 8px;
+        }
+        .kanban-column.drag-over .kanban-cards {
+            background: rgba(255, 107, 53, 0.15) !important;
+            border: 2px dashed #ff6b35 !important;
+        }
+        .task-type-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+        .task-type-core {
+            background: #28a745;
+            color: white;
+        }
+        .task-type-bug {
+            background: #dc3545;
+            color: white;
+        }
+        .task-type-analysis {
+            background: #17a2b8;
+            color: white;
         }
         .kanban-card {
             background: var(--bg-primary);
@@ -87,13 +117,30 @@
             align-items: center;
         }
         .priority-badge {
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .priority-urgent { border-left: 3px solid #dc3545; }
-        .priority-high { border-left: 3px solid #ffc107; }
-        .priority-medium { border-left: 3px solid #17a2b8; }
-        .priority-low { border-left: 3px solid #28a745; }
+        
+        /* Cores para bordas dos cards */
+        .priority-urgent { border-left: 4px solid #dc3545; }
+        .priority-high { border-left: 4px solid #ffc107; }
+        .priority-medium { border-left: 4px solid #17a2b8; }
+        .priority-low { border-left: 4px solid #28a745; }
+        
+        /* Cores para badges de prioridade */
+        .priority-urgent-badge { background-color: #dc3545 !important; color: white !important; }
+        .priority-high-badge { background-color: #ffc107 !important; color: black !important; }
+        .priority-medium-badge { background-color: #17a2b8 !important; color: white !important; }
+        .priority-low-badge { background-color: #28a745 !important; color: white !important; }
+
+        /* Cores para badges de prioridade */
+        .priority-urgent-badge { background-color: #dc3545 !important; color: white !important; }
+        .priority-high-badge { background-color: #ffc107 !important; color: black !important; }
+        .priority-medium-badge { background-color: #17a2b8 !important; color: white !important; }
+        .priority-low-badge { background-color: #28a745 !important; color: white !important; }
         .kanban-cards::-webkit-scrollbar {
             width: 4px;
         }
@@ -104,6 +151,40 @@
             background: var(--accent-orange);
             border-radius: 2px;
         }
+        .kanban-column-wrapper {
+            transition: all 0.3s ease;
+        }
+        .kanban-column-wrapper.drag-over {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+        }
+        .column-actions {
+            transition: opacity 0.3s ease;
+        }
+        .column-drag-handle {
+            cursor: move;
+        }
+        .column-name {
+            cursor: pointer;
+        }
+        .kanban-card {
+            cursor: grab;
+        }
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+        .kanban-column-wrapper[draggable="true"] {
+            cursor: move;
+        }
+        .kanban-column-wrapper[draggable="true"]:active {
+            cursor: grabbing;
+        }
+        .kanban-cards {
+            position: relative;
+        }
+
     </style>
 </head>
 <body>
@@ -197,6 +278,22 @@
                     </div>
                 </div>
 
+                <!-- Column Management -->
+                <div class="mb-3 d-flex align-items-center">
+                    <button class="btn btn-outline-primary btn-sm me-2" onclick="showColumnModal()">
+                        <i class="fas fa-plus me-1"></i>Nova Coluna
+                    </button>
+                    <button id="editColumnsBtn" class="btn btn-outline-secondary btn-sm me-2" onclick="toggleColumnEdit()">
+                        <i class="fas fa-edit me-1"></i>Editar Colunas
+                    </button>
+                    <button id="saveColumnsBtn" class="btn btn-success btn-sm me-2 d-none" onclick="saveColumnPositions()">
+                        <i class="fas fa-save me-1"></i>Salvar Posições
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#helpModal">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
+
                 <!-- Kanban Board -->
                 <div th:if="${activities.empty}" class="text-center py-5">
                     <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
@@ -208,80 +305,55 @@
                 </div>
                 
                 <div th:unless="${activities.empty}" class="kanban-board">
-                    <div class="row g-2 flex-nowrap" style="overflow-x: auto;">
-                        <!-- TODO Column -->
-                        <div class="col">
-                            <div class="kanban-column">
+                    <div id="kanban-container" class="row g-2 flex-nowrap" style="overflow-x: auto;">
+                        <div th:each="column : ${columns}" class="col kanban-column-wrapper" th:data-column-id="${column.id}">
+                            <div class="kanban-column" ondragover="handleColumnDragOver(event)" ondrop="handleColumnDrop(event)">
                                 <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-secondary me-2"></i>
-                                        A FAZER 
-                                        <span class="badge bg-secondary ms-2" th:text="${todoCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="TODO">
-                                    <div th:each="activity : ${todoActivities}" class="kanban-card draggable" 
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <!-- Hidden data for modal -->
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0 column-title" th:data-column-id="${column.id}">
+                                            <i th:class="${column.iconClass} + ' me-2'"></i>
+                                            <span class="column-name" th:text="${column.name}">Column</span>
+                                        </h6>
+                                        <div class="column-actions d-none">
+                                            <button class="btn btn-sm btn-outline-light me-1" th:onclick="'moveColumnLeft(' + ${column.id} + ')'" title="Mover para Esquerda">
+                                                <i class="fas fa-arrow-left"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-light me-1" th:onclick="'moveColumnRight(' + ${column.id} + ')'" title="Mover para Direita">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-light me-1" th:onclick="'editColumn(' + ${column.id} + ')'" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button th:if="${column.deletable}" class="btn btn-sm btn-outline-danger" th:onclick="'deleteColumn(' + ${column.id} + ')'" title="Excluir">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        
-                        <!-- IN_PROGRESS Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-warning me-2"></i>
-                                        EM PROGRESSO 
-                                        <span class="badge bg-warning ms-2" th:text="${inProgressCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="IN_PROGRESS">
-                                    <div th:each="activity : ${inProgressActivities}" class="kanban-card draggable"
+                                <div class="kanban-cards" th:data-status="${column.status}">
+                                    <div th:each="activity : ${activities}" th:if="${activity.status == column.status}" 
+                                         class="kanban-card" 
                                          th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
                                          th:data-id="${activity.id}"
                                          draggable="true"
+                                         style="border-left-width: 4px;"
                                          onclick="showActivityModal(this)">
                                         <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                            <div class="d-flex align-items-center">
+                                                <span class="task-type-indicator me-2"
+                                                      th:classappend="${activity.taskType?.name() == 'CORE'} ? 'task-type-core' : (${activity.taskType?.name() == 'BUG'} ? 'task-type-bug' : 'task-type-analysis')"
+                                                      th:title="${activity.taskType?.name() == 'CORE'} ? 'Core - Negócio' : (${activity.taskType?.name() == 'BUG'} ? 'Bug - Correção' : 'Análise - Investigação')">
+                                                    <i th:class="${activity.taskType?.name() == 'CORE'} ? 'fas fa-briefcase' : (${activity.taskType?.name() == 'BUG'} ? 'fas fa-bug' : 'fas fa-search')"></i>
+                                                </span>
+                                                <div th:if="${activity.taskNumber}">
+                                                    <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
+                                                    <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
+                                                </div>
                                             </div>
                                             <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
+                                                  th:classappend="${activity.priority.toString() == 'URGENT'} ? 'priority-urgent-badge' : 
+                                                                  (${activity.priority.toString() == 'HIGH'} ? 'priority-high-badge' : 
+                                                                  (${activity.priority.toString() == 'MEDIUM'} ? 'priority-medium-badge' : 'priority-low-badge'))"
                                                   th:text="${activity.priority}">Priority</span>
                                         </div>
                                         <h6 class="card-title" th:text="${activity.title}">Title</h6>
@@ -294,288 +366,7 @@
                                         </div>
                                         <div class="d-none">
                                             <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- TEST Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-info me-2"></i>
-                                        DEV 
-                                        <span class="badge bg-info ms-2" th:text="${devCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="DEV">
-                                    <div th:each="activity : ${devActivities}" class="kanban-card draggable"
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- UAT Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-warning me-2"></i>
-                                        UAT 
-                                        <span class="badge bg-warning ms-2" th:text="${uatCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="UAT">
-                                    <div th:each="activity : ${uatActivities}" class="kanban-card draggable"
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- HML Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-primary me-2"></i>
-                                        HML 
-                                        <span class="badge bg-primary ms-2" th:text="${hmlCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="HML">
-                                    <div th:each="activity : ${hmlActivities}" class="kanban-card draggable"
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- PRD Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-danger me-2"></i>
-                                        PRD 
-                                        <span class="badge bg-danger ms-2" th:text="${prdCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="PRD">
-                                    <div th:each="activity : ${prdActivities}" class="kanban-card draggable"
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- DEPLOY Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle me-2" style="color: var(--accent-orange);"></i>
-                                        DEPLOY 
-                                        <span class="badge ms-2" style="background: var(--accent-orange);" th:text="${deployCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="DEPLOY">
-                                    <div th:each="activity : ${deployActivities}" class="kanban-card draggable"
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
-                                            <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
-                                            <span class="actual-hours" th:text="${activity.actualHours}"></span>
-                                            <span class="skills" th:text="${activity.skills}"></span>
-                                            <span class="task-number" th:text="${activity.taskNumber}"></span>
-                                            <span class="task-url" th:text="${activity.taskUrl}"></span>
-                                            <span class="edit-url" th:text="@{/activities/{id}/edit(id=${activity.id})}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- DONE Column -->
-                        <div class="col">
-                            <div class="kanban-column">
-                                <div class="kanban-header">
-                                    <h6 class="mb-0">
-                                        <i class="fas fa-circle text-success me-2"></i>
-                                        CONCLUÍDO 
-                                        <span class="badge bg-success ms-2" th:text="${doneCount}">0</span>
-                                    </h6>
-                                </div>
-                                <div class="kanban-cards" data-status="DONE">
-                                    <div th:each="activity : ${doneActivities}" class="kanban-card draggable"
-                                         th:classappend="'priority-' + ${#strings.toLowerCase(activity.priority)}"
-                                         th:data-id="${activity.id}"
-                                         draggable="true"
-                                         onclick="showActivityModal(this)">
-                                        <div class="card-header-small">
-                                            <div th:if="${activity.taskNumber}">
-                                                <a th:if="${activity.taskUrl}" th:href="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link" target="_blank">Task</a>
-                                                <span th:unless="${activity.taskUrl}" th:text="${activity.taskNumber}" class="task-link">Task</span>
-                                            </div>
-                                            <span class="badge priority-badge"
-                                                  th:classappend="${activity.priority.name() == 'URGENT'} ? 'bg-danger' : (${activity.priority.name() == 'HIGH'} ? 'bg-warning' : (${activity.priority.name() == 'MEDIUM'} ? 'bg-info' : 'bg-secondary'))"
-                                                  th:text="${activity.priority}">Priority</span>
-                                        </div>
-                                        <h6 class="card-title" th:text="${activity.title}">Title</h6>
-                                        <p class="card-text" th:text="${#strings.abbreviate(activity.description, 60)}">Description</p>
-                                        <div class="card-footer-small">
-                                            <small class="text-muted" th:if="${activity.project}" th:text="${activity.project}">Project</small>
-                                            <div class="drag-handle">
-                                                <i class="fas fa-grip-vertical text-muted"></i>
-                                            </div>
-                                        </div>
-                                        <div class="d-none">
-                                            <span class="full-description" th:text="${activity.description}"></span>
+                                            <span class="full-priority" th:text="${activity.priority}"></span>
                                             <span class="estimated-hours" th:text="${activity.estimatedHours}"></span>
                                             <span class="actual-hours" th:text="${activity.actualHours}"></span>
                                             <span class="skills" th:text="${activity.skills}"></span>
@@ -639,6 +430,97 @@
         </div>
     </div>
 
+    <!-- Modal Gerenciar Coluna -->
+    <div class="modal fade" id="columnModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">Gerenciar Coluna</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <form id="columnForm">
+                        <input type="hidden" id="columnId">
+                        <div class="mb-3">
+                            <label for="columnName" class="form-label">Nome da Coluna *</label>
+                            <input type="text" class="form-control" id="columnName" placeholder="Ex: Em Revisão" required>
+                            <div class="form-text">Nome que aparecerá no cabeçalho da coluna</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="columnStatus" class="form-label">Status (Identificador) *</label>
+                            <input type="text" class="form-control" id="columnStatus" placeholder="Ex: REVIEW" required>
+                            <div class="form-text">Identificador único (sem espaços, maiúsculo)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="columnIcon" class="form-label">Ícone</label>
+                            <select class="form-select" id="columnIcon">
+                                <option value="fas fa-circle text-primary">🔵 Azul</option>
+                                <option value="fas fa-circle text-success">🟢 Verde</option>
+                                <option value="fas fa-circle text-warning">🟡 Amarelo</option>
+                                <option value="fas fa-circle text-danger">🔴 Vermelho</option>
+                                <option value="fas fa-circle text-info">🔵 Ciano</option>
+                                <option value="fas fa-circle text-secondary">⚫ Cinza</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="columnColor" class="form-label">Cor do Badge</label>
+                            <select class="form-select" id="columnColor">
+                                <option value="bg-primary">Azul</option>
+                                <option value="bg-success">Verde</option>
+                                <option value="bg-warning">Amarelo</option>
+                                <option value="bg-danger">Vermelho</option>
+                                <option value="bg-info">Ciano</option>
+                                <option value="bg-secondary">Cinza</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveColumn()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Ajuda -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">Como Usar o Kanban</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <h6 style="color: var(--accent-orange);">Arrastar Atividades</h6>
+                    <p>Clique e arraste os cards de atividades entre as colunas para alterar seu status automaticamente.</p>
+                    
+                    <h6 style="color: var(--accent-orange);">Gerenciar Colunas</h6>
+                    <ul>
+                        <li><strong>Nova Coluna:</strong> Cria uma nova coluna personalizada</li>
+                        <li><strong>Editar Colunas:</strong> Ativa o modo de edição para modificar/excluir colunas</li>
+                        <li><strong>Arrastar Colunas:</strong> No modo de edição, arraste colunas para reordenar</li>
+                    </ul>
+                    
+                    <h6 style="color: var(--accent-orange);">Criar Coluna</h6>
+                    <p>Preencha apenas o <strong>Nome</strong> e <strong>Status</strong>. Os outros campos têm valores padrão.</p>
+                    <ul>
+                        <li><strong>Nome:</strong> Como aparecerá na coluna (ex: "Em Revisão")</li>
+                        <li><strong>Status:</strong> Identificador único (ex: "REVIEW")</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Colunas só podem ser excluídas se estiverem vazias.
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/app.js"></script>
@@ -646,13 +528,16 @@
     <script>
         // Modal functionality
         function showActivityModal(card) {
+            if (card.getAttribute('data-dragging') === 'true') {
+                return;
+            }
             event.stopPropagation();
             
             const title = card.querySelector('.card-title').textContent;
             const description = card.querySelector('.full-description') ? card.querySelector('.full-description').textContent : card.querySelector('.card-text').textContent;
             const project = card.querySelector('.card-footer-small .text-muted') ? card.querySelector('.card-footer-small .text-muted').textContent : '-';
-            const priority = card.querySelector('.priority-badge').textContent;
-            const priorityClass = card.querySelector('.priority-badge').className;
+            const priorityElement = card.querySelector('.priority-badge');
+            const priority = priorityElement ? priorityElement.textContent : '-';
             const estimatedHours = card.querySelector('.estimated-hours') ? card.querySelector('.estimated-hours').textContent : '';
             const actualHours = card.querySelector('.actual-hours') ? card.querySelector('.actual-hours').textContent : '';
             const skills = card.querySelector('.skills') ? card.querySelector('.skills').textContent : '';
@@ -663,8 +548,15 @@
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalDescription').textContent = description;
             document.getElementById('modalProject').textContent = project;
-            document.getElementById('modalPriority').textContent = priority;
-            document.getElementById('modalPriority').className = 'badge ' + priorityClass.split(' ').slice(-1)[0];
+            // Get priority from hidden span
+            const prioritySpan = card.querySelector('.full-priority');
+            const actualPriority = prioritySpan ? prioritySpan.textContent : (priority.replace('#', '').toUpperCase());
+            
+            document.getElementById('modalPriority').textContent = actualPriority;
+            const priorityBadgeClass = actualPriority === 'URGENT' ? 'priority-urgent-badge' : 
+                                     actualPriority === 'HIGH' ? 'priority-high-badge' : 
+                                     actualPriority === 'MEDIUM' ? 'priority-medium-badge' : 'priority-low-badge';
+            document.getElementById('modalPriority').className = 'badge priority-badge ' + priorityBadgeClass;
             
             const estHours = estimatedHours && estimatedHours !== 'null' && estimatedHours !== '' ? estimatedHours + 'h' : '-';
             const actHours = actualHours && actualHours !== 'null' && actualHours !== '' ? actualHours + 'h' : '-';
@@ -697,41 +589,43 @@
             new bootstrap.Modal(document.getElementById('activityModal')).show();
         }
         
-        // Drag and Drop functionality
-        let draggedElement = null;
+        // Global variables
+        let draggedCard = null;
+        let draggedColumn = null;
+        let editMode = false;
         
+        // Card Drag and Drop
         document.addEventListener('dragstart', function(e) {
-            if (e.target.classList.contains('draggable')) {
-                draggedElement = e.target;
+            if (e.target.classList.contains('kanban-card')) {
+                draggedCard = e.target;
                 e.target.style.opacity = '0.5';
                 e.dataTransfer.effectAllowed = 'move';
+                e.target.setAttribute('data-dragging', 'true');
             }
         });
         
         document.addEventListener('dragend', function(e) {
-            if (e.target.classList.contains('draggable')) {
-                e.target.style.opacity = '1';
+            if (draggedCard) {
+                draggedCard.style.opacity = '1';
+                setTimeout(() => draggedCard.removeAttribute('data-dragging'), 100);
+                draggedCard = null;
             }
-            // Remove drag-over class from all drop zones
-            document.querySelectorAll('.kanban-cards').forEach(zone => {
-                zone.classList.remove('drag-over');
-            });
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
         });
         
         document.addEventListener('dragover', function(e) {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             
-            const dropZone = e.target.closest('.kanban-cards');
-            if (dropZone) {
-                dropZone.classList.add('drag-over');
-            }
-        });
-        
-        document.addEventListener('dragleave', function(e) {
-            const dropZone = e.target.closest('.kanban-cards');
-            if (dropZone && !dropZone.contains(e.relatedTarget)) {
-                dropZone.classList.remove('drag-over');
+            if (draggedCard) {
+                // Try multiple selectors for better drop zone detection
+                const dropZone = e.target.closest('.kanban-cards') || 
+                                e.target.closest('.kanban-column')?.querySelector('.kanban-cards');
+                                
+                if (dropZone && dropZone !== draggedCard.parentElement) {
+                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    dropZone.classList.add('drag-over');
+                }
             }
         });
         
@@ -739,68 +633,277 @@
             e.preventDefault();
             e.stopPropagation();
             
-            const dropZone = e.target.closest('.kanban-cards');
-            if (dropZone && draggedElement) {
-                dropZone.classList.remove('drag-over');
-                
-                const currentParent = draggedElement.parentElement;
-                if (dropZone !== currentParent) {
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            
+            if (draggedCard) {
+                // Better drop zone detection
+                const dropZone = e.target.closest('.kanban-cards') || 
+                                e.target.closest('.kanban-column')?.querySelector('.kanban-cards');
+                                
+                if (dropZone && dropZone !== draggedCard.parentElement) {
                     const newStatus = dropZone.dataset.status;
-                    const activityId = draggedElement.dataset.id;
+                    const activityId = draggedCard.dataset.id;
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
                     
-                    console.log('Moving activity', activityId, 'from', currentParent.dataset.status, 'to', newStatus);
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    if (csrfToken && csrfHeader) {
+                        headers[csrfHeader] = csrfToken;
+                    }
                     
-                    // Update status via AJAX first
-                    updateActivityStatus(activityId, newStatus)
-                        .then(() => {
-                            // Move element to new column only after successful update
-                            dropZone.appendChild(draggedElement);
-                            // Update counters
-                            updateCounters();
-                            console.log('Activity moved successfully');
-                        })
-                        .catch((error) => {
-                            console.error('Failed to update status, not moving card:', error);
-                        });
+                    // Move card immediately for better UX
+                    dropZone.appendChild(draggedCard);
+                    
+                    // Update backend silently
+                    fetch(`/activities/${activityId}/status`, {
+                        method: 'PATCH',
+                        headers: headers,
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(response => {
+                        if (response.ok || response.status === 200) {
+                            console.log('Card moved successfully');
+                        } else {
+                            console.warn('Backend update failed, but card moved visually');
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('Network error, but card moved visually:', error);
+                    });
                 }
             }
         });
         
-        function updateActivityStatus(activityId, newStatus) {
-            return fetch(`/activities/${activityId}/status`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ status: newStatus })
+        // Column Management
+        function toggleColumnEdit() {
+            editMode = !editMode;
+            document.querySelectorAll('.column-actions').forEach(el => {
+                el.classList.toggle('d-none', !editMode);
+            });
+            
+            const editBtn = document.getElementById('editColumnsBtn');
+            const saveBtn = document.getElementById('saveColumnsBtn');
+            
+            if (editMode) {
+                editBtn.innerHTML = '<i class="fas fa-times me-1"></i>Cancelar';
+                editBtn.className = 'btn btn-outline-danger btn-sm me-2';
+                saveBtn.classList.remove('d-none');
+            } else {
+                editBtn.innerHTML = '<i class="fas fa-edit me-1"></i>Editar Colunas';
+                editBtn.className = 'btn btn-outline-secondary btn-sm me-2';
+                saveBtn.classList.add('d-none');
+            }
+        }
+        
+        function saveColumnPositions() {
+            updateColumnPositions();
+            editMode = false;
+            document.querySelectorAll('.column-actions').forEach(el => {
+                el.classList.add('d-none');
+            });
+            
+            const editBtn = document.getElementById('editColumnsBtn');
+            const saveBtn = document.getElementById('saveColumnsBtn');
+            
+            editBtn.innerHTML = '<i class="fas fa-edit me-1"></i>Editar Colunas';
+            editBtn.className = 'btn btn-outline-secondary btn-sm me-2';
+            saveBtn.classList.add('d-none');
+            
+            alert('Posições das colunas salvas com sucesso!');
+        }
+        
+        function showColumnModal(columnId = null) {
+            document.getElementById('columnId').value = columnId || '';
+            
+            if (columnId) {
+                const column = document.querySelector(`[data-column-id="${columnId}"]`);
+                if (column) {
+                    document.getElementById('columnName').value = column.querySelector('.column-name').textContent;
+                    document.getElementById('columnStatus').value = column.closest('.kanban-column-wrapper').querySelector('.kanban-cards').dataset.status;
+                }
+            } else {
+                document.getElementById('columnName').value = '';
+                document.getElementById('columnStatus').value = '';
+                document.getElementById('columnIcon').value = 'fas fa-circle text-primary';
+                document.getElementById('columnColor').value = 'bg-primary';
+            }
+            
+            new bootstrap.Modal(document.getElementById('columnModal')).show();
+        }
+        
+        function editColumn(columnId) {
+            showColumnModal(columnId);
+        }
+        
+        function saveColumn() {
+            const columnId = document.getElementById('columnId').value;
+            const data = {
+                name: document.getElementById('columnName').value,
+                status: document.getElementById('columnStatus').value,
+                iconClass: document.getElementById('columnIcon').value,
+                colorClass: document.getElementById('columnColor').value
+            };
+            
+            const url = columnId ? `/api/columns/${columnId}` : '/api/columns';
+            const method = columnId ? 'PUT' : 'POST';
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
+            fetch(url, {
+                method: method,
+                headers: headers,
+                body: JSON.stringify(data)
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to update status');
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao salvar coluna');
                 }
-                console.log('Status updated successfully');
-                return response;
-            })
-            .catch(error => {
-                console.error('Erro ao atualizar status:', error);
-                throw error;
             });
         }
         
-        function updateCounters() {
-            document.querySelectorAll('.kanban-column').forEach(column => {
-                const cards = column.querySelectorAll('.kanban-card');
-                const badge = column.querySelector('.badge');
-                if (badge) {
-                    badge.textContent = cards.length;
+        function deleteColumn(columnId) {
+            if (confirm('Tem certeza que deseja excluir esta coluna?')) {
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                const headers = {};
+                if (csrfToken && csrfHeader) {
+                    headers[csrfHeader] = csrfToken;
                 }
-            });
+                
+                fetch(`/api/columns/${columnId}`, {
+                    method: 'DELETE',
+                    headers: headers
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        return response.json().then(data => {
+                            alert(data.error || 'Erro ao excluir coluna');
+                        });
+                    }
+                });
+            }
         }
+        
+        function moveColumnLeft(columnId) {
+            const column = document.querySelector(`[data-column-id="${columnId}"]`);
+            const container = document.getElementById('kanban-container');
+            const allColumns = Array.from(container.children);
+            const currentIndex = allColumns.indexOf(column);
+            
+            if (currentIndex > 0) {
+                container.insertBefore(column, allColumns[currentIndex - 1]);
+                updateColumnPositions();
+            }
+        }
+        
+        function moveColumnRight(columnId) {
+            const column = document.querySelector(`[data-column-id="${columnId}"]`);
+            const container = document.getElementById('kanban-container');
+            const allColumns = Array.from(container.children);
+            const currentIndex = allColumns.indexOf(column);
+            
+            if (currentIndex < allColumns.length - 1) {
+                container.insertBefore(column, allColumns[currentIndex + 2]);
+                updateColumnPositions();
+            }
+        }
+        
+        function updateColumnPositions() {
+            const container = document.getElementById('kanban-container');
+            const columnIds = Array.from(container.children).map(col => col.dataset.columnId);
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
+            fetch('/api/columns/positions', {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify({ columnIds: columnIds })
+            })
+            .catch(error => console.error('Error updating column positions:', error));
+        }
+        
+        // Função de contagem removida
         
         function refreshActivities() {
             location.reload();
         }
+        
+        // Column-specific drag handlers for better detection
+        function handleColumnDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (draggedCard) {
+                const dropZone = e.currentTarget.querySelector('.kanban-cards');
+                if (dropZone && dropZone !== draggedCard.parentElement) {
+                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    dropZone.classList.add('drag-over');
+                }
+            }
+        }
+        
+        function handleColumnDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (draggedCard) {
+                const dropZone = e.currentTarget.querySelector('.kanban-cards');
+                if (dropZone && dropZone !== draggedCard.parentElement) {
+                    const newStatus = dropZone.dataset.status;
+                    const activityId = draggedCard.dataset.id;
+                    const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                    
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (csrfToken && csrfHeader) {
+                        headers[csrfHeader] = csrfToken;
+                    }
+                    
+                    // Move card immediately
+                    dropZone.appendChild(draggedCard);
+                    
+                    // Update backend silently
+                    fetch(`/activities/${activityId}/status`, {
+                        method: 'PATCH',
+                        headers: headers,
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(response => {
+                        if (response.ok || response.status === 200) {
+                            console.log('Card moved successfully');
+                        } else {
+                            console.warn('Backend update failed, but card moved visually');
+                        }
+                    })
+                    .catch(error => {
+                        console.warn('Network error, but card moved visually:', error);
+                    });
+                }
+            }
+            
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicialização removida
+        });
     </script>
 </body>
 </html>

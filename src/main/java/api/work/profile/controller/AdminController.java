@@ -116,4 +116,45 @@ public class AdminController {
         }
         return "redirect:/admin/users";
     }
+    
+    @PostMapping("/users/{id}/disable")
+    @ResponseBody
+    public String disableUser(@PathVariable Long id, Authentication authentication) {
+        try {
+            var adminUser = profileService.getUserFromAuthentication(authentication);
+            adminService.disableUser(id, adminUser);
+            return "success";
+        } catch (Exception e) {
+            log.error("Error disabling user: {}", e.getMessage());
+            return "error";
+        }
+    }
+    
+    @PostMapping("/users/{id}/enable")
+    @ResponseBody
+    public String enableUser(@PathVariable Long id, Authentication authentication) {
+        try {
+            var adminUser = profileService.getUserFromAuthentication(authentication);
+            adminService.enableUser(id, adminUser);
+            return "success";
+        } catch (Exception e) {
+            log.error("Error enabling user: {}", e.getMessage());
+            return "error";
+        }
+    }
+    
+    @PostMapping("/users/bulk-disable")
+    @ResponseBody
+    public String bulkDisableUsers(@RequestBody java.util.Map<String, java.util.List<Long>> request, 
+                                   Authentication authentication) {
+        try {
+            var adminUser = profileService.getUserFromAuthentication(authentication);
+            var userIds = request.get("userIds");
+            adminService.bulkDisableUsers(userIds, adminUser);
+            return "success";
+        } catch (Exception e) {
+            log.error("Error bulk disabling users: {}", e.getMessage());
+            return "error";
+        }
+    }
 }

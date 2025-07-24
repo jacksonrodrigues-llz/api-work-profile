@@ -99,4 +99,54 @@ public class AdminService {
         validateAdminAccess(adminUser);
         userService.updateUserRole(id, newRole, adminUser);
     }
+    
+    public void disableUser(Long id, User adminUser) {
+        validateAdminAccess(adminUser);
+        
+        var user = userService.findById(id);
+        if (user == null) {
+            throw new IllegalArgumentException("Usuário não encontrado");
+        }
+        
+        if (user.getId().equals(adminUser.getId())) {
+            throw new IllegalArgumentException("Não é possível desabilitar seu próprio usuário");
+        }
+        
+        var updated = user.toBuilder()
+            .active(false)
+            .enabled(false)
+            .build();
+        
+        userService.save(updated);
+        log.info("[ADMIN] Usuário {} desabilitado por {}", user.getEmail(), adminUser.getEmail());
+    }
+    
+    public void enableUser(Long id, User adminUser) {
+        validateAdminAccess(adminUser);
+        
+        var user = userService.findById(id);
+        if (user == null) {
+            throw new IllegalArgumentException("Usuário não encontrado");
+        }
+        
+        var updated = user.toBuilder()
+            .active(true)
+            .enabled(true)
+            .build();
+        
+        userService.save(updated);
+        log.info("[ADMIN] Usuário {} reabilitado por {}", user.getEmail(), adminUser.getEmail());
+    }
+    
+    public void bulkDisableUsers(java.util.List<Long> userIds, User adminUser) {
+        validateAdminAccess(adminUser);
+        
+        for (Long userId : userIds) {
+            if (!userId.equals(adminUser.getId())) {
+                disableUser(userId, adminUser);
+            }
+        }
+        
+        log.info("[ADMIN] {} usuários desabilitados em massa por {}", userIds.size(), adminUser.getEmail());
+    }
 }
