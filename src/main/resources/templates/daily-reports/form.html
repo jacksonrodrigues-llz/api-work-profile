@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Report - Portal Profissional</title>
+    <title th:text="${isEdit ? 'Editar' : 'Novo'} + ' Daily Report'">Daily Report</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,12 +13,32 @@
     <link href="/css/dark-theme.css" rel="stylesheet">
     
     <style>
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
         .form-check-input:checked {
             background-color: var(--accent-orange);
             border-color: var(--accent-orange);
         }
+        
         .form-text {
             color: var(--text-secondary) !important;
+        }
+        
+        .form-control:focus {
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -58,7 +78,7 @@
                 <div class="pt-3">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link text-white active" href="/dashboard">
+                            <a class="nav-link text-white" href="/dashboard">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
@@ -83,6 +103,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-white active" href="/daily-reports">
+                                <i class="fas fa-calendar-week me-2"></i>Daily Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-white" href="/reports">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
                             </a>
@@ -93,62 +118,86 @@
 
             <!-- Main content -->
             <main class="main-content px-4">
-                <div class="pt-4 pb-2 mb-4 border-bottom d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center pb-2 mb-4 border-bottom">
                     <div>
-                        <h2><i class="fas fa-calendar-check text-warning me-3"></i>
+                        <h2>
+                            <i class="fas fa-calendar-check text-warning me-3"></i>
                             <span th:text="${isEdit ? 'Editar' : 'Novo'} + ' Daily Report'"></span>
                         </h2>
                         <p class="text-muted mb-0">Registre seu progresso diário</p>
                     </div>
-                    <a href="/dashboard" class="btn btn-outline-light">
+                    <a href="/daily-reports" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left me-1"></i>Voltar
                     </a>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-8">
+                    <div class="col-lg-8">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
+                                <h6 class="m-0 font-weight-bold text-primary">
                                     <i class="fas fa-edit me-2"></i>Daily Report
+                                    <span th:if="${dailyReport.reportDate}" 
+                                          class="badge bg-primary ms-2" 
+                                          th:text="${#temporals.format(dailyReport.reportDate, 'dd/MM/yyyy')}"></span>
                                 </h6>
                             </div>
                             <div class="card-body">
                                 <form th:action="@{/daily-reports}" th:object="${dailyReport}" method="post">
                                     <input type="hidden" th:field="*{id}">
                                     
-                                    <div class="mb-3">
-                                        <label class="form-label">Data</label>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-calendar me-2 text-primary"></i>Data
+                                        </label>
                                         <input type="date" class="form-control" th:field="*{reportDate}" readonly>
                                         <div class="form-text">Data preenchida automaticamente</div>
                                     </div>
                                     
-                                    <div class="mb-3">
-                                        <label class="form-label">O que você fez ontem? *</label>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold required">
+                                            <i class="fas fa-clock me-2 text-success"></i>O que você fez ontem?
+                                        </label>
                                         <textarea class="form-control" rows="4" th:field="*{yesterdayTasks}" required
-                                                  placeholder="Liste as principais atividades que você realizou ontem"></textarea>
+                                                  placeholder="• Implementei a funcionalidade X&#10;• Participei da reunião Y&#10;• Revisei o código Z"></textarea>
+                                        <div class="form-text">Liste as principais atividades realizadas no dia anterior</div>
                                     </div>
                                     
-                                    <div class="mb-3">
-                                        <label class="form-label">O que você fará hoje? *</label>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold required">
+                                            <i class="fas fa-tasks me-2 text-primary"></i>O que você fará hoje?
+                                        </label>
                                         <textarea class="form-control" rows="4" th:field="*{todayTasks}" required
-                                                  placeholder="Liste as principais atividades que você planeja realizar hoje"></textarea>
+                                                  placeholder="• Vou trabalhar na feature A&#10;• Participarei da daily meeting&#10;• Farei code review do PR B"></textarea>
+                                        <div class="form-text">Descreva suas principais metas para hoje</div>
                                     </div>
                                     
-                                    <div class="mb-3">
-                                        <label class="form-label">Algum impedimento?</label>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Algum impedimento?
+                                        </label>
                                         <textarea class="form-control" rows="3" th:field="*{impediments}"
-                                                  placeholder="Descreva qualquer bloqueio ou impedimento que esteja enfrentando"></textarea>
+                                                  placeholder="Descreva qualquer bloqueio, dependência ou dificuldade que esteja enfrentando"></textarea>
+                                        <div class="form-text">Opcional - informe apenas se houver bloqueios</div>
                                     </div>
                                     
-                                    <div class="mb-3 form-check">
-                                        <input type="checkbox" class="form-check-input" th:field="*{remoteWork}">
-                                        <label class="form-check-label">Trabalhou remotamente?</label>
+                                    <div class="mb-4">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" th:field="*{remoteWork}" id="remoteWork">
+                                            <label class="form-check-label fw-bold" for="remoteWork">
+                                                <i class="fas fa-home me-2 text-info"></i>Trabalhou remotamente?
+                                            </label>
+                                        </div>
+                                        <div class="form-text">Marque se trabalhou de casa ou remotamente</div>
                                     </div>
                                     
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <a href="/daily-reports" class="btn btn-outline-secondary me-md-2">
+                                            <i class="fas fa-times me-1"></i>Cancelar
+                                        </a>
                                         <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save me-1"></i>Salvar
+                                            <i class="fas fa-save me-1"></i>
+                                            <span th:text="${isEdit ? 'Atualizar' : 'Salvar'} + ' Report'"></span>
                                         </button>
                                     </div>
                                 </form>
@@ -156,15 +205,20 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-4">
-                        <div class="card">
+                    <div class="col-lg-4">
+                        <!-- Dicas para um bom Daily -->
+                        <div class="card mb-4">
                             <div class="card-header">
-                                <h6 class="mb-0"><i class="fas fa-info-circle me-1"></i>Dicas para um bom Daily</h6>
+                                <h6 class="mb-0">
+                                    <i class="fas fa-lightbulb me-2 text-warning"></i>Dicas para um bom Daily
+                                </h6>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <h6 style="color: var(--accent-orange);">O que fez ontem?</h6>
-                                    <ul class="small text-muted">
+                                    <h6 class="text-success">
+                                        <i class="fas fa-clock me-1"></i>O que fez ontem?
+                                    </h6>
+                                    <ul class="small text-muted mb-0">
                                         <li>Seja específico sobre o que foi concluído</li>
                                         <li>Mencione progresso em tarefas importantes</li>
                                         <li>Inclua reuniões relevantes</li>
@@ -172,8 +226,10 @@
                                 </div>
                                 
                                 <div class="mb-3">
-                                    <h6 style="color: var(--accent-orange);">O que fará hoje?</h6>
-                                    <ul class="small text-muted">
+                                    <h6 class="text-primary">
+                                        <i class="fas fa-tasks me-1"></i>O que fará hoje?
+                                    </h6>
+                                    <ul class="small text-muted mb-0">
                                         <li>Priorize suas tarefas</li>
                                         <li>Seja realista sobre o que pode ser feito</li>
                                         <li>Inclua reuniões planejadas</li>
@@ -181,12 +237,40 @@
                                 </div>
                                 
                                 <div>
-                                    <h6 style="color: var(--accent-orange);">Impedimentos</h6>
-                                    <ul class="small text-muted">
+                                    <h6 class="text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Impedimentos
+                                    </h6>
+                                    <ul class="small text-muted mb-0">
                                         <li>Descreva bloqueios técnicos</li>
                                         <li>Mencione dependências de outras pessoas</li>
                                         <li>Indique se precisa de ajuda</li>
                                     </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Histórico Recente -->
+                        <div class="card" th:if="${recentReports != null and !recentReports.empty}">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-history me-2 text-info"></i>Últimos Reports
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div th:each="report : ${recentReports}" class="mb-3 pb-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="fw-bold" th:text="${#temporals.format(report.reportDate, 'dd/MM/yyyy')}"></small>
+                                        <span class="badge" th:classappend="${report.remoteWork ? 'bg-info' : 'bg-secondary'}"
+                                              th:text="${report.remoteWork ? 'Remoto' : 'Presencial'}"></span>
+                                    </div>
+                                    <p class="small text-muted mb-1" style="max-height: 40px; overflow: hidden;">
+                                        <strong>Hoje:</strong> 
+                                        <span th:text="${#strings.abbreviate(report.todayTasks, 80)}"></span>
+                                    </p>
+                                    <div th:if="${report.impediments}" class="small text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        <span th:text="${#strings.abbreviate(report.impediments, 60)}"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

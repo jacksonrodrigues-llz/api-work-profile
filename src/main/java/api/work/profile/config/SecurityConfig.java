@@ -1,6 +1,7 @@
 package api.work.profile.config;
 
 import api.work.profile.service.CustomUserDetailsService;
+import api.work.profile.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import org.springframework.security.config.Customizer;
 public class SecurityConfig {
     
     private final CustomUserDetailsService userDetailsService;
+    private final CustomOAuth2UserService customOAuth2UserService;
     
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -49,12 +51,16 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/login")
                 .defaultSuccessUrl("/dashboard", true)
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                )
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
+                .logoutSuccessUrl("/login?logout")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
+                .clearAuthentication(true)
                 .permitAll()
             )
             .sessionManagement(session -> session
@@ -64,7 +70,7 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/api/tech-debts/webhook", "/h2-console/**")
+                .ignoringRequestMatchers("/api/tech-debts/webhook", "/h2-console/**", "/daily-reports/*/delete", "/admin/users/bulk-disable", "/admin/users/*/disable", "/admin/users/*/enable")
             )
             .headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.deny())

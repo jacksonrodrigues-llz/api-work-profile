@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Reports Semanais</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Dark Theme -->
+    <link href="/css/dark-theme.css" rel="stylesheet">
+    
+    <style>
+        .card {
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 107, 53, 0.2);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15);
+            border-color: var(--accent-orange);
+        }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .card.border-warning {
+            border-left: 4px solid var(--accent-orange);
+        }
+        .btn-primary {
+            background: var(--accent-orange) !important;
+            border-color: var(--accent-orange) !important;
+        }
+        .btn-outline-primary {
+            color: var(--accent-orange) !important;
+            border-color: var(--accent-orange) !important;
+        }
+        .btn-info {
+            background: var(--accent-orange) !important;
+            border-color: var(--accent-orange) !important;
+            color: white !important;
+        }
+        .btn-outline-light {
+            color: var(--text-secondary) !important;
+            border-color: var(--border-color) !important;
+        }
+        .btn-outline-light:hover {
+            background: var(--accent-orange) !important;
+            border-color: var(--accent-orange) !important;
+            color: white !important;
+        }
+        .btn-outline-primary:hover {
+            background: var(--accent-orange) !important;
+            border-color: var(--accent-orange) !important;
+            color: white !important;
+        }
+        .card-header {
+            border-radius: 12px 12px 0 0;
+            background: rgba(255, 107, 53, 0.1);
+            border-bottom: 1px solid rgba(255, 107, 53, 0.2);
+        }
+        .card-footer {
+            border-radius: 0 0 12px 12px;
+            background: rgba(255, 107, 53, 0.05);
+            border-top: 1px solid rgba(255, 107, 53, 0.1);
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <button class="navbar-toggler me-2" type="button" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="logo" href="/dashboard">
+                <i class="fas fa-code me-2"></i>DevPortal
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="nav-item dropdown" th:if="${user != null}">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <img th:src="${user?.profilePhoto ?: (user?.avatar ?: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (user?.name ?: 'default'))}" alt="Avatar" class="rounded-circle me-2" width="24" height="24">
+                        <span th:text="${user?.name ?: 'Usuário'}">Usuário</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-edit me-2"></i>Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="sidebar">
+                <div class="pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/tech-debts">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Débitos Técnicos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/activities">
+                                <i class="fas fa-tasks me-2"></i>Atividades
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/goals">
+                                <i class="fas fa-bullseye me-2"></i>Metas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/achievements">
+                                <i class="fas fa-trophy me-2"></i>Conquistas
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="/daily-reports">
+                                <i class="fas fa-calendar-week me-2"></i>Daily Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="/reports">
+                                <i class="fas fa-chart-bar me-2"></i>Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item" th:if="${user?.role?.name() == 'ADMIN'}">
+                            <a class="nav-link text-white" href="/admin/users">
+                                <i class="fas fa-users-cog me-2"></i>Gestão de Pessoas
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="main-content px-4">
+                <div class="d-flex justify-content-between align-items-center pb-2 mb-4 border-bottom">
+                    <div>
+                        <h2><i class="fas fa-calendar-week text-primary me-2"></i>Daily Reports Semanais</h2>
+                        <p class="text-muted mb-0">Gerencie seus relatórios diários da semana</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshReports()">
+                            <i class="fas fa-sync-alt me-1"></i>Atualizar
+                        </button>
+                        <a href="/daily-reports/new" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Novo Report
+                        </a>
+                    </div>
+                </div>
+
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="row" id="weeklyReportsContainer">
+                    <!-- Cards serão gerados dinamicamente -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('weeklyReportsContainer');
+            const existingReports = /*[[${weeklyReports}]]*/ [];
+            const today = new Date();
+            
+            // Criar mapa de relatórios existentes por data
+            const reportsMap = {};
+            existingReports.forEach(report => {
+                reportsMap[report.reportDate] = report;
+            });
+            
+            // Gerar 5 cards (segunda a sexta)
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                
+                // Pular fins de semana
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    continue;
+                }
+                
+                const dateStr = date.toISOString().split('T')[0];
+                const report = reportsMap[dateStr];
+                
+                const card = createReportCard(date, report, i === 0, i === 1);
+                container.appendChild(card);
+                
+                // Parar após 5 cards
+                if (container.children.length >= 5) break;
+            }
+        });
+        
+        function refreshReports() {
+            window.location.reload();
+        }
+        
+
+        
+        function createReportCard(date, report, isToday, isYesterday) {
+            const dateStr = date.toISOString().split('T')[0];
+            const dayName = isToday ? 'Hoje' : 
+                           isYesterday ? 'Ontem' : 
+                           date.toLocaleDateString('pt-BR', { weekday: 'long' });
+            
+            const formattedDate = date.toLocaleDateString('pt-BR', { 
+                day: '2-digit', 
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-xl-4 mb-4';
+            
+            const hasReport = report !== undefined && report !== null;
+            const cardClass = hasReport ? 'border-success' : 'border-warning';
+            const iconClass = hasReport ? 'fas fa-check-circle text-success' : 'fas fa-plus-circle text-warning';
+            const cardBg = hasReport ? 'bg-success bg-opacity-10' : 'bg-warning bg-opacity-10';
+            
+            const progressClass = isToday ? 'border-primary' : (hasReport ? 'border-success' : 'border-warning');
+            const todayBadge = isToday ? '<span class="badge bg-primary ms-2">Hoje</span>' : '';
+            
+            col.innerHTML = `
+                <div class="card h-100 shadow-sm" style="background: var(--bg-card); border: 1px solid var(--border-color); ${hasReport ? 'border-left: 4px solid var(--accent-orange);' : ''}">
+                    <div class="card-header d-flex justify-content-between align-items-center" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                        <h6 class="mb-0 d-flex align-items-center" style="color: var(--text-primary);">
+                            <i class="${iconClass} me-2"></i>
+                            ${dayName} - ${formattedDate}
+                            ${todayBadge}
+                        </h6>
+                        <small class="text-muted">${dateStr}</small>
+                    </div>
+                    <div class="card-body">
+                        ${hasReport ? `
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-clock text-success me-2"></i>
+                                    <strong class="small">${isYesterday ? 'Ontem' : 'Atividades anteriores'}:</strong>
+                                </div>
+                                <p class="small text-muted mb-0" style="max-height: 60px; overflow: hidden; line-height: 1.4;">
+                                    ${(report.yesterdayTasks || 'Não informado').substring(0, 120)}${report.yesterdayTasks && report.yesterdayTasks.length > 120 ? '...' : ''}
+                                </p>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-tasks text-primary me-2"></i>
+                                    <strong class="small">${isToday ? 'Hoje' : 'Atividades do dia'}:</strong>
+                                </div>
+                                <p class="small text-muted mb-0" style="max-height: 60px; overflow: hidden; line-height: 1.4;">
+                                    ${(report.todayTasks || 'Não informado').substring(0, 120)}${report.todayTasks && report.todayTasks.length > 120 ? '...' : ''}
+                                </p>
+                            </div>
+                            ${report.impediments ? `
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                        <strong class="small">Impedimentos:</strong>
+                                    </div>
+                                    <p class="small text-warning mb-0" style="max-height: 40px; overflow: hidden; line-height: 1.4;">
+                                        ${report.impediments.substring(0, 100)}${report.impediments.length > 100 ? '...' : ''}
+                                    </p>
+                                </div>
+                            ` : ''}
+                            <div class="d-flex align-items-center justify-content-between mt-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-${report.remoteWork ? 'home text-info' : 'building text-secondary'} me-2"></i>
+                                    <span class="badge ${report.remoteWork ? 'bg-info' : 'bg-secondary'}">
+                                        ${report.remoteWork ? 'Remoto' : 'Presencial'}
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar-check me-1"></i>Completo
+                                </small>
+                            </div>
+                        ` : `
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar-plus fa-3x text-warning mb-3 opacity-50"></i>
+                                <h6 class="text-muted mb-2">Nenhum relatório</h6>
+                                <p class="small text-muted mb-0">Clique para criar seu daily report</p>
+                            </div>
+                        `}
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        ${hasReport ? `
+                            <div class="d-flex gap-1">
+                                <a href="/daily-reports/${report.id}" 
+                                   class="btn btn-sm btn-outline-light flex-fill">
+                                    <i class="fas fa-eye me-1"></i>Ver
+                                </a>
+                                <a href="/daily-reports/new?date=${dateStr}" 
+                                   class="btn btn-sm btn-outline-light flex-fill">
+                                    <i class="fas fa-edit me-1"></i>Editar
+                                </a>
+                                <form method="post" action="/daily-reports/${report.id}/delete" style="display: inline;" class="flex-fill">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" 
+                                            onclick="return confirm('Tem certeza que deseja excluir este daily report?')">
+                                        <i class="fas fa-trash me-1"></i>Excluir
+                                    </button>
+                                </form>
+                            </div>
+                        ` : `
+                            <div class="d-grid">
+                                <a href="/daily-reports/new?date=${dateStr}" 
+                                   class="btn btn-sm btn-primary d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-plus me-2"></i>Criar Report
+                                </a>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+    </script>
+</body>
+</html>

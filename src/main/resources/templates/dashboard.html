@@ -234,6 +234,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-white" href="/daily-reports">
+                                <i class="fas fa-calendar-week me-2"></i>Daily Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-white" href="/reports">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
                             </a>
@@ -409,8 +414,8 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <a href="/daily-reports/new" class="btn btn-primary w-100">
-                                            <i class="fas fa-calendar-check me-2"></i>Daily Report
+                                        <a href="/daily-reports" class="btn btn-outline-light w-100">
+                                            <i class="fas fa-calendar-week me-2"></i>Daily Reports
                                         </a>
                                     </div>
                                     <div class="col-md-6 mb-3">
@@ -485,47 +490,51 @@
                                 <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
                                     <i class="fas fa-calendar-check me-2"></i>Daily Reports
                                 </h6>
-                                <a href="/daily-reports/new" class="btn btn-sm btn-outline-light">
+                                <a href="/daily-reports" class="btn btn-sm btn-outline-light">
+                                    <i class="fas fa-list me-1"></i>Ver Todos
+                                </a>
+                                <a href="/daily-reports/new" class="btn btn-sm btn-primary">
                                     <i class="fas fa-plus me-1"></i>Novo
                                 </a>
                             </div>
                             <div class="card-body">
-                                <div th:if="${dailyReports != null and !dailyReports.empty}">
+                                <div th:if="${weeklyReports != null and !weeklyReports.empty}">
                                     <div class="row">
-                                        <div th:each="report, reportStat : ${dailyReports}" class="col-md-6 mb-3">
+                                        <div th:each="report, reportStat : ${weeklyReports}" th:if="${reportStat.index < 3}" class="col-lg-4 col-md-12 mb-3">
                                             <div class="card h-100" th:classappend="${report.reportDate.equals(#temporals.createToday()) ? 'border-warning' : ''}">
                                                 <div class="card-header d-flex justify-content-between align-items-center">
                                                     <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">
                                                         <i class="fas fa-calendar-day me-2"></i>
-                                                        <span th:text="${report.reportDate.equals(#temporals.createToday()) ? 'Hoje' : 'Ontem'}">Data</span>
+                                                        <span th:text="${report.reportDate.equals(#temporals.createToday()) ? 'Hoje' : (report.reportDate.equals(#temporals.createToday().minusDays(1)) ? 'Ontem' : #temporals.format(report.reportDate, 'EEEE', #locale))}">Data</span>
                                                         <span class="text-muted small ms-2" th:text="'(' + ${#temporals.format(report.reportDate, 'dd/MM/yyyy')} + ')'"></span>
                                                     </h6>
                                                     <span th:if="${report.remoteWork}" class="badge bg-info">Remoto</span>
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="mb-3">
-                                                        <h6 style="color: var(--accent-orange);">O que fez ontem:</h6>
-                                                        <p class="text-muted" th:text="${report.yesterdayTasks}">Tarefas de ontem</p>
+                                                        <h6 style="color: var(--accent-orange);" th:text="${report.reportDate.equals(#temporals.createToday().minusDays(1)) ? 'O que fez ontem:' : 'Atividades anteriores:'}">Atividades:</h6>
+                                                        <p class="text-muted" th:text="${#strings.abbreviate(report.yesterdayTasks, 100)}">Tarefas anteriores</p>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <h6 style="color: var(--accent-orange);">O que fará hoje:</h6>
-                                                        <p class="text-muted" th:text="${report.todayTasks}">Tarefas de hoje</p>
+                                                        <h6 style="color: var(--accent-orange);" th:text="${report.reportDate.equals(#temporals.createToday()) ? 'O que fará hoje:' : 'Atividades do dia:'}">Atividades do dia:</h6>
+                                                        <p class="text-muted" th:text="${#strings.abbreviate(report.todayTasks, 100)}">Tarefas do dia</p>
                                                     </div>
                                                     <div th:if="${report.impediments}" class="mb-0">
                                                         <h6 style="color: var(--accent-orange);">Impedimentos:</h6>
-                                                        <p class="text-muted mb-0" th:text="${report.impediments}">Impedimentos</p>
+                                                        <p class="text-muted mb-0" th:text="${#strings.abbreviate(report.impediments, 80)}">Impedimentos</p>
                                                     </div>
                                                 </div>
                                                 <div class="card-footer bg-transparent border-top border-secondary text-end">
-                                                    <a th:href="@{/daily-reports/new}" class="btn btn-sm btn-outline-light">
+                                                    <button class="btn btn-sm btn-outline-light" 
+                                                            th:onclick="'editReport(' + ${report.id} + ')'">
                                                         <i class="fas fa-edit me-1"></i>Editar
-                                                    </a>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div th:if="${dailyReports == null or dailyReports.empty}" class="text-center p-4">
+                                <div th:if="${weeklyReports == null or weeklyReports.empty}" class="text-center p-4">
                                     <div class="row justify-content-center">
                                         <div class="col-md-6">
                                             <div class="card">
@@ -546,6 +555,48 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">Editar Daily Report</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editForm" method="post" action="/daily-reports">
+                    <div class="modal-body" style="color: var(--text-primary);">
+                        <input type="hidden" id="editId" name="id">
+                        <input type="hidden" id="editDate" name="reportDate">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" style="color: var(--accent-orange);">O que você fez ontem?</label>
+                            <textarea class="form-control" id="editYesterday" name="yesterdayTasks" rows="3" required style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" style="color: var(--accent-orange);">O que você fará hoje?</label>
+                            <textarea class="form-control" id="editToday" name="todayTasks" rows="3" required style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" style="color: var(--accent-orange);">Impedimentos</label>
+                            <textarea class="form-control" id="editImpediments" name="impediments" rows="2" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary);"></textarea>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editRemote" name="remoteWork">
+                            <label class="form-check-label" for="editRemote" style="color: var(--text-primary);">Trabalho remoto</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -607,6 +658,47 @@
                 refreshDashboard();
             }
         });
+        
+        function editReport(reportId) {
+            // Buscar dados do report via AJAX
+            fetch(`/daily-reports/${reportId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    // Se não é JSON, redirecionar para edição
+                    window.location.href = `/daily-reports/new?date=${new Date().toISOString().split('T')[0]}`;
+                    return null;
+                }
+            })
+            .then(report => {
+                if (report) {
+                    document.getElementById('editId').value = report.id;
+                    document.getElementById('editDate').value = report.reportDate;
+                    document.getElementById('editYesterday').value = report.yesterdayTasks || '';
+                    document.getElementById('editToday').value = report.todayTasks || '';
+                    document.getElementById('editImpediments').value = report.impediments || '';
+                    document.getElementById('editRemote').checked = report.remoteWork || false;
+                    
+                    // Mostrar modal
+                    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                    modal.show();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar report:', error);
+                // Fallback: redirecionar para página de edição
+                window.location.href = `/daily-reports/new?date=${new Date().toISOString().split('T')[0]}`;
+            });
+        }
+        
+
     </script>
 </body>
 </html>

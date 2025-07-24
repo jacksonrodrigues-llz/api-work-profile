@@ -7,8 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -25,10 +28,33 @@ public class DailyReportService {
     }
 
     public Optional<DailyReport> getTodaysReport(User user) {
-        return dailyReportRepository.findByUserAndReportDate(user, LocalDate.now());
+        return dailyReportRepository.findByUserAndReportDate(user, LocalDate.now()).stream().findFirst();
+    }
+    
+    public Optional<DailyReport> getReportByDate(User user, LocalDate date) {
+        return dailyReportRepository.findByUserAndReportDate(user, date).stream().findFirst();
     }
 
     public List<DailyReport> getAllReports(User user) {
         return dailyReportRepository.findByUserOrderByReportDateDesc(user);
+    }
+    
+    public List<DailyReport> getWeeklyReports(User user) {
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.minusDays(30); // Buscar últimos 30 dias
+        
+        List<DailyReport> reports = dailyReportRepository.findByUserAndReportDateBetweenOrderByReportDateDesc(
+            user, startOfWeek, today
+        );
+        
+        return reports != null ? reports : new ArrayList<>();
+    }
+    
+    public Optional<DailyReport> getReportById(Long id, User user) {
+        return dailyReportRepository.findByIdAndUser(id, user);
+    }
+    
+    public void deleteReport(DailyReport report) {
+        dailyReportRepository.delete(report);
     }
 }

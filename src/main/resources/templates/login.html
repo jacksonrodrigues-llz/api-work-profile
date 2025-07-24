@@ -84,6 +84,9 @@
                         <div th:if="${param.error}" class="alert alert-danger">
                             <i class="fas fa-exclamation-triangle me-2"></i>Credenciais inválidas
                         </div>
+                        <div th:if="${param.logout}" class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>Logout realizado com sucesso
+                        </div>
                         <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
                         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
                         

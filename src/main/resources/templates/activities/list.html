@@ -248,6 +248,11 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link text-white" href="/daily-reports">
+                                <i class="fas fa-calendar-week me-2"></i>Daily Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link text-white" href="/reports">
                                 <i class="fas fa-chart-bar me-2"></i>Relatórios
                             </a>
@@ -298,7 +303,10 @@
                 <div th:if="${activities.empty}" class="text-center py-5">
                     <i class="fas fa-tasks fa-4x text-muted mb-3"></i>
                     <h4 class="text-muted">Nenhuma atividade encontrada</h4>
-                    <p class="text-muted">Comece criando sua primeira atividade</p>
+                    <p class="text-muted">Configure seu board antes de adicionar atividades</p>
+                    <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#setupModal">
+                        <i class="fas fa-info-circle me-2"></i>Como Começar
+                    </button>
                     <a href="/activities/new" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>Criar Primeira Atividade
                     </a>
@@ -516,6 +524,61 @@
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Setup -->
+    <div class="modal fade" id="setupModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">
+                        <i class="fas fa-rocket me-2" style="color: var(--accent-orange);"></i>Como Começar com o Kanban
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 style="color: var(--accent-orange);"><i class="fas fa-columns me-2"></i>1. Configure as Colunas</h6>
+                            <p class="text-muted">Primeiro, crie colunas personalizadas para organizar seu fluxo de trabalho:</p>
+                            <ul class="text-muted">
+                                <li>Clique em "Nova Coluna"</li>
+                                <li>Defina nome e status (ex: "Em Revisão", "REVIEW")</li>
+                                <li>Escolha ícone e cor</li>
+                            </ul>
+                            
+                            <h6 style="color: var(--accent-orange);"><i class="fas fa-tasks me-2"></i>2. Adicione Atividades</h6>
+                            <p class="text-muted">Depois de ter colunas, crie suas atividades:</p>
+                            <ul class="text-muted">
+                                <li>Clique em "Nova Atividade"</li>
+                                <li>Preencha título e descrição</li>
+                                <li>Defina prioridade e tipo</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 style="color: var(--accent-orange);"><i class="fas fa-arrows-alt me-2"></i>3. Organize o Fluxo</h6>
+                            <p class="text-muted">Use drag & drop para mover atividades:</p>
+                            <ul class="text-muted">
+                                <li>Arraste cards entre colunas</li>
+                                <li>Status é atualizado automaticamente</li>
+                                <li>Reordene colunas no modo edição</li>
+                            </ul>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Dica:</strong> Comece com colunas básicas como "A Fazer", "Fazendo" e "Concluído".
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Entendi</button>
+                    <button type="button" class="btn btn-primary" onclick="showColumnModal()" data-bs-dismiss="modal">
+                        <i class="fas fa-plus me-2"></i>Criar Primeira Coluna
+                    </button>
                 </div>
             </div>
         </div>
