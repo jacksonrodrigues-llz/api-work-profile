@@ -1,11 +1,13 @@
 spring:
   datasource:
-    url: ${DATABASE_URL}
+    url: jdbc:postgresql://dpg-d20oedripnbc73dgh84g-a.oregon-postgres.render.com/careertracker
+    username: careertracker_user
+    password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: false
   
   security:
@@ -13,7 +15,14 @@ spring:
       client:
         registration:
           github:
-            redirect-uri: "${RAILWAY_STATIC_URL}/login/oauth2/code/github"
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            scope: user:email,repo
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
 
 server:
   port: ${PORT:8080}
