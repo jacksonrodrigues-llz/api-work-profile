@@ -348,7 +348,7 @@
                     </div>
 
                     <!-- GitHub Stats -->
-                    <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="col-lg-3 col-md-6 mb-4" th:if="${user.githubUsername}">
                         <a th:href="'https://github.com/' + ${user.githubUsername}" target="_blank" class="text-decoration-none">
                             <div class="card card-metric github-card">
                                 <div class="card-body">
@@ -473,7 +473,7 @@
                                     <i class="fab fa-github fa-4x text-muted mb-3"></i>
                                     <h5 class="text-muted">GitHub não conectado</h5>
                                     <p class="text-muted mb-3">Conecte sua conta para ver estatísticas</p>
-                                    <a href="/auth/github" class="btn btn-primary">
+                                    <a href="/oauth2/authorization/github" class="btn btn-primary">
                                         <i class="fab fa-github me-2"></i>Conectar GitHub
                                     </a>
                                 </div>
