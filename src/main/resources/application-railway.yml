@@ -15,8 +15,8 @@ spring:
       client:
         registration:
           github:
-            client-id: ${GITHUB_CLIENT_ID}
-            client-secret: ${GITHUB_CLIENT_SECRET}
+            client-id: Ov23li1tI16Hb3jbYl3c
+            client-secret: ac3fd8bddb8419d6513f07521aa6357177f5d821
             redirect-uri: https://api-work-profile.onrender.com/login/oauth2/code/github
             scope: user:email,repo
         provider:
