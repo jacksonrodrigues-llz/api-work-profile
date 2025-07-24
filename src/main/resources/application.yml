@@ -60,10 +60,6 @@ github:
   token: ${GITHUB_TOKEN:}
   base-url: https://api.github.com
 
-app:
-  api:
-    key: ${API_KEY:}
-
 recaptcha:
   site-key: ${RECAPTCHA_SITE_KEY:6Ld5II0rAAAAAMWEG_C5w3egPB9s7AsOyKxU6_JH}
   secret-key: ${RECAPTCHA_SECRET_KEY:6Ld5II0rAAAAALiw95tI0GNYUDtfQTN6JwiDdPnP}
