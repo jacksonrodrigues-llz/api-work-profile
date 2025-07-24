@@ -4,18 +4,11 @@ spring:
     username: careertracker_user
     password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 5
-      connection-timeout: 30000
+  
   jpa:
     hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+      ddl-auto: none
     show-sql: false
-
   
   security:
     oauth2:
@@ -24,7 +17,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: "https://api-work-profile.onrender.com/login/oauth2/code/github"
+            scope: user:email,repo
         provider:
           github:
             authorization-uri: https://github.com/login/oauth/authorize
@@ -33,24 +26,28 @@ spring:
 
 server:
   port: ${PORT:8080}
+  compression:
+    enabled: true
   servlet:
     session:
+      timeout: 30m
       cookie:
+        http-only: true
         secure: true
         same-site: strict
+  forward-headers-strategy: native
+  error:
+    include-stacktrace: never
+    include-message: never
 
 logging:
+  level:
+    api.work.profile: INFO
+    org.springframework.security: WARN
+    org.hibernate: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  level:
-    org.springframework.web: DEBUG
-    org.springframework.jdbc: DEBUG
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: always
+app:
+  api:
+    key: ${API_KEY}
