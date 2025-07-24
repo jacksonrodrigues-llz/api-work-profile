@@ -1,42 +1,35 @@
 spring:
   datasource:
-    url: ${RDS_HOSTNAME:jdbc:postgresql://localhost:5432/careertracker}
-    username: ${RDS_USERNAME:postgres}
-    password: ${RDS_PASSWORD:postgres}
-    hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
+    url: jdbc:postgresql://dpg-d20oedripnbc73dgh84g-a.oregon-postgres.render.com/careertracker
+    username: careertracker_user
+    password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
+    driver-class-name: org.postgresql.Driver
   
-  security:
-    oauth2:
-      client:
-        registration:
-          github:
-            redirect-uri: "https://devportal.com.br/login/oauth2/code/github"
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+BASE_URL: https://api-work-profile.onrender.com
 
 server:
-  port: ${PORT:5000}
-  http2:
+  port: ${PORT:8080}
+  compression:
     enabled: true
   servlet:
     session:
+      timeout: 30m
       cookie:
+        http-only: true
         secure: true
         same-site: strict
+  forward-headers-strategy: native
   error:
-    include-binding-errors: never
+    include-stacktrace: never
+    include-message: never
 
 logging:
   level:
-    api.work.profile: WARN
-    org.springframework.security: ERROR
-    org.springframework.web: ERROR
-    org.thymeleaf: ERROR
-    org.hibernate: ERROR
-    feign: ERROR
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: /var/log/work-profile.log
-    max-size: 10MB
-    max-history: 30
+    api.work.profile: INFO
+    org.springframework.security: WARN
+    org.hibernate: WARN
