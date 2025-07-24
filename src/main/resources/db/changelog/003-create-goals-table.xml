@@ -6,6 +6,11 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <changeSet id="003-create-goals-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="goals"/>
+            </not>
+        </preConditions>
         <createTable tableName="goals">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>

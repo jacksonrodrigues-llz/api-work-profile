@@ -6,6 +6,11 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <changeSet id="002-create-activities-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="activities"/>
+            </not>
+        </preConditions>
         <createTable tableName="activities">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>

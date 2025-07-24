@@ -6,6 +6,11 @@
                         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <changeSet id="005-create-tech-debts-table" author="system">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tech_debts"/>
+            </not>
+        </preConditions>
         <createTable tableName="tech_debts">
             <column name="id" type="BIGSERIAL">
                 <constraints primaryKey="true" nullable="false"/>
@@ -38,6 +43,11 @@
             referencedTableName="users"
             referencedColumnNames="id"/>
             
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tech_debt_tipos"/>
+            </not>
+        </preConditions>
         <createTable tableName="tech_debt_tipos">
             <column name="tech_debt_id" type="BIGINT">
                 <constraints nullable="false"/>
@@ -53,6 +63,11 @@
             referencedColumnNames="id"
             onDelete="CASCADE"/>
             
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="tech_debt_tags"/>
+            </not>
+        </preConditions>
         <createTable tableName="tech_debt_tags">
             <column name="tech_debt_id" type="BIGINT">
                 <constraints nullable="false"/>
