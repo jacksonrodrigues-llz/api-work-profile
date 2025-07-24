@@ -17,7 +17,7 @@ spring:
   
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: true
+    enabled: false
     drop-first: false
     show-summary: false
     show-summary-output: LOG
