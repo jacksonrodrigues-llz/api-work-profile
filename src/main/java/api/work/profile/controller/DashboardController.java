@@ -41,6 +41,7 @@ public class DashboardController {
             model.addAttribute("user", user);
             model.addAttribute("metrics", dashboardService.getDashboardMetrics(user));
             model.addAttribute("dailyReports", dailyReportService.getRecentReports(user));
+            model.addAttribute("weeklyReports", dailyReportService.getWeeklyReports(user));
             
             return "dashboard";
         } catch (Exception e) {
