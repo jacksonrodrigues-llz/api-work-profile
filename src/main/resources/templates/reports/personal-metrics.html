@@ -167,12 +167,12 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                            Metas Concluídas
+                                            Horas Investidas
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.totalHours ?: 0} + 'h'">0h</div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-bullseye fa-2x text-success"></i>
+                                        <i class="fas fa-clock fa-2x text-success"></i>
                                     </div>
                                 </div>
                             </div>
@@ -185,12 +185,12 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                            Metas Ativas
+                                            Metas Concluídas
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.activeGoals}">0</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-flag fa-2x text-info"></i>
+                                        <i class="fas fa-bullseye fa-2x text-info"></i>
                                     </div>
                                 </div>
                             </div>
@@ -218,7 +218,7 @@
 
                 <!-- Gráficos -->
                 <div class="row mb-4">
-                    <div class="col-xl-6 col-lg-6">
+                    <div class="col-xl-4 col-lg-6">
                         <div class="card mb-4">
                             <div class="card-header">
                                 <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Progresso Mensal</h6>
@@ -231,10 +231,10 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-6 col-lg-6">
+                    <div class="col-xl-4 col-lg-6">
                         <div class="card mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Habilidades Radar</h6>
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Radar de Habilidades</h6>
                                 <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#radarExplanationModal">
                                     <i class="fas fa-info-circle"></i>
                                 </button>
@@ -246,7 +246,26 @@
                                 <div class="mt-2">
                                     <small class="text-muted">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Valores calculados com base em atividades, metas e conquistas. Clique no ícone acima para detalhes.
+                                        Valores calculados com base em atividades, metas e conquistas.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-xl-4 col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Radar de Performance</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="performanceChart"></canvas>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-chart-radar me-1"></i>
+                                        Métricas de produtividade e qualidade.
                                     </small>
                                 </div>
                             </div>
@@ -376,22 +395,38 @@
         
         // Gráfico de Progresso
         const progressCtx = document.getElementById('progressChart').getContext('2d');
-        const completedActivities = /*[[${monthlyReport.completedActivities}]]*/ 0;
+        let progressChart;
         
-        new Chart(progressCtx, {
-            type: 'line',
-            data: {
+        function initProgressChart() {
+            const chartData = /*[[${chartData}]]*/ null;
+            const progressData = chartData?.progressData || {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                datasets: [{
-                    label: 'Atividades Concluídas',
-                    data: [12, 19, 15, 25, 22, completedActivities],
-                    borderColor: '#ff6b35',
-                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
-                    tension: 0.4,
-                    pointBackgroundColor: '#ff6b35',
-                    pointBorderColor: '#ff8c42'
-                }]
-            },
+                activities: [0, 0, 0, 0, 0, 0],
+                goals: [0, 0, 0, 0, 0, 0]
+            };
+            
+            progressChart = new Chart(progressCtx, {
+                type: 'line',
+                data: {
+                    labels: progressData.labels,
+                    datasets: [{
+                        label: 'Atividades Concluídas',
+                        data: progressData.activities,
+                        borderColor: '#ff6b35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff6b35',
+                        pointBorderColor: '#ff8c42'
+                    }, {
+                        label: 'Metas Concluídas',
+                        data: progressData.goals,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#28a745',
+                        pointBorderColor: '#34ce57'
+                    }]
+                },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -426,23 +461,63 @@
 
         // Gráfico Radar de Habilidades
         const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        const completedGoals = /*[[${monthlyReport.completedGoals}]]*/ 0;
-        const activeGoals = /*[[${monthlyReport.activeGoals}]]*/ 0;
-        const achievements = /*[[${monthlyReport.achievements}]]*/ 0;
+        let categoryChart;
         
-        new Chart(categoryCtx, {
-            type: 'radar',
-            data: {
+        function initCategoryChart() {
+            const chartData = /*[[${chartData}]]*/ null;
+            const radarData = chartData?.radarData || {
                 labels: ['Técnico', 'Liderança', 'Comunicação', 'Inovação', 'Colaboração', 'Aprendizado'],
-                datasets: [{
-                    label: 'Nível Atual',
-                    data: [7, 5, 6, 8, 7, 9],
-                    borderColor: '#ff6b35',
-                    backgroundColor: 'rgba(255, 107, 53, 0.2)',
-                    pointBackgroundColor: '#ff6b35',
-                    pointBorderColor: '#ff8c42'
-                }]
-            },
+                data: [0, 0, 0, 0, 0, 0]
+            };
+            
+            categoryChart = new Chart(categoryCtx, {
+                type: 'radar',
+                data: {
+                    labels: radarData.labels,
+                    datasets: [{
+                        label: 'Nível Atual',
+                        data: radarData.data,
+                        borderColor: '#ff6b35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                        pointBackgroundColor: '#ff6b35',
+                        pointBorderColor: '#ff8c42',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 2
+                            },
+                            grid: {
+                                color: '#4a4a4a'
+                            },
+                            angleLines: {
+                                color: '#4a4a4a'
+                            },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -476,6 +551,83 @@
                     }
                 }
             }
+        });
+        }
+        
+        // Gráfico Radar de Performance
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        let performanceChart;
+        
+        function initPerformanceChart() {
+            const chartData = /*[[${chartData}]]*/ null;
+            const performanceData = chartData?.performanceData || {
+                labels: ['Produtividade', 'Qualidade', 'Velocidade', 'Consistência', 'Eficiência'],
+                data: [5, 5, 5, 5, 5]
+            };
+            
+            performanceChart = new Chart(performanceCtx, {
+                type: 'radar',
+                data: {
+                    labels: performanceData.labels,
+                    datasets: [{
+                        label: 'Performance Atual',
+                        data: performanceData.data,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        pointBackgroundColor: '#28a745',
+                        pointBorderColor: '#34ce57',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 2
+                            },
+                            grid: {
+                                color: '#4a4a4a'
+                            },
+                            angleLines: {
+                                color: '#4a4a4a'
+                            },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Inicializar gráficos após DOM carregado
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando Personal Metrics...');
+            initProgressChart();
+            initCategoryChart();
+            initPerformanceChart();
+            
+            // Aguardar um pouco para garantir que os gráficos foram criados
+            setTimeout(function() {
+                console.log('Carregando dados iniciais...');
+                updatePersonalMetrics();
+            }, 500);
         });
         /*]]>*/
         
@@ -516,14 +668,62 @@
         }
         
         function updatePersonalChartsWithData(data) {
-            // Recarregar gráficos com novos dados se necessário
-            console.log('Dados recebidos:', data);
+            console.log('Atualizando gráficos com dados:', data);
+            
+            // Atualizar gráfico de progresso
+            if (data.chartData?.progressData && progressChart) {
+                const progressData = data.chartData.progressData;
+                console.log('Dados de progresso:', progressData);
+                progressChart.data.labels = progressData.labels;
+                progressChart.data.datasets[0].data = progressData.activities;
+                if (progressChart.data.datasets[1]) {
+                    progressChart.data.datasets[1].data = progressData.goals;
+                }
+                progressChart.update('active');
+            }
+            
+            // Atualizar gráfico radar
+            if (data.chartData?.radarData && categoryChart) {
+                const radarData = data.chartData.radarData;
+                console.log('Dados do radar:', radarData);
+                categoryChart.data.datasets[0].data = radarData.data;
+                categoryChart.update('active');
+            }
+            
+            // Atualizar gráfico de performance
+            if (data.chartData?.performanceData && performanceChart) {
+                const performanceData = data.chartData.performanceData;
+                console.log('Dados de performance:', performanceData);
+                performanceChart.data.datasets[0].data = performanceData.data;
+                performanceChart.update('active');
+            }
         }
         
         function updatePersonalMetricsCards(data) {
             if (data.monthlyReport) {
                 const metrics = data.monthlyReport;
-                // Atualizar cards de métricas se existirem elementos específicos
+                
+                // Atualizar cards de métricas
+                const completedActivitiesEl = document.querySelector('.border-left-primary .h5');
+                if (completedActivitiesEl && metrics.completedActivities !== undefined) {
+                    completedActivitiesEl.textContent = metrics.completedActivities;
+                }
+                
+                const totalHoursEl = document.querySelector('.border-left-success .h5');
+                if (totalHoursEl && metrics.totalHours !== undefined) {
+                    totalHoursEl.textContent = metrics.totalHours + 'h';
+                }
+                
+                const completedGoalsEl = document.querySelector('.border-left-info .h5');
+                if (completedGoalsEl && metrics.completedGoals !== undefined) {
+                    completedGoalsEl.textContent = metrics.completedGoals;
+                }
+                
+                const achievementsEl = document.querySelector('.border-left-warning .h5');
+                if (achievementsEl && metrics.achievements !== undefined) {
+                    achievementsEl.textContent = metrics.achievements;
+                }
+                
                 console.log('Métricas atualizadas:', metrics);
             }
         }

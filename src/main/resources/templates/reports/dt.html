@@ -146,7 +146,7 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Críticos Abertos</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                                        <div id="criticalOpen" class="h5 mb-0 font-weight-bold text-gray-800">0</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
@@ -161,7 +161,7 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Tempo Médio</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0 dias</div>
+                                        <div id="averageTime" class="h5 mb-0 font-weight-bold text-gray-800">0 dias</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-clock fa-2x text-warning"></i>
@@ -176,7 +176,7 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Resolvidos</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                                        <div id="resolved" class="h5 mb-0 font-weight-bold text-gray-800">0</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-check-circle fa-2x text-success"></i>
@@ -191,7 +191,7 @@
                                 <div class="row no-gutters align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Taxa Resolução</div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800">0%</div>
+                                        <div id="resolutionRate" class="h5 mb-0 font-weight-bold text-gray-800">0%</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-chart-line fa-2x text-info"></i>
@@ -220,7 +220,7 @@
                     <div class="col-xl-4 col-lg-6 mb-4">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Débitos por Status</h6>
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Radar de Status</h6>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container">
@@ -233,7 +233,7 @@
                     <div class="col-xl-4 col-lg-6 mb-4">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Prioridade vs Dias Abertos</h6>
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Radar de Prioridades</h6>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container">
@@ -262,7 +262,7 @@
                     <div class="col-xl-6 col-lg-6 mb-4">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Tipos de Débito</h6>
+                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Radar de Tipos</h6>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container">
@@ -323,15 +323,16 @@
             statusChart = new Chart(statusCtx, {
                 type: 'radar',
                 data: {
-                    labels: ['TODO', 'EM PROGRESSO', 'TESTE', 'DEPLOY', 'CONCLUÍDO'],
+                    labels: ['TODO', 'EM PROGRESSO', 'PAUSADO', 'TESTE', 'DEPLOY', 'CONCLUÍDO', 'CANCELADO'],
                     datasets: [{
-                        label: 'Quantidade de Débitos',
-                        data: [0, 0, 0, 0, 0],
-                        borderColor: '#6c757d',
-                        backgroundColor: 'rgba(108, 117, 125, 0.2)',
-                        pointBackgroundColor: '#6c757d',
-                        pointBorderColor: '#6c757d',
-                        pointRadius: 6
+                        label: 'Status dos Débitos',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#ff6b35',
+                        backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                        pointBackgroundColor: '#ff6b35',
+                        pointBorderColor: '#ff8c42',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
@@ -349,7 +350,7 @@
                             beginAtZero: true,
                             ticks: {
                                 color: '#b0b0b0',
-                                stepSize: 5
+                                stepSize: 1
                             },
                             grid: {
                                 color: '#4a4a4a'
@@ -370,13 +371,18 @@
             
             const priorityCtx = document.getElementById('priorityChart').getContext('2d');
             priorityChart = new Chart(priorityCtx, {
-                type: 'scatter',
+                type: 'radar',
                 data: {
+                    labels: ['Crítico', 'Alto', 'Médio', 'Baixo'],
                     datasets: [{
-                        label: 'Sem dados',
-                        data: [],
-                        backgroundColor: '#6c757d',
-                        pointRadius: 4
+                        label: 'Distribuição por Prioridade',
+                        data: [0, 0, 0, 0],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                        pointBackgroundColor: '#dc3545',
+                        pointBorderColor: '#ff6b6b',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
@@ -384,28 +390,30 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: { color: '#ffffff' }
+                            labels: {
+                                color: '#ffffff'
+                            }
                         }
                     },
                     scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Prioridade',
-                                color: '#ffffff'
-                            },
-                            ticks: { color: '#b0b0b0' },
-                            grid: { color: '#4a4a4a' }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Dias Abertos',
-                                color: '#ffffff'
-                            },
+                        r: {
                             beginAtZero: true,
-                            ticks: { color: '#b0b0b0' },
-                            grid: { color: '#4a4a4a' }
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: '#4a4a4a'
+                            },
+                            angleLines: {
+                                color: '#4a4a4a'
+                            },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 12
+                                }
+                            }
                         }
                     }
                 }
@@ -454,33 +462,49 @@
             
             const typeCtx = document.getElementById('typeChart').getContext('2d');
             typeChart = new Chart(typeCtx, {
-                type: 'bar',
+                type: 'radar',
                 data: {
                     labels: ['Performance', 'Segurança', 'Código', 'Arquitetura', 'Documentação'],
                     datasets: [{
-                        label: 'Quantidade',
+                        label: 'Tipos de Débito',
                         data: [0, 0, 0, 0, 0],
-                        backgroundColor: ['#6c757d', '#6c757d', '#6c757d', '#6c757d', '#6c757d']
+                        borderColor: '#20c997',
+                        backgroundColor: 'rgba(32, 201, 151, 0.2)',
+                        pointBackgroundColor: '#20c997',
+                        pointBorderColor: '#4dd4ac',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
                     },
                     scales: {
-                        x: {
-                            ticks: { 
-                                color: '#b0b0b0',
-                                maxRotation: 45
-                            },
-                            grid: { color: '#4a4a4a' }
-                        },
-                        y: {
+                        r: {
                             beginAtZero: true,
-                            ticks: { color: '#b0b0b0' },
-                            grid: { color: '#4a4a4a' }
+                            ticks: {
+                                color: '#b0b0b0',
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: '#4a4a4a'
+                            },
+                            angleLines: {
+                                color: '#4a4a4a'
+                            },
+                            pointLabels: {
+                                color: '#ffffff',
+                                font: {
+                                    size: 11
+                                }
+                            }
                         }
                     }
                 }
@@ -520,47 +544,69 @@
         
         function updateMetrics(data) {
             if (data.criticalOpen !== undefined) {
-                const criticalElement = document.querySelector('.border-left-danger .h5');
+                const criticalElement = document.getElementById('criticalOpen');
                 if (criticalElement) criticalElement.textContent = data.criticalOpen;
             }
             if (data.averageTime !== undefined) {
-                const avgTimeElement = document.querySelector('.border-left-warning .h5');
+                const avgTimeElement = document.getElementById('averageTime');
                 if (avgTimeElement) avgTimeElement.textContent = data.averageTime + ' dias';
             }
             if (data.resolved !== undefined) {
-                const resolvedElement = document.querySelector('.border-left-success .h5');
+                const resolvedElement = document.getElementById('resolved');
                 if (resolvedElement) resolvedElement.textContent = data.resolved;
             }
             if (data.resolutionRate !== undefined) {
-                const rateElement = document.querySelector('.border-left-info .h5');
+                const rateElement = document.getElementById('resolutionRate');
                 if (rateElement) rateElement.textContent = data.resolutionRate + '%';
             }
         }
         
         function updateChartsWithData(data) {
+            console.log('Atualizando gráficos DT com dados:', data);
+            
             if (data.creatorData && creatorChart) {
                 creatorChart.data.labels = data.creatorData.labels;
                 creatorChart.data.datasets[0].data = data.creatorData.data;
+                creatorChart.data.datasets[0].backgroundColor = data.creatorData.backgroundColor || ['#ff6b35', '#ff8c42', '#ffa726', '#ffb74d', '#ffcc80'];
                 creatorChart.update();
             }
             
             if (data.statusData && statusChart) {
                 statusChart.data.labels = data.statusData.labels;
                 statusChart.data.datasets[0].data = data.statusData.data;
+                statusChart.data.datasets[0].borderColor = '#ff6b35';
+                statusChart.data.datasets[0].backgroundColor = 'rgba(255, 107, 53, 0.2)';
+                statusChart.data.datasets[0].pointBackgroundColor = '#ff6b35';
                 statusChart.update();
             }
             
             if (data.trendData && trendChart) {
                 trendChart.data.labels = data.trendData.labels;
                 trendChart.data.datasets[0].data = data.trendData.created;
+                trendChart.data.datasets[0].borderColor = '#ff6b35';
+                trendChart.data.datasets[0].backgroundColor = 'rgba(255, 107, 53, 0.1)';
                 trendChart.data.datasets[1].data = data.trendData.resolved;
+                trendChart.data.datasets[1].borderColor = '#28a745';
+                trendChart.data.datasets[1].backgroundColor = 'rgba(40, 167, 69, 0.1)';
                 trendChart.update();
             }
             
             if (data.typeData && typeChart) {
                 typeChart.data.labels = data.typeData.labels;
                 typeChart.data.datasets[0].data = data.typeData.data;
+                typeChart.data.datasets[0].borderColor = '#20c997';
+                typeChart.data.datasets[0].backgroundColor = 'rgba(32, 201, 151, 0.2)';
+                typeChart.data.datasets[0].pointBackgroundColor = '#20c997';
                 typeChart.update();
+            }
+            
+            if (data.priorityData && priorityChart) {
+                priorityChart.data.labels = ['Crítico', 'Alto', 'Médio', 'Baixo'];
+                priorityChart.data.datasets[0].data = data.priorityData.data;
+                priorityChart.data.datasets[0].borderColor = '#dc3545';
+                priorityChart.data.datasets[0].backgroundColor = 'rgba(220, 53, 69, 0.2)';
+                priorityChart.data.datasets[0].pointBackgroundColor = '#dc3545';
+                priorityChart.update();
             }
         }
         
@@ -570,7 +616,14 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando DT Report...');
             loadDTCharts();
+            
+            // Aguardar um pouco para garantir que os gráficos foram criados
+            setTimeout(function() {
+                console.log('Carregando dados iniciais...');
+                updateDTReport();
+            }, 500);
         });
     </script>
 </body>

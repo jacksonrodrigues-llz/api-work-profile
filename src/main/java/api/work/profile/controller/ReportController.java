@@ -71,7 +71,18 @@ public class ReportController {
     @ResponseBody
     public Map<String, Object> getDtData(@RequestParam(required = false) String periodo, Authentication authentication) {
         var user = profileService.getUserFromAuthentication(authentication);
-        return reportService.getDtReportData(user, periodo);
+        log.info("[DT_DATA] Solicitação de dados DT para usuário: {}, período: {}", user.getEmail(), periodo);
+        var result = reportService.getDtReportData(user, periodo);
+        log.info("[DT_DATA] Retornando dados: criticalOpen={}, resolved={}", result.get("criticalOpen"), result.get("resolved"));
+        return result;
+    }
+    
+    @GetMapping("/test-dt")
+    @ResponseBody
+    public Map<String, Object> testDtData(Authentication authentication) {
+        var user = profileService.getUserFromAuthentication(authentication);
+        log.info("[TEST_DT] Testando dados para usuário: {}", user.getEmail());
+        return reportService.getDtReportData(user, null);
     }
     
     @GetMapping("/pdf")

@@ -316,6 +316,7 @@ public class ReportService {
         data.put("activities", getFilteredActivities(user, periodoDate));
         data.put("goals", getFilteredGoals(user, periodoDate));
         data.put("achievements", getFilteredAchievements(user, periodoDate));
+        data.put("chartData", getChartData(user, periodoDate));
         
         return data;
     }
@@ -323,116 +324,176 @@ public class ReportService {
     public Map<String, Object> getDtReportData(User user, String periodo) {
         var data = new HashMap<String, Object>();
         
-        // Buscar dados reais de débitos técnicos
-        var allDebts = techDebtRepository.findByUserOrderByDataCriacaoDesc(user, org.springframework.data.domain.Pageable.unpaged()).getContent();
-        
-        // Filtrar por período se especificado
-        LocalDateTime periodoDate = calculatePeriodDate(periodo);
-        if (periodoDate != null) {
-            allDebts = allDebts.stream()
-                .filter(debt -> debt.getDataCriacao().isAfter(periodoDate))
-                .toList();
-        }
-        
-        // Métricas
-        long criticalOpen = allDebts.stream().filter(d -> d.getPrioridade() == 1 && d.getStatus() != TechDebt.StatusDebito.DONE).count();
-        double averageTime = allDebts.stream().mapToLong(TechDebt::getDiasEmAberto).average().orElse(0);
-        long resolved = allDebts.stream().filter(d -> d.getStatus() == TechDebt.StatusDebito.DONE).count();
-        int resolutionRate = allDebts.isEmpty() ? 0 : (int) ((resolved * 100) / allDebts.size());
-        
-        data.put("criticalOpen", criticalOpen);
-        data.put("averageTime", (int) averageTime);
-        data.put("resolved", resolved);
-        data.put("resolutionRate", resolutionRate);
-        
-        // Dados por criador
-        var creatorMap = allDebts.stream()
-            .collect(java.util.stream.Collectors.groupingBy(
-                debt -> debt.getCriadoPor() != null ? debt.getCriadoPor() : "Desconhecido",
-                java.util.stream.Collectors.counting()
-            ));
-        
-        if (creatorMap.isEmpty()) {
-            data.put("creatorData", Map.of(
-                "labels", List.of("Sem dados"),
-                "data", List.of(1)
-            ));
-        } else {
-            data.put("creatorData", Map.of(
-                "labels", creatorMap.keySet().stream().toList(),
-                "data", creatorMap.values().stream().toList()
-            ));
-        }
-        
-        // Dados por status
-        var statusCounts = new long[5];
-        for (var debt : allDebts) {
-            switch (debt.getStatus()) {
-                case TODO -> statusCounts[0]++;
-                case IN_PROGRESS -> statusCounts[1]++;
-                case TEST -> statusCounts[2]++;
-                case DEPLOY -> statusCounts[3]++;
-                case DONE -> statusCounts[4]++;
+        try {
+            // Buscar dados reais de débitos técnicos
+            var allDebts = techDebtRepository.findByUserOrderByDataCriacaoDesc(user, org.springframework.data.domain.Pageable.unpaged()).getContent();
+            log.info("[DT_REPORT] Encontrados {} débitos técnicos para usuário {}", allDebts.size(), user.getEmail());
+            
+            // Filtrar por período se especificado
+            LocalDateTime periodoDate = calculatePeriodDate(periodo);
+            if (periodoDate != null) {
+                allDebts = allDebts.stream()
+                    .filter(debt -> debt.getDataCriacao() != null && debt.getDataCriacao().isAfter(periodoDate))
+                    .toList();
+                log.info("[DT_REPORT] Após filtro de período: {} débitos", allDebts.size());
             }
-        }
-        
-        data.put("statusData", Map.of(
-            "labels", List.of("TODO", "EM PROGRESSO", "TESTE", "DEPLOY", "CONCLUÍDO"),
-            "data", java.util.Arrays.stream(statusCounts).boxed().toList()
-        ));
-        
-        // Tendência mensal (simplificada)
-        var now = LocalDateTime.now();
-        var monthlyCreated = new long[6];
-        var monthlyResolved = new long[6];
-        
-        for (int i = 0; i < 6; i++) {
-            var monthStart = now.minusMonths(5 - i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-            var monthEnd = monthStart.plusMonths(1).minusSeconds(1);
             
-            monthlyCreated[i] = allDebts.stream()
-                .filter(d -> d.getDataCriacao().isAfter(monthStart) && d.getDataCriacao().isBefore(monthEnd))
-                .count();
+            // Métricas
+            long criticalOpen = allDebts.stream().filter(d -> d.getPrioridade() == 1 && d.getStatus() != TechDebt.StatusDebito.DONE).count();
+            double averageTime = allDebts.stream().mapToLong(TechDebt::getDiasEmAberto).average().orElse(0);
+            long resolved = allDebts.stream().filter(d -> d.getStatus() == TechDebt.StatusDebito.DONE).count();
+            int resolutionRate = allDebts.isEmpty() ? 0 : (int) ((resolved * 100) / allDebts.size());
             
-            monthlyResolved[i] = allDebts.stream()
-                .filter(d -> d.getDataResolucao() != null && 
-                           d.getDataResolucao().isAfter(monthStart) && 
-                           d.getDataResolucao().isBefore(monthEnd))
-                .count();
-        }
-        
-        data.put("trendData", Map.of(
-            "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
-            "created", java.util.Arrays.stream(monthlyCreated).boxed().toList(),
-            "resolved", java.util.Arrays.stream(monthlyResolved).boxed().toList()
-        ));
-        
-        // Dados por tipo
-        var typeCounts = new java.util.HashMap<String, Long>();
-        typeCounts.put("Performance", 0L);
-        typeCounts.put("Segurança", 0L);
-        typeCounts.put("Código", 0L);
-        typeCounts.put("Arquitetura", 0L);
-        typeCounts.put("Documentação", 0L);
-        
-        for (var debt : allDebts) {
-            if (debt.getTipos() != null) {
-                for (var tipo : debt.getTipos()) {
-                    switch (tipo) {
-                        case BACKEND, FRONTEND -> typeCounts.merge("Código", 1L, Long::sum);
-                        case SECURITY -> typeCounts.merge("Segurança", 1L, Long::sum);
-                        case INFRA -> typeCounts.merge("Arquitetura", 1L, Long::sum);
-                        case DATABASE -> typeCounts.merge("Performance", 1L, Long::sum);
-                        default -> typeCounts.merge("Documentação", 1L, Long::sum);
+            data.put("criticalOpen", criticalOpen);
+            data.put("averageTime", (int) averageTime);
+            data.put("resolved", resolved);
+            data.put("resolutionRate", resolutionRate);
+            
+            // Dados por criador
+            var creatorMap = allDebts.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    debt -> debt.getCriadoPor() != null && !debt.getCriadoPor().trim().isEmpty() ? debt.getCriadoPor() : "Desconhecido",
+                    java.util.stream.Collectors.counting()
+                ));
+            
+            if (creatorMap.isEmpty() || allDebts.isEmpty()) {
+                data.put("creatorData", Map.of(
+                    "labels", List.of("Sem dados"),
+                    "data", List.of(1),
+                    "backgroundColor", List.of("#6c757d")
+                ));
+            } else {
+                var colors = List.of("#ff6b35", "#ff8c42", "#ffa726", "#ffb74d", "#ffcc80", "#ffe0b2");
+                var labels = creatorMap.keySet().stream().sorted().toList();
+                var dataValues = labels.stream().map(creatorMap::get).toList();
+                var backgroundColors = new java.util.ArrayList<String>();
+                for (int i = 0; i < labels.size(); i++) {
+                    backgroundColors.add(colors.get(i % colors.size()));
+                }
+                
+                data.put("creatorData", Map.of(
+                    "labels", labels,
+                    "data", dataValues,
+                    "backgroundColor", backgroundColors
+                ));
+            }
+            
+            // Dados por status
+            var statusCounts = new long[7]; // Incluindo PAUSE e CANCELLED
+            for (var debt : allDebts) {
+                if (debt.getStatus() != null) {
+                    switch (debt.getStatus()) {
+                        case TODO -> statusCounts[0]++;
+                        case IN_PROGRESS -> statusCounts[1]++;
+                        case PAUSE -> statusCounts[2]++;
+                        case TEST -> statusCounts[3]++;
+                        case DEPLOY -> statusCounts[4]++;
+                        case DONE -> statusCounts[5]++;
+                        case CANCELLED -> statusCounts[6]++;
                     }
                 }
             }
+            
+            data.put("statusData", Map.of(
+                "labels", List.of("TODO", "EM PROGRESSO", "PAUSADO", "TESTE", "DEPLOY", "CONCLUÍDO", "CANCELADO"),
+                "data", java.util.Arrays.stream(statusCounts).boxed().toList(),
+                "backgroundColor", List.of("#6c757d", "#ffc107", "#fd7e14", "#17a2b8", "#20c997", "#28a745", "#dc3545")
+            ));
+            
+            // Tendência mensal
+            var now = LocalDateTime.now();
+            var monthNames = new java.util.ArrayList<String>();
+            var monthlyCreated = new java.util.ArrayList<Long>();
+            var monthlyResolved = new java.util.ArrayList<Long>();
+            
+            for (int i = 5; i >= 0; i--) {
+                var monthStart = now.minusMonths(i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                var monthEnd = monthStart.plusMonths(1).minusDays(1).withHour(23).withMinute(59).withSecond(59);
+                
+                monthNames.add(monthStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM", java.util.Locale.forLanguageTag("pt-BR"))));
+                
+                long created = allDebts.stream()
+                    .filter(d -> d.getDataCriacao() != null)
+                    .filter(d -> !d.getDataCriacao().isBefore(monthStart) && !d.getDataCriacao().isAfter(monthEnd))
+                    .count();
+                
+                long monthlyResolvedCount = allDebts.stream()
+                    .filter(d -> d.getDataResolucao() != null)
+                    .filter(d -> !d.getDataResolucao().isBefore(monthStart) && !d.getDataResolucao().isAfter(monthEnd))
+                    .count();
+                
+                monthlyCreated.add(created);
+                monthlyResolved.add(monthlyResolvedCount);
+            }
+            
+            data.put("trendData", Map.of(
+                "labels", monthNames,
+                "created", monthlyCreated,
+                "resolved", monthlyResolved
+            ));
+            
+            // Dados por tipo
+            var typeCounts = new java.util.HashMap<String, Long>();
+            typeCounts.put("Performance", 0L);
+            typeCounts.put("Segurança", 0L);
+            typeCounts.put("Código", 0L);
+            typeCounts.put("Arquitetura", 0L);
+            typeCounts.put("Documentação", 0L);
+            
+            for (var debt : allDebts) {
+                if (debt.getTipos() != null && !debt.getTipos().isEmpty()) {
+                    for (var tipo : debt.getTipos()) {
+                        switch (tipo) {
+                            case BACKEND, FRONTEND -> typeCounts.merge("Código", 1L, Long::sum);
+                            case SECURITY -> typeCounts.merge("Segurança", 1L, Long::sum);
+                            case INFRA -> typeCounts.merge("Arquitetura", 1L, Long::sum);
+                            case DATABASE -> typeCounts.merge("Performance", 1L, Long::sum);
+                            default -> typeCounts.merge("Documentação", 1L, Long::sum);
+                        }
+                    }
+                } else {
+                    typeCounts.merge("Documentação", 1L, Long::sum);
+                }
+            }
+            
+            data.put("typeData", Map.of(
+                "labels", List.of("Performance", "Segurança", "Código", "Arquitetura", "Documentação"),
+                "data", typeCounts.values().stream().toList(),
+                "backgroundColor", List.of("#ff6b35", "#dc3545", "#007bff", "#6f42c1", "#20c997")
+            ));
+            
+            // Dados por prioridade
+            var priorityCounts = new long[4];
+            for (var debt : allDebts) {
+                if (debt.getPrioridade() != null) {
+                    int priority = debt.getPrioridade();
+                    if (priority >= 1 && priority <= 4) {
+                        priorityCounts[priority - 1]++;
+                    }
+                }
+            }
+            
+            data.put("priorityData", Map.of(
+                "labels", List.of("Crítico (1)", "Alto (2)", "Médio (3)", "Baixo (4)"),
+                "data", java.util.Arrays.stream(priorityCounts).boxed().toList(),
+                "backgroundColor", List.of("#dc3545", "#fd7e14", "#ffc107", "#28a745")
+            ));
+            
+            log.info("[DT_REPORT] Relatório gerado com sucesso: {} débitos processados, críticos: {}, resolvidos: {}, prioridades: {}", 
+                allDebts.size(), criticalOpen, resolved, java.util.Arrays.toString(priorityCounts));
+            
+        } catch (Exception e) {
+            log.error("[DT_REPORT] Erro ao gerar relatório DT: {}", e.getMessage(), e);
+            // Retornar dados vazios em caso de erro
+            data.put("criticalOpen", 0);
+            data.put("averageTime", 0);
+            data.put("resolved", 0);
+            data.put("resolutionRate", 0);
+            data.put("creatorData", Map.of("labels", List.of("Erro"), "data", List.of(0)));
+            data.put("statusData", Map.of("labels", List.of("Erro"), "data", List.of(0)));
+            data.put("trendData", Map.of("labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"), "created", List.of(0,0,0,0,0,0), "resolved", List.of(0,0,0,0,0,0)));
+            data.put("typeData", Map.of("labels", List.of("Erro"), "data", List.of(0)));
         }
-        
-        data.put("typeData", Map.of(
-            "labels", List.of("Performance", "Segurança", "Código", "Arquitetura", "Documentação"),
-            "data", typeCounts.values().stream().toList()
-        ));
         
         return data;
     }
@@ -470,17 +531,42 @@ public class ReportService {
         var report = new HashMap<String, Object>();
         var startDate = since != null ? since : LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
-        var completedActivities = activityRepository.countCompletedActivitiesSince(user, String.valueOf(Activity.ActivityStatus.DONE), startDate);
-        var avgHours = activityRepository.getAverageHoursPerActivity(user, String.valueOf(Activity.ActivityStatus.DONE));
-        var completedGoals = goalRepository.countCompletedGoals(user, Goal.GoalStatus.COMPLETED);
-        var activeGoals = goalRepository.countActiveGoals(user, Goal.GoalStatus.ACTIVE);
-        var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
+        // Buscar dados reais do banco
+        var allActivities = activityRepository.findByUserOrderByCreatedAtDesc(user);
+        var filteredActivities = since != null ? 
+            allActivities.stream().filter(a -> a.getCreatedAt().isAfter(since)).toList() : allActivities;
         
-        report.put("completedActivities", completedActivities != null ? completedActivities : 0);
-        report.put("averageHours", avgHours != null ? avgHours.intValue() : 0);
-        report.put("completedGoals", completedGoals != null ? completedGoals : 0);
-        report.put("activeGoals", activeGoals != null ? activeGoals : 0);
-        report.put("achievements", achievements != null ? achievements.size() : 0);
+        var completedActivities = filteredActivities.stream()
+            .filter(a -> "DONE".equals(a.getStatus()))
+            .count();
+        
+        var totalHours = filteredActivities.stream()
+            .filter(a -> a.getActualHours() != null)
+            .mapToInt(Activity::getActualHours)
+            .sum();
+        
+        var allGoals = goalRepository.findByUserOrderByCreatedAtDesc(user);
+        var filteredGoals = since != null ? 
+            allGoals.stream().filter(g -> g.getCreatedAt().isAfter(since)).toList() : allGoals;
+        
+        var completedGoals = filteredGoals.stream()
+            .filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED)
+            .count();
+        
+        var activeGoals = filteredGoals.stream()
+            .filter(g -> g.getStatus() == Goal.GoalStatus.ACTIVE)
+            .count();
+        
+        var allAchievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
+        var filteredAchievements = since != null ? 
+            allAchievements.stream().filter(a -> a.getAchievedAt() != null && a.getAchievedAt().isAfter(since)).toList() : allAchievements;
+        
+        report.put("completedActivities", completedActivities);
+        report.put("totalHours", totalHours);
+        report.put("averageHours", completedActivities > 0 ? totalHours / completedActivities : 0);
+        report.put("completedGoals", completedGoals);
+        report.put("activeGoals", activeGoals);
+        report.put("achievements", filteredAchievements.size());
         
         return report;
     }
@@ -660,6 +746,131 @@ public class ReportService {
                   .replace("\"", "&quot;")
                   .replace("'", "&#39;")
                   .replace("\n", "<br/>");
+    }
+    
+    private Map<String, Object> getChartData(User user, LocalDateTime since) {
+        var chartData = new HashMap<String, Object>();
+        
+        try {
+            var allActivities = activityRepository.findByUserOrderByCreatedAtDesc(user);
+            var allGoals = goalRepository.findByUserOrderByCreatedAtDesc(user);
+            var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
+            
+            log.info("[CHART_DATA] Usuário {}: {} atividades, {} metas, {} conquistas", 
+                user.getEmail(), allActivities.size(), allGoals.size(), achievements.size());
+            
+            // Dados para gráfico de progresso mensal
+            var now = LocalDateTime.now();
+            var monthNames = new java.util.ArrayList<String>();
+            var monthlyActivities = new java.util.ArrayList<Long>();
+            var monthlyGoals = new java.util.ArrayList<Long>();
+            
+            for (int i = 5; i >= 0; i--) {
+                var monthStart = now.minusMonths(i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                var monthEnd = monthStart.plusMonths(1).minusDays(1).withHour(23).withMinute(59).withSecond(59);
+                
+                monthNames.add(monthStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM", java.util.Locale.forLanguageTag("pt-BR"))));
+                
+                long activitiesCount = allActivities.stream()
+                    .filter(a -> "DONE".equals(a.getStatus()))
+                    .filter(a -> a.getCompletedAt() != null)
+                    .filter(a -> !a.getCompletedAt().isBefore(monthStart) && !a.getCompletedAt().isAfter(monthEnd))
+                    .count();
+                
+                long goalsCount = allGoals.stream()
+                    .filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED)
+                    .filter(g -> g.getCompletedAt() != null)
+                    .filter(g -> !g.getCompletedAt().isBefore(monthStart) && !g.getCompletedAt().isAfter(monthEnd))
+                    .count();
+                
+                monthlyActivities.add(activitiesCount);
+                monthlyGoals.add(goalsCount);
+            }
+            
+            chartData.put("progressData", Map.of(
+                "labels", monthNames,
+                "activities", monthlyActivities,
+                "goals", monthlyGoals
+            ));
+            
+            // Dados para radar de habilidades (baseado em atividades e metas)
+            var techActivities = allActivities.stream()
+                .filter(a -> a.getProject() != null && 
+                    (a.getProject().toLowerCase().contains("api") || 
+                     a.getProject().toLowerCase().contains("backend") || 
+                     a.getProject().toLowerCase().contains("frontend") ||
+                     a.getProject().toLowerCase().contains("tech")))
+                .count();
+            
+            var leadershipGoals = allGoals.stream()
+                .filter(g -> g.getCategory() == Goal.GoalCategory.LEADERSHIP)
+                .count();
+            
+            var technicalGoals = allGoals.stream()
+                .filter(g -> g.getCategory() == Goal.GoalCategory.TECHNICAL)
+                .count();
+            
+            var communicationAchievements = achievements.stream()
+                .filter(a -> a.getType().name().contains("RECOGNITION") || a.getType().name().contains("LEADERSHIP"))
+                .count();
+            
+            // Calcular valores do radar (0-10)
+            var radarValues = List.of(
+                Math.min(10L, Math.max(1L, techActivities + technicalGoals)), // Técnico
+                Math.min(10L, Math.max(1L, leadershipGoals * 2)), // Liderança
+                Math.min(10L, Math.max(1L, communicationAchievements * 2)), // Comunicação
+                Math.min(10L, Math.max(1L, achievements.size())), // Inovação
+                Math.min(10L, Math.max(1L, allActivities.size() / 5)), // Colaboração
+                Math.min(10L, Math.max(1L, (allGoals.size() + achievements.size()) / 2)) // Aprendizado
+            );
+            
+            chartData.put("radarData", Map.of(
+                "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
+                "data", radarValues
+            ));
+            
+            // Dados para radar de performance
+            var avgHoursPerActivity = allActivities.isEmpty() ? 0 : 
+                allActivities.stream().filter(a -> a.getActualHours() != null)
+                    .mapToInt(Activity::getActualHours).average().orElse(0);
+            
+            var completionRate = allActivities.isEmpty() ? 0 : 
+                (double) allActivities.stream().filter(a -> "DONE".equals(a.getStatus())).count() / allActivities.size() * 10;
+            
+            var goalCompletionRate = allGoals.isEmpty() ? 0 : 
+                (double) allGoals.stream().filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED).count() / allGoals.size() * 10;
+            
+            var performanceValues = List.of(
+                Math.min(10L, Math.max(1L, Math.round(completionRate))), // Produtividade
+                Math.min(10L, Math.max(1L, Math.round(goalCompletionRate))), // Qualidade
+                Math.min(10L, Math.max(1L, Math.round(avgHoursPerActivity / 2))), // Velocidade
+                Math.min(10L, Math.max(1L, achievements.size() > 0 ? 8L : 5L)), // Consistência
+                Math.min(10L, Math.max(1L, (techActivities + achievements.size()) / 2)) // Eficiência
+            );
+            
+            chartData.put("performanceData", Map.of(
+                "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
+                "data", performanceValues
+            ));
+            
+            log.info("[CHART_DATA] Radar values: {}", radarValues);
+            log.info("[CHART_DATA] Performance values: {}", performanceValues);
+            log.info("[CHART_DATA] Progress data: activities={}, goals={}", monthlyActivities, monthlyGoals);
+            
+        } catch (Exception e) {
+            log.error("[CHART_DATA] Erro ao gerar dados de gráficos: {}", e.getMessage(), e);
+            chartData.put("progressData", Map.of(
+                "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
+                "activities", List.of(0L, 0L, 0L, 0L, 0L, 0L),
+                "goals", List.of(0L, 0L, 0L, 0L, 0L, 0L)
+            ));
+            chartData.put("radarData", Map.of(
+                "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
+                "data", List.of(1L, 1L, 1L, 1L, 1L, 1L)
+            ));
+        }
+        
+        return chartData;
     }
     
     private double calculateGoalProgress(java.util.List<api.work.profile.entity.Goal> goals) {
