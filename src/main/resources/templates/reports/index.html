@@ -355,7 +355,7 @@
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
                 datasets: [{
                     label: 'Atividades Concluídas',
-                    data: [12, 19, 15, 25, 22, completedActivities],
+                    data: [0, 0, 0, 0, 0, completedActivities],
                     borderColor: '#ff6b35',
                     backgroundColor: 'rgba(255, 107, 53, 0.1)',
                     tension: 0.4,
@@ -499,10 +499,10 @@
             creatorChart = new Chart(creatorCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Lima'],
+                    labels: ['Sem dados'],
                     datasets: [{
-                        data: [12, 8, 6, 4],
-                        backgroundColor: ['#ff6b35', '#ff8c42', '#ffa726', '#ffb74d']
+                        data: [1],
+                        backgroundColor: ['#6c757d']
                     }]
                 },
                 options: {
@@ -525,8 +525,8 @@
                     labels: ['TODO', 'EM PROGRESSO', 'TESTE', 'DEPLOY', 'CONCLUÍDO'],
                     datasets: [{
                         label: 'Quantidade',
-                        data: [15, 8, 5, 3, 12],
-                        backgroundColor: '#ff6b35'
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: '#6c757d'
                     }]
                 },
                 options: {
@@ -557,21 +557,9 @@
                 type: 'scatter',
                 data: {
                     datasets: [{
-                        label: 'Crítico',
-                        data: [{x: 1, y: 45}, {x: 1, y: 30}, {x: 1, y: 60}],
-                        backgroundColor: '#dc3545'
-                    }, {
-                        label: 'Alto',
-                        data: [{x: 2, y: 25}, {x: 2, y: 40}, {x: 2, y: 15}],
-                        backgroundColor: '#ffc107'
-                    }, {
-                        label: 'Médio',
-                        data: [{x: 3, y: 20}, {x: 3, y: 35}, {x: 3, y: 10}],
-                        backgroundColor: '#17a2b8'
-                    }, {
-                        label: 'Baixo',
-                        data: [{x: 4, y: 5}, {x: 4, y: 12}, {x: 4, y: 8}],
-                        backgroundColor: '#28a745'
+                        label: 'Sem dados',
+                        data: [],
+                        backgroundColor: '#6c757d'
                     }]
                 },
                 options: {

@@ -2,7 +2,7 @@ spring:
   application:
     name: work-profile-portal
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:railway}
+    active: ${SPRING_PROFILES_ACTIVE:local}
   
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -68,7 +68,9 @@ recaptcha:
 logging:
   level:
     api.work.profile: INFO
-    org.springframework.security: WARN
+    api.work.profile.service.CustomOAuth2UserService: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
     org.springframework.web: WARN
     org.thymeleaf: WARN
     org.hibernate.SQL: WARN

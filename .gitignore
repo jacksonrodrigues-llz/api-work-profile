@@ -23,10 +23,11 @@ target/
 /docs
 ### VS Code ###
 .vscode/
-.env
 /mvnw text eol=lf
 *.cmd text eol=crlf
 .mvn/wrapper
 .gitattributes
 .gitignore
 mvnw
+verify-github-oauth.sh
+.env

@@ -15,17 +15,18 @@ spring:
       client:
         registration:
           github:
-            client-id: Ov23li1tI16Hb3jbYl3c
-            client-secret: ac3fd8bddb8419d6513f07521aa6357177f5d821
-            redirect-uri: https://api-work-profile.onrender.com/login/oauth2/code/github
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            redirect-uri: "${BASE_URL}/login/oauth2/code/github"
             scope: user:email,repo
         provider:
           github:
             authorization-uri: https://github.com/login/oauth/authorize
             token-uri: https://github.com/login/oauth/access_token
             user-info-uri: https://api.github.com/user
+            user-name-attribute: login
 
-BASE_URL: https://api-work-profile.onrender.com
+BASE_URL: ${BASE_URL}
 
 server:
   port: ${PORT:8080}
@@ -37,8 +38,9 @@ server:
       cookie:
         http-only: true
         secure: true
-        same-site: strict
-  forward-headers-strategy: native
+        same-site: none
+  forward-headers-strategy: framework
+  use-forward-headers: true
   error:
     include-stacktrace: never
     include-message: never
@@ -46,7 +48,12 @@ server:
 logging:
   level:
     api.work.profile: INFO
-    org.springframework.security: WARN
+    api.work.profile.service.CustomOAuth2UserService: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.oauth2.client: DEBUG
+    org.springframework.security.oauth2.core: DEBUG
+    org.springframework.web.client: DEBUG
     org.hibernate: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
