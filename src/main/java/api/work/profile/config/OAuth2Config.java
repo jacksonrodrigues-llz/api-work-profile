@@ -12,11 +12,8 @@ import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 @Configuration
 public class OAuth2Config {
 
-    @Value("${spring.security.oauth2.client.registration.github.client-id}")
-    private String clientId;
-
-    @Value("${spring.security.oauth2.client.registration.github.client-secret}")
-    private String clientSecret;
+    private String clientId = "Ov23li1tI16Hb3jbYl3c";
+    private String clientSecret = "dc343ab563dfc795fa14cfab04d9d6356d28b0b3";
 
     @Value("${BASE_URL:https://api-work-profile.onrender.com}")
     private String baseUrl;
