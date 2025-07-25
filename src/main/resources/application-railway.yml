@@ -38,9 +38,14 @@ server:
         secure: true
         same-site: none
   forward-headers-strategy: framework
+  use-forward-headers: true
   error:
     include-stacktrace: never
     include-message: never
+
+# Configuração da URL base
+app:
+  base-url: ${BASE_URL:https://api-work-profile.onrender.com}
 
 logging:
   level:
