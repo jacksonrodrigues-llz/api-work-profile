@@ -6,6 +6,8 @@ import api.work.profile.entity.User;
 import api.work.profile.repository.ActivityRepository;
 import api.work.profile.repository.GoalRepository;
 import api.work.profile.repository.AchievementRepository;
+import api.work.profile.repository.TechDebtRepository;
+import api.work.profile.entity.TechDebt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class ReportService {
     private final ActivityRepository activityRepository;
     private final GoalRepository goalRepository;
     private final AchievementRepository achievementRepository;
+    private final TechDebtRepository techDebtRepository;
     private final InsightService insightService;
 
     public byte[] generatePdfReport(User user) {
@@ -320,34 +323,115 @@ public class ReportService {
     public Map<String, Object> getDtReportData(User user, String periodo) {
         var data = new HashMap<String, Object>();
         
-        // Ajustar dados baseado no período
-        int multiplier = calculatePeriodMultiplier(periodo);
+        // Buscar dados reais de débitos técnicos
+        var allDebts = techDebtRepository.findByUserOrderByDataCriacaoDesc(user, org.springframework.data.domain.Pageable.unpaged()).getContent();
         
-        data.put("criticalOpen", 8 * multiplier);
-        data.put("averageTime", Math.max(15, 32 - (multiplier * 5)));
-        data.put("resolved", 15 * multiplier);
-        data.put("resolutionRate", Math.min(95, 68 + (multiplier * 8)));
+        // Filtrar por período se especificado
+        LocalDateTime periodoDate = calculatePeriodDate(periodo);
+        if (periodoDate != null) {
+            allDebts = allDebts.stream()
+                .filter(debt -> debt.getDataCriacao().isAfter(periodoDate))
+                .toList();
+        }
         
-        // Dados dos gráficos ajustados por período
-        data.put("creatorData", Map.of(
-            "labels", List.of("João Silva", "Maria Santos", "Pedro Costa", "Ana Lima", "Carlos Oliveira"),
-            "data", List.of(15 * multiplier, 12 * multiplier, 8 * multiplier, 6 * multiplier, 4 * multiplier)
-        ));
+        // Métricas
+        long criticalOpen = allDebts.stream().filter(d -> d.getPrioridade() == 1 && d.getStatus() != TechDebt.StatusDebito.DONE).count();
+        double averageTime = allDebts.stream().mapToLong(TechDebt::getDiasEmAberto).average().orElse(0);
+        long resolved = allDebts.stream().filter(d -> d.getStatus() == TechDebt.StatusDebito.DONE).count();
+        int resolutionRate = allDebts.isEmpty() ? 0 : (int) ((resolved * 100) / allDebts.size());
+        
+        data.put("criticalOpen", criticalOpen);
+        data.put("averageTime", (int) averageTime);
+        data.put("resolved", resolved);
+        data.put("resolutionRate", resolutionRate);
+        
+        // Dados por criador
+        var creatorMap = allDebts.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                debt -> debt.getCriadoPor() != null ? debt.getCriadoPor() : "Desconhecido",
+                java.util.stream.Collectors.counting()
+            ));
+        
+        if (creatorMap.isEmpty()) {
+            data.put("creatorData", Map.of(
+                "labels", List.of("Sem dados"),
+                "data", List.of(1)
+            ));
+        } else {
+            data.put("creatorData", Map.of(
+                "labels", creatorMap.keySet().stream().toList(),
+                "data", creatorMap.values().stream().toList()
+            ));
+        }
+        
+        // Dados por status
+        var statusCounts = new long[5];
+        for (var debt : allDebts) {
+            switch (debt.getStatus()) {
+                case TODO -> statusCounts[0]++;
+                case IN_PROGRESS -> statusCounts[1]++;
+                case TEST -> statusCounts[2]++;
+                case DEPLOY -> statusCounts[3]++;
+                case DONE -> statusCounts[4]++;
+            }
+        }
         
         data.put("statusData", Map.of(
             "labels", List.of("TODO", "EM PROGRESSO", "TESTE", "DEPLOY", "CONCLUÍDO"),
-            "data", List.of(18 * multiplier, 12 * multiplier, 8 * multiplier, 5 * multiplier, 15 * multiplier)
+            "data", java.util.Arrays.stream(statusCounts).boxed().toList()
         ));
+        
+        // Tendência mensal (simplificada)
+        var now = LocalDateTime.now();
+        var monthlyCreated = new long[6];
+        var monthlyResolved = new long[6];
+        
+        for (int i = 0; i < 6; i++) {
+            var monthStart = now.minusMonths(5 - i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+            var monthEnd = monthStart.plusMonths(1).minusSeconds(1);
+            
+            monthlyCreated[i] = allDebts.stream()
+                .filter(d -> d.getDataCriacao().isAfter(monthStart) && d.getDataCriacao().isBefore(monthEnd))
+                .count();
+            
+            monthlyResolved[i] = allDebts.stream()
+                .filter(d -> d.getDataResolucao() != null && 
+                           d.getDataResolucao().isAfter(monthStart) && 
+                           d.getDataResolucao().isBefore(monthEnd))
+                .count();
+        }
         
         data.put("trendData", Map.of(
             "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
-            "created", List.of(12, 15, 8, 18, 10, 14),
-            "resolved", List.of(8, 12, 10, 15, 12, 16)
+            "created", java.util.Arrays.stream(monthlyCreated).boxed().toList(),
+            "resolved", java.util.Arrays.stream(monthlyResolved).boxed().toList()
         ));
+        
+        // Dados por tipo
+        var typeCounts = new java.util.HashMap<String, Long>();
+        typeCounts.put("Performance", 0L);
+        typeCounts.put("Segurança", 0L);
+        typeCounts.put("Código", 0L);
+        typeCounts.put("Arquitetura", 0L);
+        typeCounts.put("Documentação", 0L);
+        
+        for (var debt : allDebts) {
+            if (debt.getTipos() != null) {
+                for (var tipo : debt.getTipos()) {
+                    switch (tipo) {
+                        case BACKEND, FRONTEND -> typeCounts.merge("Código", 1L, Long::sum);
+                        case SECURITY -> typeCounts.merge("Segurança", 1L, Long::sum);
+                        case INFRA -> typeCounts.merge("Arquitetura", 1L, Long::sum);
+                        case DATABASE -> typeCounts.merge("Performance", 1L, Long::sum);
+                        default -> typeCounts.merge("Documentação", 1L, Long::sum);
+                    }
+                }
+            }
+        }
         
         data.put("typeData", Map.of(
             "labels", List.of("Performance", "Segurança", "Código", "Arquitetura", "Documentação"),
-            "data", List.of(12 * multiplier, 8 * multiplier, 15 * multiplier, 6 * multiplier, 4 * multiplier)
+            "data", typeCounts.values().stream().toList()
         ));
         
         return data;
