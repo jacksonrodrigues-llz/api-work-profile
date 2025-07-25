@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: postgresql://careertracker_user:FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq@dpg-d20oedripnbc73dgh84g-a/careertracker
+    url: jdbc:postgresql://dpg-d20oedripnbc73dgh84g-a:5432/careertracker
     username: careertracker_user
     password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     driver-class-name: org.postgresql.Driver
@@ -11,7 +11,7 @@ spring:
     show-sql: false
   
   liquibase:
-    url: postgresql://careertracker_user:FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq@dpg-d20oedripnbc73dgh84g-a/careertracker
+    url: jdbc:postgresql://dpg-d20oedripnbc73dgh84g-a:5432/careertracker
     user: careertracker_user
     password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     change-log: classpath:db/changelog/db.changelog-master.xml
