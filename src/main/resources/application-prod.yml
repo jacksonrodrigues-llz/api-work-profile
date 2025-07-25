@@ -9,6 +9,13 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: false
+  
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            redirect-uri: "https://api-work-profile.onrender.com/login/oauth2/code/github"
 
 BASE_URL: https://api-work-profile.onrender.com
 
