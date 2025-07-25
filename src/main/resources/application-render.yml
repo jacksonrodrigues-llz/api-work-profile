@@ -4,6 +4,8 @@ spring:
     username: careertracker_user
     password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     driver-class-name: org.postgresql.Driver
+    hikari:
+      jdbc-url: jdbc:postgresql://dpg-d20oedripnbc73dgh84g-a:5432/careertracker
   
   jpa:
     hibernate:
@@ -11,9 +13,6 @@ spring:
     show-sql: false
   
   liquibase:
-    url: jdbc:postgresql://dpg-d20oedripnbc73dgh84g-a:5432/careertracker
-    user: careertracker_user
-    password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
     drop-first: false
