@@ -38,7 +38,6 @@ server:
         secure: true
         same-site: none
   forward-headers-strategy: framework
-  use-forward-headers: true
   error:
     include-stacktrace: never
     include-message: never
