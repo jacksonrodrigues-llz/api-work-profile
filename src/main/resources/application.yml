@@ -2,7 +2,7 @@ spring:
   application:
     name: work-profile-portal
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+    active: ${SPRING_PROFILES_ACTIVE:railway}
   
   datasource:
     driver-class-name: org.postgresql.Driver

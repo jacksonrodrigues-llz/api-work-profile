@@ -17,7 +17,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: "${BASE_URL:https://api-work-profile-production.up.railway.app}/login/oauth2/code/github"
+            redirect-uri: "${BASE_URL:https://api-work-profile.onrender.com}/login/oauth2/code/github"
             scope: user:email,repo
         provider:
           github:
@@ -38,7 +38,6 @@ server:
         secure: true
         same-site: none
   forward-headers-strategy: framework
-  use-forward-headers: true
   error:
     include-stacktrace: never
     include-message: never
