@@ -1,12 +1,22 @@
 spring:
   datasource:
-    url: ${DATABASE_URL}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/careertracker}
+    username: ${PGUSER:postgres}
+    password: ${PGPASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
+  
+  liquibase:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/careertracker}
+    user: ${PGUSER:postgres}
+    password: ${PGPASSWORD:postgres}
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    drop-first: false
   
   security:
     oauth2:
