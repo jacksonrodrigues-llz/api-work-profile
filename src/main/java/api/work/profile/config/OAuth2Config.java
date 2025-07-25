@@ -18,7 +18,7 @@ public class OAuth2Config {
     @Value("${spring.security.oauth2.client.registration.github.client-secret}")
     private String clientSecret;
 
-    @Value("${BASE_URL:http://localhost:8080}")
+    @Value("${BASE_URL:https://api-work-profile.onrender.com}")
     private String baseUrl;
 
     @Bean
