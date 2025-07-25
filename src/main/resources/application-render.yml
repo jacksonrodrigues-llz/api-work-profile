@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/careertracker}
-    username: ${PGUSER:postgres}
-    password: ${PGPASSWORD:postgres}
+    url: postgresql://careertracker_user:FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq@dpg-d20oedripnbc73dgh84g-a/careertracker
+    username: careertracker_user
+    password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     driver-class-name: org.postgresql.Driver
   
   jpa:
@@ -11,9 +11,9 @@ spring:
     show-sql: false
   
   liquibase:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/careertracker}
-    user: ${PGUSER:postgres}
-    password: ${PGPASSWORD:postgres}
+    url: postgresql://careertracker_user:FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq@dpg-d20oedripnbc73dgh84g-a/careertracker
+    user: careertracker_user
+    password: FzPIZKkcUuM9d8zb1bei5cuHdjTQoPuq
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
     drop-first: false
