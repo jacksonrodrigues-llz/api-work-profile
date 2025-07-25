@@ -49,6 +49,10 @@ server:
     include-stacktrace: never
     include-message: never
 
+github:
+  token: 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
+  base-url: https://api.github.com
+
 app:
   base-url: https://api-work-profile.onrender.com
   api:
