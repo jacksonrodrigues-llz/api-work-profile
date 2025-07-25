@@ -13,7 +13,7 @@ spring:
       client:
         registration:
           github:
-            redirect-uri: "{baseUrl}/login/oauth2/code/github"
+            redirect-uri: "https://api-work-profile.onrender.com/login/oauth2/code/github"
 
 server:
   port: ${PORT:8080}
