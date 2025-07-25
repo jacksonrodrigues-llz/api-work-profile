@@ -51,4 +51,4 @@ logging:
 
 app:
   api:
-    key: ${API_KEY}
+    key: ${API_KEY:}
