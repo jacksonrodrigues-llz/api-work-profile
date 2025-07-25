@@ -7,6 +7,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            redirect-uri: "https://api-work-profile.onrender.com/login/oauth2/code/github"
 
 server:
   port: ${PORT:8080}

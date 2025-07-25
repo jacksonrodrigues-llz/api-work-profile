@@ -29,7 +29,7 @@ spring:
           github:
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: "${BASE_URL:http://localhost:8080}/login/oauth2/code/github"
+            redirect-uri: "https://api-work-profile.onrender.com/login/oauth2/code/github"
             scope: user:email,repo
         provider:
           github:
