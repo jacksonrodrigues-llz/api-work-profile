@@ -57,7 +57,7 @@ server:
     include-message: never
 
 github:
-  token: ${GITHUB_TOKEN:}
+  token: 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
   base-url: https://api.github.com
 
 recaptcha:
