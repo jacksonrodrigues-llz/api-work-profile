@@ -18,6 +18,8 @@ public interface DailyReportRepository extends JpaRepository<DailyReport, Long> 
     
     List<DailyReport> findTop2ByUserOrderByReportDateDesc(User user);
     
+    List<DailyReport> findTop20ByUserOrderByReportDateDesc(User user);
+    
     List<DailyReport> findByUserAndReportDateBetweenOrderByReportDateDesc(User user, LocalDate startDate, LocalDate endDate);
     
     Optional<DailyReport> findByIdAndUser(Long id, User user);
