@@ -40,13 +40,7 @@ public class DailyReportService {
     }
     
     public List<DailyReport> getWeeklyReports(User user) {
-        LocalDate today = LocalDate.now();
-        LocalDate startOfWeek = today.minusDays(30); // Buscar últimos 30 dias
-        
-        List<DailyReport> reports = dailyReportRepository.findByUserAndReportDateBetweenOrderByReportDateDesc(
-            user, startOfWeek, today
-        );
-        
+        List<DailyReport> reports = dailyReportRepository.findTop20ByUserOrderByReportDateDesc(user);
         return reports != null ? reports : new ArrayList<>();
     }
     

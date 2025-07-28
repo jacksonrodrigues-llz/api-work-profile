@@ -525,6 +525,10 @@
                                                     </div>
                                                 </div>
                                                 <div class="card-footer bg-transparent border-top border-secondary text-end">
+                                                    <button class="btn btn-sm btn-outline-warning me-2" 
+                                                            th:onclick="'viewReport(' + ${report.id} + ')'">
+                                                        <i class="fas fa-eye me-1"></i>Visualizar
+                                                    </button>
                                                     <button class="btn btn-sm btn-outline-light" 
                                                             th:onclick="'editReport(' + ${report.id} + ')'">
                                                         <i class="fas fa-edit me-1"></i>Editar
@@ -555,6 +559,63 @@
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Modal de Visualização -->
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-primary);">
+                        <i class="fas fa-calendar-day me-2" style="color: var(--accent-orange);"></i>
+                        Daily Report - <span id="viewReportDate"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="color: var(--text-primary);">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex align-items-center mb-2">
+                                <span id="viewRemoteWork" class="badge bg-info" style="display: none;">Trabalho Remoto</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="fw-bold" style="color: var(--accent-orange);">
+                            <i class="fas fa-clock me-2"></i>Atividades Anteriores
+                        </h6>
+                        <div class="p-3 rounded" style="background: var(--bg-secondary); border-left: 3px solid var(--accent-orange);">
+                            <p id="viewYesterdayTasks" class="mb-0" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="fw-bold" style="color: var(--accent-orange);">
+                            <i class="fas fa-tasks me-2"></i>Atividades do Dia
+                        </h6>
+                        <div class="p-3 rounded" style="background: var(--bg-secondary); border-left: 3px solid var(--accent-orange);">
+                            <p id="viewTodayTasks" class="mb-0" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
+                    
+                    <div id="viewImpedimentsSection" class="mb-0" style="display: none;">
+                        <h6 class="fw-bold" style="color: #dc3545;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Impedimentos
+                        </h6>
+                        <div class="p-3 rounded" style="background: var(--bg-secondary); border-left: 3px solid #dc3545;">
+                            <p id="viewImpediments" class="mb-0" style="white-space: pre-wrap;"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" id="editFromViewBtn">
+                        <i class="fas fa-edit me-1"></i>Editar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -658,6 +719,69 @@
                 refreshDashboard();
             }
         });
+        
+        let currentReportData = null;
+        
+        function viewReport(reportId) {
+            fetch(`/daily-reports/${reportId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(report => {
+                if (report) {
+                    currentReportData = report;
+                    
+                    // Formatar data
+                    const date = new Date(report.reportDate);
+                    const formattedDate = date.toLocaleDateString('pt-BR', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    
+                    document.getElementById('viewReportDate').textContent = formattedDate;
+                    document.getElementById('viewYesterdayTasks').textContent = report.yesterdayTasks || 'Nenhuma atividade registrada';
+                    document.getElementById('viewTodayTasks').textContent = report.todayTasks || 'Nenhuma atividade registrada';
+                    
+                    // Impedimentos
+                    const impedimentsSection = document.getElementById('viewImpedimentsSection');
+                    const impedimentsText = document.getElementById('viewImpediments');
+                    if (report.impediments && report.impediments.trim()) {
+                        impedimentsText.textContent = report.impediments;
+                        impedimentsSection.style.display = 'block';
+                    } else {
+                        impedimentsSection.style.display = 'none';
+                    }
+                    
+                    // Trabalho remoto
+                    const remoteWorkBadge = document.getElementById('viewRemoteWork');
+                    if (report.remoteWork) {
+                        remoteWorkBadge.style.display = 'inline-block';
+                    } else {
+                        remoteWorkBadge.style.display = 'none';
+                    }
+                    
+                    // Configurar botão de editar
+                    document.getElementById('editFromViewBtn').onclick = function() {
+                        const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewModal'));
+                        viewModal.hide();
+                        setTimeout(() => editReport(reportId), 300);
+                    };
+                    
+                    // Mostrar modal
+                    const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+                    modal.show();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar report:', error);
+            });
+        }
         
         function editReport(reportId) {
             // Buscar dados do report via AJAX
