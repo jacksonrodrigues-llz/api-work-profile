@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Débitos Técnicos - Portal Profissional</title>
     
     <!-- Bootstrap 5 CSS -->
@@ -726,19 +728,27 @@
             try {
                 const jsonObj = JSON.parse(data);
                 
+                const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+                
+                const headers = {'Content-Type': 'application/json'};
+                if (csrfToken && csrfHeader) {
+                    headers[csrfHeader] = csrfToken;
+                }
+                
                 let response;
                 if (Array.isArray(jsonObj)) {
                     // Múltiplos registros
                     response = await fetch('/api/tech-debts/upload/json', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: headers,
                         body: JSON.stringify(jsonObj)
                     });
                 } else {
                     // Registro único
                     response = await fetch('/api/tech-debts/upload/single', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: headers,
                         body: JSON.stringify(jsonObj)
                     });
                 }
@@ -890,6 +900,14 @@
             e.preventDefault();
             const formData = new FormData();
             formData.append('file', document.getElementById('csvFile').files[0]);
+            
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            
+            if (csrfToken && csrfHeader) {
+                formData.append(csrfHeader.replace('X-', '').toLowerCase(), csrfToken);
+            }
+            
             try {
                 const response = await fetch('/api/tech-debts/upload/sheet', {
                     method: 'POST',
@@ -955,9 +973,17 @@
             const selected = Array.from(document.querySelectorAll('.debt-checkbox:checked')).map(cb => parseInt(cb.value));
             if (selected.length === 0) return;
             
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
             fetch('/api/tech-debts/bulk-update-status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify({ ids: selected, status: status })
             })
             .then(response => response.ok ? location.reload() : alert('Erro ao atualizar'))
@@ -968,9 +994,17 @@
             const selected = Array.from(document.querySelectorAll('.debt-checkbox:checked')).map(cb => parseInt(cb.value));
             if (selected.length === 0) return;
             
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
             fetch('/api/tech-debts/bulk-update-priority', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify({ ids: selected, priority: priority })
             })
             .then(response => response.ok ? location.reload() : alert('Erro ao atualizar'))
@@ -1010,9 +1044,17 @@
         function executeBulkDelete() {
             const selected = Array.from(document.querySelectorAll('.debt-checkbox:checked')).map(cb => cb.value);
             
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+            
             fetch('/tech-debts/delete-multiple', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify(selected)
             })
             .then(response => response.ok ? location.reload() : alert('Erro ao excluir'))

@@ -129,7 +129,7 @@
                             <div class="col-md-3">
                                 <label class="form-label">&nbsp;</label>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="updatePersonalMetrics()">
+                                    <button type="button" class="btn btn-primary" onclick="applyPersonalFilter()">
                                         <i class="fas fa-filter me-1"></i>Filtrar
                                     </button>
                                     <button type="button" class="btn btn-outline-light" onclick="clearPersonalFilters()">
@@ -399,11 +399,13 @@
         
         function initProgressChart() {
             const chartData = /*[[${chartData}]]*/ null;
+            console.log('Chart data from server:', chartData);
             const progressData = chartData?.progressData || {
                 labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
                 activities: [0, 0, 0, 0, 0, 0],
                 goals: [0, 0, 0, 0, 0, 0]
             };
+            console.log('Progress data:', progressData);
             
             progressChart = new Chart(progressCtx, {
                 type: 'line',
@@ -427,7 +429,7 @@
                         pointBorderColor: '#34ce57'
                     }]
                 },
-            options: {
+                options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -467,8 +469,9 @@
             const chartData = /*[[${chartData}]]*/ null;
             const radarData = chartData?.radarData || {
                 labels: ['Técnico', 'Liderança', 'Comunicação', 'Inovação', 'Colaboração', 'Aprendizado'],
-                data: [0, 0, 0, 0, 0, 0]
+                data: [1, 1, 1, 1, 1, 1]
             };
+            console.log('Radar data:', radarData);
             
             categoryChart = new Chart(categoryCtx, {
                 type: 'radar',
@@ -518,40 +521,7 @@
                         }
                     }
                 }
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
-                    }
-                },
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 10,
-                        ticks: {
-                            color: '#b0b0b0',
-                            stepSize: 2
-                        },
-                        grid: {
-                            color: '#4a4a4a'
-                        },
-                        angleLines: {
-                            color: '#4a4a4a'
-                        },
-                        pointLabels: {
-                            color: '#ffffff',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                }
-            }
-        });
+            });
         }
         
         // Gráfico Radar de Performance
@@ -562,8 +532,9 @@
             const chartData = /*[[${chartData}]]*/ null;
             const performanceData = chartData?.performanceData || {
                 labels: ['Produtividade', 'Qualidade', 'Velocidade', 'Consistência', 'Eficiência'],
-                data: [5, 5, 5, 5, 5]
+                data: [1, 1, 1, 1, 1]
             };
+            console.log('Performance data:', performanceData);
             
             performanceChart = new Chart(performanceCtx, {
                 type: 'radar',
@@ -623,11 +594,8 @@
             initCategoryChart();
             initPerformanceChart();
             
-            // Aguardar um pouco para garantir que os gráficos foram criados
-            setTimeout(function() {
-                console.log('Carregando dados iniciais...');
-                updatePersonalMetrics();
-            }, 500);
+            // Carregar dados iniciais imediatamente
+            updatePersonalMetrics();
         });
         /*]]>*/
         
@@ -662,7 +630,13 @@
                 });
         }
         
+        function applyPersonalFilter() {
+            console.log('Aplicando filtro...');
+            updatePersonalMetrics();
+        }
+        
         function clearPersonalFilters() {
+            console.log('Limpando filtros...');
             document.getElementById('personalPeriodoSelect').value = '';
             updatePersonalMetrics();
         }
@@ -670,14 +644,27 @@
         function updatePersonalChartsWithData(data) {
             console.log('Atualizando gráficos com dados:', data);
             
+            if (data.error) {
+                console.error('Erro nos dados:', data.error);
+                alert('Erro ao carregar dados: ' + data.error);
+                return;
+            }
+            
             // Atualizar gráfico de progresso
             if (data.chartData?.progressData && progressChart) {
                 const progressData = data.chartData.progressData;
                 console.log('Dados de progresso:', progressData);
-                progressChart.data.labels = progressData.labels;
-                progressChart.data.datasets[0].data = progressData.activities;
+                
+                // Garantir que os dados são arrays de números
+                const activities = Array.isArray(progressData.activities) ? 
+                    progressData.activities.map(v => Number(v) || 0) : [0, 0, 0, 0, 0, 0];
+                const goals = Array.isArray(progressData.goals) ? 
+                    progressData.goals.map(v => Number(v) || 0) : [0, 0, 0, 0, 0, 0];
+                
+                progressChart.data.labels = progressData.labels || ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+                progressChart.data.datasets[0].data = activities;
                 if (progressChart.data.datasets[1]) {
-                    progressChart.data.datasets[1].data = progressData.goals;
+                    progressChart.data.datasets[1].data = goals;
                 }
                 progressChart.update('active');
             }
@@ -686,7 +673,12 @@
             if (data.chartData?.radarData && categoryChart) {
                 const radarData = data.chartData.radarData;
                 console.log('Dados do radar:', radarData);
-                categoryChart.data.datasets[0].data = radarData.data;
+                
+                // Garantir que os dados são arrays de números
+                const radarValues = Array.isArray(radarData.data) ? 
+                    radarData.data.map(v => Number(v) || 1) : [1, 1, 1, 1, 1, 1];
+                
+                categoryChart.data.datasets[0].data = radarValues;
                 categoryChart.update('active');
             }
             
@@ -694,7 +686,12 @@
             if (data.chartData?.performanceData && performanceChart) {
                 const performanceData = data.chartData.performanceData;
                 console.log('Dados de performance:', performanceData);
-                performanceChart.data.datasets[0].data = performanceData.data;
+                
+                // Garantir que os dados são arrays de números
+                const performanceValues = Array.isArray(performanceData.data) ? 
+                    performanceData.data.map(v => Number(v) || 1) : [1, 1, 1, 1, 1];
+                
+                performanceChart.data.datasets[0].data = performanceValues;
                 performanceChart.update('active');
             }
         }
