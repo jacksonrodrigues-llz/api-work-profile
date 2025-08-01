@@ -2,7 +2,7 @@ spring:
   application:
     name: work-profile-portal
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:render}
+    active: ${SPRING_PROFILES_ACTIVE:local}
   
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -73,8 +73,8 @@ logging:
     org.springframework.security.oauth2: DEBUG
     org.springframework.web: WARN
     org.thymeleaf: WARN
-    org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: DEBUG
     feign: WARN
     liquibase: ERROR
     liquibase.database: ERROR

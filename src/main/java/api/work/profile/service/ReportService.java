@@ -311,12 +311,20 @@ public class ReportService {
         var data = new HashMap<String, Object>();
         
         LocalDateTime periodoDate = calculatePeriodDate(periodo);
+        log.info("[REPORT_DATA] Gerando dados para usuário {} com período: {} (data: {})", 
+            user.getEmail(), periodo, periodoDate);
         
-        data.put("monthlyReport", getMonthlyReport(user, periodoDate));
+        var monthlyReport = getMonthlyReport(user, periodoDate);
+        var chartData = getChartData(user, periodoDate);
+        
+        data.put("monthlyReport", monthlyReport);
         data.put("activities", getFilteredActivities(user, periodoDate));
         data.put("goals", getFilteredGoals(user, periodoDate));
         data.put("achievements", getFilteredAchievements(user, periodoDate));
-        data.put("chartData", getChartData(user, periodoDate));
+        data.put("chartData", chartData);
+        
+        log.info("[REPORT_DATA] Dados gerados - Monthly: {}, Chart keys: {}", 
+            monthlyReport, chartData.keySet());
         
         return data;
     }
@@ -529,44 +537,57 @@ public class ReportService {
     
     private Map<String, Object> getMonthlyReport(User user, LocalDateTime since) {
         var report = new HashMap<String, Object>();
-        var startDate = since != null ? since : LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
-        // Buscar dados reais do banco
-        var allActivities = activityRepository.findByUserOrderByCreatedAtDesc(user);
-        var filteredActivities = since != null ? 
-            allActivities.stream().filter(a -> a.getCreatedAt().isAfter(since)).toList() : allActivities;
-        
-        var completedActivities = filteredActivities.stream()
-            .filter(a -> "DONE".equals(a.getStatus()))
-            .count();
-        
-        var totalHours = filteredActivities.stream()
-            .filter(a -> a.getActualHours() != null)
-            .mapToInt(Activity::getActualHours)
-            .sum();
-        
-        var allGoals = goalRepository.findByUserOrderByCreatedAtDesc(user);
-        var filteredGoals = since != null ? 
-            allGoals.stream().filter(g -> g.getCreatedAt().isAfter(since)).toList() : allGoals;
-        
-        var completedGoals = filteredGoals.stream()
-            .filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED)
-            .count();
-        
-        var activeGoals = filteredGoals.stream()
-            .filter(g -> g.getStatus() == Goal.GoalStatus.ACTIVE)
-            .count();
-        
-        var allAchievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
-        var filteredAchievements = since != null ? 
-            allAchievements.stream().filter(a -> a.getAchievedAt() != null && a.getAchievedAt().isAfter(since)).toList() : allAchievements;
-        
-        report.put("completedActivities", completedActivities);
-        report.put("totalHours", totalHours);
-        report.put("averageHours", completedActivities > 0 ? totalHours / completedActivities : 0);
-        report.put("completedGoals", completedGoals);
-        report.put("activeGoals", activeGoals);
-        report.put("achievements", filteredAchievements.size());
+        try {
+            // Buscar dados reais do banco
+            var allActivities = activityRepository.findByUserOrderByCreatedAtDesc(user);
+            var filteredActivities = since != null ? 
+                allActivities.stream().filter(a -> a.getCreatedAt().isAfter(since)).toList() : allActivities;
+            
+            var completedActivities = filteredActivities.stream()
+                .filter(a -> "DONE".equals(a.getStatus()))
+                .count();
+            
+            var totalHours = filteredActivities.stream()
+                .filter(a -> a.getActualHours() != null)
+                .mapToInt(Activity::getActualHours)
+                .sum();
+            
+            var allGoals = goalRepository.findByUserOrderByCreatedAtDesc(user);
+            var filteredGoals = since != null ? 
+                allGoals.stream().filter(g -> g.getCreatedAt().isAfter(since)).toList() : allGoals;
+            
+            var completedGoals = filteredGoals.stream()
+                .filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED)
+                .count();
+            
+            var activeGoals = filteredGoals.stream()
+                .filter(g -> g.getStatus() == Goal.GoalStatus.ACTIVE)
+                .count();
+            
+            var allAchievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
+            var filteredAchievements = since != null ? 
+                allAchievements.stream().filter(a -> a.getAchievedAt() != null && a.getAchievedAt().isAfter(since)).toList() : allAchievements;
+            
+            report.put("completedActivities", completedActivities);
+            report.put("totalHours", totalHours);
+            report.put("averageHours", completedActivities > 0 ? totalHours / completedActivities : 0);
+            report.put("completedGoals", completedGoals);
+            report.put("activeGoals", activeGoals);
+            report.put("achievements", filteredAchievements.size());
+            
+            log.info("[MONTHLY_REPORT] Usuário {}: {} atividades concluídas, {} horas, {} metas concluídas, {} conquistas", 
+                user.getEmail(), completedActivities, totalHours, completedGoals, filteredAchievements.size());
+            
+        } catch (Exception e) {
+            log.error("[MONTHLY_REPORT] Erro ao gerar relatório mensal: {}", e.getMessage(), e);
+            report.put("completedActivities", 0);
+            report.put("totalHours", 0);
+            report.put("averageHours", 0);
+            report.put("completedGoals", 0);
+            report.put("activeGoals", 0);
+            report.put("achievements", 0);
+        }
         
         return report;
     }
@@ -756,7 +777,20 @@ public class ReportService {
             var allGoals = goalRepository.findByUserOrderByCreatedAtDesc(user);
             var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
             
-            log.info("[CHART_DATA] Usuário {}: {} atividades, {} metas, {} conquistas", 
+            // Aplicar filtro de período se especificado
+            if (since != null) {
+                allActivities = allActivities.stream()
+                    .filter(a -> a.getCreatedAt().isAfter(since))
+                    .toList();
+                allGoals = allGoals.stream()
+                    .filter(g -> g.getCreatedAt().isAfter(since))
+                    .toList();
+                achievements = achievements.stream()
+                    .filter(a -> a.getAchievedAt() != null && a.getAchievedAt().isAfter(since))
+                    .toList();
+            }
+            
+            log.info("[CHART_DATA] Usuário {}: {} atividades, {} metas, {} conquistas (após filtro)", 
                 user.getEmail(), allActivities.size(), allGoals.size(), achievements.size());
             
             // Dados para gráfico de progresso mensal
@@ -771,16 +805,16 @@ public class ReportService {
                 
                 monthNames.add(monthStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM", java.util.Locale.forLanguageTag("pt-BR"))));
                 
+                // Contar atividades concluídas no mês
                 long activitiesCount = allActivities.stream()
                     .filter(a -> "DONE".equals(a.getStatus()))
-                    .filter(a -> a.getCompletedAt() != null)
-                    .filter(a -> !a.getCompletedAt().isBefore(monthStart) && !a.getCompletedAt().isAfter(monthEnd))
+                    .filter(a -> a.getCreatedAt() != null && !a.getCreatedAt().isBefore(monthStart) && !a.getCreatedAt().isAfter(monthEnd))
                     .count();
                 
+                // Contar metas concluídas no mês
                 long goalsCount = allGoals.stream()
                     .filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED)
-                    .filter(g -> g.getCompletedAt() != null)
-                    .filter(g -> !g.getCompletedAt().isBefore(monthStart) && !g.getCompletedAt().isAfter(monthEnd))
+                    .filter(g -> g.getCreatedAt() != null && !g.getCreatedAt().isBefore(monthStart) && !g.getCreatedAt().isAfter(monthEnd))
                     .count();
                 
                 monthlyActivities.add(activitiesCount);
@@ -789,8 +823,8 @@ public class ReportService {
             
             chartData.put("progressData", Map.of(
                 "labels", monthNames,
-                "activities", monthlyActivities,
-                "goals", monthlyGoals
+                "activities", monthlyActivities.stream().map(Long::intValue).toList(),
+                "goals", monthlyGoals.stream().map(Long::intValue).toList()
             ));
             
             // Dados para radar de habilidades (baseado em atividades e metas)
@@ -799,7 +833,8 @@ public class ReportService {
                     (a.getProject().toLowerCase().contains("api") || 
                      a.getProject().toLowerCase().contains("backend") || 
                      a.getProject().toLowerCase().contains("frontend") ||
-                     a.getProject().toLowerCase().contains("tech")))
+                     a.getProject().toLowerCase().contains("tech") ||
+                     a.getProject().toLowerCase().contains("dev")))
                 .count();
             
             var leadershipGoals = allGoals.stream()
@@ -814,19 +849,26 @@ public class ReportService {
                 .filter(a -> a.getType().name().contains("RECOGNITION") || a.getType().name().contains("LEADERSHIP"))
                 .count();
             
-            // Calcular valores do radar (0-10)
+            var completedActivities = allActivities.stream()
+                .filter(a -> "DONE".equals(a.getStatus()))
+                .count();
+            
+            log.info("[CHART_DATA] Atividades concluídas: {}, Atividades técnicas: {}, Metas técnicas: {}, Metas liderança: {}", 
+                completedActivities, techActivities, technicalGoals, leadershipGoals);
+            
+            // Calcular valores do radar (0-10) com base em dados reais
             var radarValues = List.of(
-                Math.min(10L, Math.max(1L, techActivities + technicalGoals)), // Técnico
-                Math.min(10L, Math.max(1L, leadershipGoals * 2)), // Liderança
-                Math.min(10L, Math.max(1L, communicationAchievements * 2)), // Comunicação
-                Math.min(10L, Math.max(1L, achievements.size())), // Inovação
-                Math.min(10L, Math.max(1L, allActivities.size() / 5)), // Colaboração
-                Math.min(10L, Math.max(1L, (allGoals.size() + achievements.size()) / 2)) // Aprendizado
+                Math.min(10L, Math.max(1L, techActivities + technicalGoals + (completedActivities > 5 ? 2 : 0))), // Técnico
+                Math.min(10L, Math.max(1L, leadershipGoals * 2 + (allActivities.size() > 10 ? 1 : 0))), // Liderança
+                Math.min(10L, Math.max(1L, communicationAchievements + achievements.size() / 2 + (allGoals.size() > 0 ? 1 : 0))), // Comunicação
+                Math.min(10L, Math.max(1L, achievements.size() + (allActivities.size() > 0 ? 1 : 0))), // Inovação
+                Math.min(10L, Math.max(1L, Math.min(8, allActivities.size() / 3) + (completedActivities > 0 ? 1 : 0))), // Colaboração
+                Math.min(10L, Math.max(1L, allGoals.size() + achievements.size() + (allActivities.size() > 5 ? 1 : 0))) // Aprendizado
             );
             
             chartData.put("radarData", Map.of(
                 "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
-                "data", radarValues
+                "data", radarValues.stream().map(Long::intValue).toList()
             ));
             
             // Dados para radar de performance
@@ -835,22 +877,25 @@ public class ReportService {
                     .mapToInt(Activity::getActualHours).average().orElse(0);
             
             var completionRate = allActivities.isEmpty() ? 0 : 
-                (double) allActivities.stream().filter(a -> "DONE".equals(a.getStatus())).count() / allActivities.size() * 10;
+                (double) completedActivities / allActivities.size() * 10;
             
             var goalCompletionRate = allGoals.isEmpty() ? 0 : 
                 (double) allGoals.stream().filter(g -> g.getStatus() == Goal.GoalStatus.COMPLETED).count() / allGoals.size() * 10;
             
+            var avgProgress = allGoals.isEmpty() ? 0 : 
+                allGoals.stream().mapToInt(g -> g.getProgressPercentage() != null ? g.getProgressPercentage() : 0).average().orElse(0) / 10;
+            
             var performanceValues = List.of(
-                Math.min(10L, Math.max(1L, Math.round(completionRate))), // Produtividade
-                Math.min(10L, Math.max(1L, Math.round(goalCompletionRate))), // Qualidade
-                Math.min(10L, Math.max(1L, Math.round(avgHoursPerActivity / 2))), // Velocidade
-                Math.min(10L, Math.max(1L, achievements.size() > 0 ? 8L : 5L)), // Consistência
-                Math.min(10L, Math.max(1L, (techActivities + achievements.size()) / 2)) // Eficiência
+                Math.min(10L, Math.max(1L, Math.round(completionRate) + (allActivities.size() > 0 ? 1 : 0))), // Produtividade
+                Math.min(10L, Math.max(1L, Math.round(goalCompletionRate) + (allGoals.size() > 0 ? 1 : 0))), // Qualidade
+                Math.min(10L, Math.max(1L, avgHoursPerActivity > 0 ? Math.min(8, Math.round(avgHoursPerActivity / 2)) + 1 : (allActivities.size() > 0 ? 2 : 1))), // Velocidade
+                Math.min(10L, Math.max(1L, Math.round(avgProgress) + (completedActivities > 0 ? 1 : 0))), // Consistência
+                Math.min(10L, Math.max(1L, achievements.size() + (completedActivities > 0 ? 2 : 0) + (allGoals.size() > 0 ? 1 : 0))) // Eficiência
             );
             
             chartData.put("performanceData", Map.of(
                 "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
-                "data", performanceValues
+                "data", performanceValues.stream().map(Long::intValue).toList()
             ));
             
             log.info("[CHART_DATA] Radar values: {}", radarValues);
@@ -861,12 +906,16 @@ public class ReportService {
             log.error("[CHART_DATA] Erro ao gerar dados de gráficos: {}", e.getMessage(), e);
             chartData.put("progressData", Map.of(
                 "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
-                "activities", List.of(0L, 0L, 0L, 0L, 0L, 0L),
-                "goals", List.of(0L, 0L, 0L, 0L, 0L, 0L)
+                "activities", List.of(0, 0, 0, 0, 0, 0),
+                "goals", List.of(0, 0, 0, 0, 0, 0)
             ));
             chartData.put("radarData", Map.of(
                 "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
-                "data", List.of(1L, 1L, 1L, 1L, 1L, 1L)
+                "data", List.of(1, 1, 1, 1, 1, 1)
+            ));
+            chartData.put("performanceData", Map.of(
+                "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
+                "data", List.of(1, 1, 1, 1, 1)
             ));
         }
         

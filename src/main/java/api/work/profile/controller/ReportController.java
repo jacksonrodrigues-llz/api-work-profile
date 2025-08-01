@@ -37,9 +37,10 @@ public class ReportController {
     public String personalMetrics(Authentication authentication, @RequestParam(required = false) String periodo, Model model) {
         try {
             var user = profileService.getUserFromAuthentication(authentication);
-            log.debug("[REPORT] Carregando métricas pessoais para: {}", user.getEmail());
+            log.info("[REPORT] Carregando métricas pessoais para: {} com período: {}", user.getEmail(), periodo);
             
             var reportData = reportService.getReportData(user, periodo);
+            log.info("[REPORT] Dados carregados: {}", reportData.keySet());
             
             model.addAttribute("user", user);
             model.addAttribute("currentUser", user);
@@ -47,7 +48,7 @@ public class ReportController {
             
             return "reports/personal-metrics";
         } catch (Exception e) {
-            log.error("[REPORT] Erro ao carregar métricas pessoais: {}", e.getMessage());
+            log.error("[REPORT] Erro ao carregar métricas pessoais: {}", e.getMessage(), e);
             model.addAttribute("errorMessage", "Erro ao carregar relatórios: " + e.getMessage());
             return "error";
         }
@@ -56,8 +57,16 @@ public class ReportController {
     @GetMapping("/personal-metrics-data")
     @ResponseBody
     public Map<String, Object> getPersonalMetricsData(@RequestParam(required = false) String periodo, Authentication authentication) {
-        var user = profileService.getUserFromAuthentication(authentication);
-        return reportService.getReportData(user, periodo);
+        try {
+            var user = profileService.getUserFromAuthentication(authentication);
+            log.info("[PERSONAL_METRICS_DATA] Carregando dados para usuário: {} com período: {}", user.getEmail(), periodo);
+            var data = reportService.getReportData(user, periodo);
+            log.info("[PERSONAL_METRICS_DATA] Dados retornados: {}", data.keySet());
+            return data;
+        } catch (Exception e) {
+            log.error("[PERSONAL_METRICS_DATA] Erro: {}", e.getMessage(), e);
+            return Map.of("error", e.getMessage());
+        }
     }
     
     @GetMapping("/dt")

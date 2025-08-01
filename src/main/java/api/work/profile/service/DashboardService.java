@@ -37,8 +37,8 @@ public class DashboardService {
         LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
         
         // Atividades
-        var completedActivities = activityRepository.countCompletedActivitiesSince(user, String.valueOf(Activity.ActivityStatus.DONE), startOfMonth);
-        var avgHours = activityRepository.getAverageHoursPerActivity(user, String.valueOf(Activity.ActivityStatus.DONE));
+        var completedActivities = activityRepository.countByUserAndStatus(user, "DONE");
+        var avgHours = activityRepository.getAverageHoursPerActivity(user, "DONE");
         
         // Metas
         var completedGoals = goalRepository.countCompletedGoals(user, Goal.GoalStatus.COMPLETED);

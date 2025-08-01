@@ -21,4 +21,7 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
     
     @Query("SELECT COUNT(a) > 0 FROM Activity a WHERE a.user = ?1 AND a.status = ?2")
     boolean existsByUserAndStatus(User user, String status);
+    
+    @Query("SELECT COUNT(a) FROM Activity a WHERE a.user = ?1 AND a.status = ?2")
+    Long countByUserAndStatus(User user, String status);
 }
