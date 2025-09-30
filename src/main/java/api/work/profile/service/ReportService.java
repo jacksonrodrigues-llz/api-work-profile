@@ -84,7 +84,7 @@ public class ReportService {
                 String statusIcon = getStatusIcon(activity.getStatus());
                 String categoryTag = getCategoryTag(activity.getProject());
                 activitiesHtml.append(String.format(
-                        "<tr><td>%s</td><td>%s</td><td class='status-%s'>%s %s</td><td class='priority-%s'>%s</td><td>%s</td><td>%s</td></tr>",
+                        "<tr><td>%s</td><td>%s</td><td class='status-%s'>%s %s</td><td class='priority-%s'>%s</td><td>%s</td></tr>",
                         sanitizeHtml(activity.getTitle()),
                         sanitizeHtml(activity.getProject() != null ? activity.getProject() : "-"),
                         activity.getStatus().toLowerCase(),
@@ -92,8 +92,7 @@ public class ReportService {
                         translateStatus(activity.getStatus()),
                         activity.getPriority().name().toLowerCase(),
                         translatePriority(activity.getPriority().name()),
-                        activity.getActualHours() != null ? activity.getActualHours() + "h" : "-",
-                        categoryTag
+                        activity.getActualHours() != null ? activity.getActualHours() + "h" : "-"
                 ));
             });
 
@@ -226,7 +225,7 @@ public class ReportService {
                         <h2 class="section-title">Atividades Realizadas</h2>
                         <table>
                             <thead>
-                                <tr><th>Título</th><th>Projeto</th><th>Status</th><th>Prioridade</th><th>Horas</th><th>Categoria</th></tr>
+                                <tr><th>Título</th><th>Projeto</th><th>Status</th><th>Prioridade</th><th>Horas</th></tr>
                             </thead>
                             <tbody>%s</tbody>
                         </table>
@@ -698,10 +697,8 @@ public class ReportService {
     }
     
     private String getCategoryTag(String project) {
-        if (project == null) return "<span class='tag'>GERAL</span>";
-        if (project.toLowerCase().contains("api")) return "<span class='tag'>BACKEND</span>";
-        if (project.toLowerCase().contains("test")) return "<span class='tag'>TEST</span>";
-        return "<span class='tag'>FULL-STACK</span>";
+        // Remover coluna de categoria por enquanto
+        return "";
     }
     
     private String translateStatus(String status) {
@@ -773,9 +770,14 @@ public class ReportService {
         var chartData = new HashMap<String, Object>();
         
         try {
+            log.info("[CHART_DATA] Iniciando geração de dados de gráficos para usuário: {}", user.getEmail());
+            
             var allActivities = activityRepository.findByUserOrderByCreatedAtDesc(user);
             var allGoals = goalRepository.findByUserOrderByCreatedAtDesc(user);
             var achievements = achievementRepository.findByUserOrderByAchievedAtDesc(user);
+            
+            log.info("[CHART_DATA] Dados brutos: {} atividades, {} metas, {} conquistas", 
+                allActivities.size(), allGoals.size(), achievements.size());
             
             // Aplicar filtro de período se especificado
             if (since != null) {
@@ -796,8 +798,8 @@ public class ReportService {
             // Dados para gráfico de progresso mensal
             var now = LocalDateTime.now();
             var monthNames = new java.util.ArrayList<String>();
-            var monthlyActivities = new java.util.ArrayList<Long>();
-            var monthlyGoals = new java.util.ArrayList<Long>();
+            var monthlyActivities = new java.util.ArrayList<Integer>();
+            var monthlyGoals = new java.util.ArrayList<Integer>();
             
             for (int i = 5; i >= 0; i--) {
                 var monthStart = now.minusMonths(i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
@@ -817,14 +819,14 @@ public class ReportService {
                     .filter(g -> g.getCreatedAt() != null && !g.getCreatedAt().isBefore(monthStart) && !g.getCreatedAt().isAfter(monthEnd))
                     .count();
                 
-                monthlyActivities.add(activitiesCount);
-                monthlyGoals.add(goalsCount);
+                monthlyActivities.add((int) activitiesCount);
+                monthlyGoals.add((int) goalsCount);
             }
             
             chartData.put("progressData", Map.of(
                 "labels", monthNames,
-                "activities", monthlyActivities.stream().map(Long::intValue).toList(),
-                "goals", monthlyGoals.stream().map(Long::intValue).toList()
+                "activities", monthlyActivities,
+                "goals", monthlyGoals
             ));
             
             // Dados para radar de habilidades (baseado em atividades e metas)
@@ -858,17 +860,17 @@ public class ReportService {
             
             // Calcular valores do radar (0-10) com base em dados reais
             var radarValues = List.of(
-                Math.min(10L, Math.max(1L, techActivities + technicalGoals + (completedActivities > 5 ? 2 : 0))), // Técnico
-                Math.min(10L, Math.max(1L, leadershipGoals * 2 + (allActivities.size() > 10 ? 1 : 0))), // Liderança
-                Math.min(10L, Math.max(1L, communicationAchievements + achievements.size() / 2 + (allGoals.size() > 0 ? 1 : 0))), // Comunicação
-                Math.min(10L, Math.max(1L, achievements.size() + (allActivities.size() > 0 ? 1 : 0))), // Inovação
-                Math.min(10L, Math.max(1L, Math.min(8, allActivities.size() / 3) + (completedActivities > 0 ? 1 : 0))), // Colaboração
-                Math.min(10L, Math.max(1L, allGoals.size() + achievements.size() + (allActivities.size() > 5 ? 1 : 0))) // Aprendizado
+                (int) Math.min(10L, Math.max(1L, techActivities + technicalGoals + (completedActivities > 5 ? 2 : 0))), // Técnico
+                (int) Math.min(10L, Math.max(1L, leadershipGoals * 2 + (allActivities.size() > 10 ? 1 : 0))), // Liderança
+                (int) Math.min(10L, Math.max(1L, communicationAchievements + achievements.size() / 2 + (allGoals.size() > 0 ? 1 : 0))), // Comunicação
+                (int) Math.min(10L, Math.max(1L, achievements.size() + (allActivities.size() > 0 ? 1 : 0))), // Inovação
+                (int) Math.min(10L, Math.max(1L, Math.min(8, allActivities.size() / 3) + (completedActivities > 0 ? 1 : 0))), // Colaboração
+                (int) Math.min(10L, Math.max(1L, allGoals.size() + achievements.size() + (allActivities.size() > 5 ? 1 : 0))) // Aprendizado
             );
             
             chartData.put("radarData", Map.of(
                 "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
-                "data", radarValues.stream().map(Long::intValue).toList()
+                "data", radarValues
             ));
             
             // Dados para radar de performance
@@ -886,24 +888,26 @@ public class ReportService {
                 allGoals.stream().mapToInt(g -> g.getProgressPercentage() != null ? g.getProgressPercentage() : 0).average().orElse(0) / 10;
             
             var performanceValues = List.of(
-                Math.min(10L, Math.max(1L, Math.round(completionRate) + (allActivities.size() > 0 ? 1 : 0))), // Produtividade
-                Math.min(10L, Math.max(1L, Math.round(goalCompletionRate) + (allGoals.size() > 0 ? 1 : 0))), // Qualidade
-                Math.min(10L, Math.max(1L, avgHoursPerActivity > 0 ? Math.min(8, Math.round(avgHoursPerActivity / 2)) + 1 : (allActivities.size() > 0 ? 2 : 1))), // Velocidade
-                Math.min(10L, Math.max(1L, Math.round(avgProgress) + (completedActivities > 0 ? 1 : 0))), // Consistência
-                Math.min(10L, Math.max(1L, achievements.size() + (completedActivities > 0 ? 2 : 0) + (allGoals.size() > 0 ? 1 : 0))) // Eficiência
+                (int) Math.min(10L, Math.max(1L, Math.round(completionRate) + (allActivities.size() > 0 ? 1 : 0))), // Produtividade
+                (int) Math.min(10L, Math.max(1L, Math.round(goalCompletionRate) + (allGoals.size() > 0 ? 1 : 0))), // Qualidade
+                (int) Math.min(10L, Math.max(1L, avgHoursPerActivity > 0 ? Math.min(8, Math.round(avgHoursPerActivity / 2)) + 1 : (allActivities.size() > 0 ? 2 : 1))), // Velocidade
+                (int) Math.min(10L, Math.max(1L, Math.round(avgProgress) + (completedActivities > 0 ? 1 : 0))), // Consistência
+                (int) Math.min(10L, Math.max(1L, achievements.size() + (completedActivities > 0 ? 2 : 0) + (allGoals.size() > 0 ? 1 : 0))) // Eficiência
             );
             
             chartData.put("performanceData", Map.of(
                 "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
-                "data", performanceValues.stream().map(Long::intValue).toList()
+                "data", performanceValues
             ));
             
             log.info("[CHART_DATA] Radar values: {}", radarValues);
             log.info("[CHART_DATA] Performance values: {}", performanceValues);
             log.info("[CHART_DATA] Progress data: activities={}, goals={}", monthlyActivities, monthlyGoals);
+            log.info("[CHART_DATA] Final chart data keys: {}", chartData.keySet());
             
         } catch (Exception e) {
             log.error("[CHART_DATA] Erro ao gerar dados de gráficos: {}", e.getMessage(), e);
+            // Retornar dados padrão em caso de erro
             chartData.put("progressData", Map.of(
                 "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
                 "activities", List.of(0, 0, 0, 0, 0, 0),
@@ -913,6 +917,27 @@ public class ReportService {
                 "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
                 "data", List.of(1, 1, 1, 1, 1, 1)
             ));
+            chartData.put("performanceData", Map.of(
+                "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
+                "data", List.of(1, 1, 1, 1, 1)
+            ));
+        }
+        
+        // Garantir que sempre temos dados de gráficos
+        if (!chartData.containsKey("progressData")) {
+            chartData.put("progressData", Map.of(
+                "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
+                "activities", List.of(0, 0, 0, 0, 0, 0),
+                "goals", List.of(0, 0, 0, 0, 0, 0)
+            ));
+        }
+        if (!chartData.containsKey("radarData")) {
+            chartData.put("radarData", Map.of(
+                "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
+                "data", List.of(1, 1, 1, 1, 1, 1)
+            ));
+        }
+        if (!chartData.containsKey("performanceData")) {
             chartData.put("performanceData", Map.of(
                 "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
                 "data", List.of(1, 1, 1, 1, 1)
