@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -34,21 +35,17 @@ public class ReportController {
     }
     
     @GetMapping("/personal-metrics")
-    public String personalMetrics(Authentication authentication, @RequestParam(required = false) String periodo, Model model) {
+    public String personalMetrics(Authentication authentication, Model model) {
         try {
             var user = profileService.getUserFromAuthentication(authentication);
-            log.info("[REPORT] Carregando métricas pessoais para: {} com período: {}", user.getEmail(), periodo);
-            
-            var reportData = reportService.getReportData(user, periodo);
-            log.info("[REPORT] Dados carregados: {}", reportData.keySet());
+            log.info("[REPORT] Carregando página de métricas pessoais para: {}", user.getEmail());
             
             model.addAttribute("user", user);
             model.addAttribute("currentUser", user);
-            model.addAllAttributes(reportData);
             
             return "reports/personal-metrics";
         } catch (Exception e) {
-            log.error("[REPORT] Erro ao carregar métricas pessoais: {}", e.getMessage(), e);
+            log.error("[REPORT] Erro ao carregar página de métricas pessoais: {}", e.getMessage(), e);
             model.addAttribute("errorMessage", "Erro ao carregar relatórios: " + e.getMessage());
             return "error";
         }
@@ -60,12 +57,44 @@ public class ReportController {
         try {
             var user = profileService.getUserFromAuthentication(authentication);
             log.info("[PERSONAL_METRICS_DATA] Carregando dados para usuário: {} com período: {}", user.getEmail(), periodo);
+            
             var data = reportService.getReportData(user, periodo);
-            log.info("[PERSONAL_METRICS_DATA] Dados retornados: {}", data.keySet());
+            log.info("[PERSONAL_METRICS_DATA] Dados retornados com sucesso. Keys: {}", data.keySet());
+            
+            // Log chart data specifically
+            if (data.containsKey("chartData")) {
+                var chartData = (Map<String, Object>) data.get("chartData");
+                log.info("[PERSONAL_METRICS_DATA] Chart data keys: {}", chartData.keySet());
+            }
+            
             return data;
         } catch (Exception e) {
-            log.error("[PERSONAL_METRICS_DATA] Erro: {}", e.getMessage(), e);
-            return Map.of("error", e.getMessage());
+            log.error("[PERSONAL_METRICS_DATA] Erro ao carregar dados: {}", e.getMessage(), e);
+            return Map.of(
+                "error", e.getMessage(),
+                "monthlyReport", Map.of(
+                    "completedActivities", 0,
+                    "totalHours", 0,
+                    "completedGoals", 0,
+                    "achievements", 0
+                ),
+                "chartData", Map.of(
+                    "progressData", Map.of(
+                        "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
+                        "activities", List.of(0, 0, 0, 0, 0, 0),
+                        "goals", List.of(0, 0, 0, 0, 0, 0),
+                        "achievements", List.of(0, 0, 0, 0, 0, 0)
+                    ),
+                    "radarData", Map.of(
+                        "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
+                        "data", List.of(1, 1, 1, 1, 1, 1)
+                    ),
+                    "performanceData", Map.of(
+                        "labels", List.of("Produtividade", "Qualidade", "Velocidade", "Consistência", "Eficiência"),
+                        "data", List.of(1, 1, 1, 1, 1)
+                    )
+                )
+            );
         }
     }
     

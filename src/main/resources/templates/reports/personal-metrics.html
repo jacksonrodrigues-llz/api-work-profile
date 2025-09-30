@@ -129,7 +129,7 @@
                             <div class="col-md-3">
                                 <label class="form-label">&nbsp;</label>
                                 <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-primary" onclick="applyPersonalFilter()">
+                                    <button type="button" class="btn btn-primary" onclick="updatePersonalMetrics()">
                                         <i class="fas fa-filter me-1"></i>Filtrar
                                     </button>
                                     <button type="button" class="btn btn-outline-light" onclick="clearPersonalFilters()">
@@ -151,7 +151,7 @@
                                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                             Atividades Concluídas
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedActivities}">0</div>
+                                        <div id="completedActivities" class="h5 mb-0 font-weight-bold text-gray-800">0</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-check-circle fa-2x text-success"></i>
@@ -169,7 +169,7 @@
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                             Horas Investidas
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.totalHours ?: 0} + 'h'">0h</div>
+                                        <div id="totalHours" class="h5 mb-0 font-weight-bold text-gray-800">0h</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-clock fa-2x text-success"></i>
@@ -187,7 +187,7 @@
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                             Metas Concluídas
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.completedGoals}">0</div>
+                                        <div id="completedGoals" class="h5 mb-0 font-weight-bold text-gray-800">0</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-bullseye fa-2x text-info"></i>
@@ -205,7 +205,7 @@
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                             Conquistas
                                         </div>
-                                        <div class="h5 mb-0 font-weight-bold text-gray-800" th:text="${monthlyReport.achievements}">0</div>
+                                        <div id="achievements" class="h5 mb-0 font-weight-bold text-gray-800">0</div>
                                     </div>
                                     <div class="col-auto">
                                         <i class="fas fa-trophy fa-2x text-warning"></i>
@@ -233,21 +233,12 @@
 
                     <div class="col-xl-4 col-lg-6">
                         <div class="card mb-4">
-                            <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="card-header">
                                 <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Radar de Habilidades</h6>
-                                <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#radarExplanationModal">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
                             </div>
                             <div class="card-body">
                                 <div class="chart-container">
                                     <canvas id="categoryChart"></canvas>
-                                </div>
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Valores calculados com base em atividades, metas e conquistas.
-                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -262,120 +253,6 @@
                                 <div class="chart-container">
                                     <canvas id="performanceChart"></canvas>
                                 </div>
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fas fa-chart-radar me-1"></i>
-                                        Métricas de produtividade e qualidade.
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Seções de Dados -->
-                <div class="row mb-4">
-                    <!-- Atividades Recentes -->
-                    <div class="col-xl-4 col-lg-6 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Atividades Recentes</h6>
-                                <a href="/activities" class="btn btn-sm btn-outline-light">Ver Todas</a>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="list-group list-group-flush" th:if="${activities != null and !activities.empty}">
-                                    <div th:each="activity : ${activities}" class="list-group-item bg-dark border-secondary">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1 text-white" th:text="${activity.title}">Título</h6>
-                                            <small class="text-muted" th:text="${#temporals.format(activity.createdAt, 'dd/MM')}">Data</small>
-                                        </div>
-                                        <p class="mb-1 text-muted small" th:text="${activity.project ?: 'Sem projeto'}">Projeto</p>
-                                        <small>
-                                            <span th:switch="${activity.status}" class="badge">
-                                                <span th:case="'TODO'" class="badge bg-secondary">TODO</span>
-                                                <span th:case="'IN_PROGRESS'" class="badge bg-primary">EM PROGRESSO</span>
-                                                <span th:case="'DEV'" class="badge bg-info">DEV</span>
-                                                <span th:case="'UAT'" class="badge bg-warning">UAT</span>
-                                                <span th:case="'HML'" class="badge bg-warning">HML</span>
-                                                <span th:case="'PRD'" class="badge bg-warning">PRD</span>
-                                                <span th:case="'DEPLOY'" class="badge bg-warning">DEPLOY</span>
-                                                <span th:case="'DONE'" class="badge bg-success">CONCLUÍDO</span>
-                                                <span th:case="*" class="badge bg-secondary" th:text="${activity.status}">Status</span>
-                                            </span>
-                                            <span th:switch="${activity.priority}" class="badge ms-1">
-                                                <span th:case="'LOW'" class="badge bg-success ms-1">BAIXA</span>
-                                                <span th:case="'MEDIUM'" class="badge bg-info ms-1">MÉDIA</span>
-                                                <span th:case="'HIGH'" class="badge bg-warning ms-1">ALTA</span>
-                                                <span th:case="'URGENT'" class="badge bg-danger ms-1">URGENTE</span>
-                                                <span th:case="*" class="badge bg-secondary ms-1" th:text="${activity.priority}">Prioridade</span>
-                                            </span>
-                                        </small>
-                                    </div>
-                                </div>
-                                <div th:if="${activities == null or activities.empty}" class="text-center p-3 text-muted">
-                                    <i class="fas fa-tasks fa-2x mb-2"></i>
-                                    <p>Nenhuma atividade encontrada</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Metas Ativas -->
-                    <div class="col-xl-4 col-lg-6 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Metas Ativas</h6>
-                                <a href="/goals" class="btn btn-sm btn-outline-light">Ver Todas</a>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="list-group list-group-flush" th:if="${goals != null and !goals.empty}">
-                                    <div th:each="goal : ${goals}" class="list-group-item bg-dark border-secondary">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1 text-white" th:text="${goal.title}">Título</h6>
-                                            <small class="text-muted" th:text="${goal.progressPercentage ?: 0} + '%'">0%</small>
-                                        </div>
-                                        <div class="progress mb-2" style="height: 6px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" 
-                                                 th:style="'width: ' + ${goal.progressPercentage ?: 0} + '%'"></div>
-                                        </div>
-                                        <small>
-                                            <span class="badge bg-info" th:text="${goal.category}">Categoria</span>
-                                            <span class="badge bg-success ms-1" th:text="${goal.status}">Status</span>
-                                        </small>
-                                    </div>
-                                </div>
-                                <div th:if="${goals == null or goals.empty}" class="text-center p-3 text-muted">
-                                    <i class="fas fa-bullseye fa-2x mb-2"></i>
-                                    <p>Nenhuma meta encontrada</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Conquistas Recentes -->
-                    <div class="col-xl-4 col-lg-6 mb-4">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 font-weight-bold" style="color: var(--accent-orange);">Conquistas Recentes</h6>
-                                <a href="/achievements" class="btn btn-sm btn-outline-light">Ver Todas</a>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="list-group list-group-flush" th:if="${achievements != null and !achievements.empty}">
-                                    <div th:each="achievement : ${achievements}" class="list-group-item bg-dark border-secondary">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1 text-white" th:text="${achievement.title}">Título</h6>
-                                            <small class="text-muted" th:text="${#temporals.format(achievement.achievedAt, 'dd/MM')}">Data</small>
-                                        </div>
-                                        <p class="mb-1 text-muted small" th:text="${achievement.description}">Descrição</p>
-                                        <small>
-                                            <span class="badge bg-warning" th:text="${achievement.type}">Tipo</span>
-                                        </small>
-                                    </div>
-                                </div>
-                                <div th:if="${achievements == null or achievements.empty}" class="text-center p-3 text-muted">
-                                    <i class="fas fa-trophy fa-2x mb-2"></i>
-                                    <p>Nenhuma conquista encontrada</p>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -386,34 +263,28 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/app.js"></script>
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        // Configuração global para tema escuro
+    <script>
         Chart.defaults.color = '#ffffff';
         Chart.defaults.borderColor = '#4a4a4a';
         Chart.defaults.backgroundColor = 'rgba(255, 107, 53, 0.1)';
         
-        // Gráfico de Progresso
-        const progressCtx = document.getElementById('progressChart').getContext('2d');
-        let progressChart;
+        let progressChart, categoryChart, performanceChart;
         
-        function initProgressChart() {
-            const chartData = /*[[${chartData}]]*/ null;
-            console.log('Chart data from server:', chartData);
-            const progressData = chartData?.progressData || {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                activities: [0, 0, 0, 0, 0, 0],
-                goals: [0, 0, 0, 0, 0, 0]
-            };
-            console.log('Progress data:', progressData);
+        function loadPersonalCharts() {
+            if (progressChart) {
+                progressChart.destroy();
+                categoryChart.destroy();
+                performanceChart.destroy();
+            }
             
+            const progressCtx = document.getElementById('progressChart').getContext('2d');
             progressChart = new Chart(progressCtx, {
                 type: 'line',
                 data: {
-                    labels: progressData.labels,
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
                     datasets: [{
                         label: 'Atividades Concluídas',
-                        data: progressData.activities,
+                        data: [0, 0, 0, 0, 0, 0],
                         borderColor: '#ff6b35',
                         backgroundColor: 'rgba(255, 107, 53, 0.1)',
                         tension: 0.4,
@@ -421,65 +292,52 @@
                         pointBorderColor: '#ff8c42'
                     }, {
                         label: 'Metas Concluídas',
-                        data: progressData.goals,
+                        data: [0, 0, 0, 0, 0, 0],
                         borderColor: '#28a745',
                         backgroundColor: 'rgba(40, 167, 69, 0.1)',
                         tension: 0.4,
                         pointBackgroundColor: '#28a745',
                         pointBorderColor: '#34ce57'
+                    }, {
+                        label: 'Conquistas',
+                        data: [0, 0, 0, 0, 0, 0],
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffc107',
+                        pointBorderColor: '#ffcd39'
                     }]
                 },
                 options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#4a4a4a'
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
                         }
                     },
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            color: '#b0b0b0'
+                    scales: {
+                        x: {
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
                         },
-                        grid: {
-                            color: '#4a4a4a'
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#b0b0b0' },
+                            grid: { color: '#4a4a4a' }
                         }
                     }
                 }
-            }
-        });
-
-        // Gráfico Radar de Habilidades
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        let categoryChart;
-        
-        function initCategoryChart() {
-            const chartData = /*[[${chartData}]]*/ null;
-            const radarData = chartData?.radarData || {
-                labels: ['Técnico', 'Liderança', 'Comunicação', 'Inovação', 'Colaboração', 'Aprendizado'],
-                data: [1, 1, 1, 1, 1, 1]
-            };
-            console.log('Radar data:', radarData);
+            });
             
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
             categoryChart = new Chart(categoryCtx, {
                 type: 'radar',
                 data: {
-                    labels: radarData.labels,
+                    labels: ['Técnico', 'Liderança', 'Comunicação', 'Inovação', 'Colaboração', 'Aprendizado'],
                     datasets: [{
                         label: 'Nível Atual',
-                        data: radarData.data,
+                        data: [1, 1, 1, 1, 1, 1],
                         borderColor: '#ff6b35',
                         backgroundColor: 'rgba(255, 107, 53, 0.2)',
                         pointBackgroundColor: '#ff6b35',
@@ -493,9 +351,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: {
-                                color: '#ffffff'
-                            }
+                            labels: { color: '#ffffff' }
                         }
                     },
                     scales: {
@@ -506,43 +362,25 @@
                                 color: '#b0b0b0',
                                 stepSize: 2
                             },
-                            grid: {
-                                color: '#4a4a4a'
-                            },
-                            angleLines: {
-                                color: '#4a4a4a'
-                            },
+                            grid: { color: '#4a4a4a' },
+                            angleLines: { color: '#4a4a4a' },
                             pointLabels: {
                                 color: '#ffffff',
-                                font: {
-                                    size: 11
-                                }
+                                font: { size: 11 }
                             }
                         }
                     }
                 }
             });
-        }
-        
-        // Gráfico Radar de Performance
-        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-        let performanceChart;
-        
-        function initPerformanceChart() {
-            const chartData = /*[[${chartData}]]*/ null;
-            const performanceData = chartData?.performanceData || {
-                labels: ['Produtividade', 'Qualidade', 'Velocidade', 'Consistência', 'Eficiência'],
-                data: [1, 1, 1, 1, 1]
-            };
-            console.log('Performance data:', performanceData);
             
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
             performanceChart = new Chart(performanceCtx, {
                 type: 'radar',
                 data: {
-                    labels: performanceData.labels,
+                    labels: ['Produtividade', 'Qualidade', 'Velocidade', 'Consistência', 'Eficiência'],
                     datasets: [{
                         label: 'Performance Atual',
-                        data: performanceData.data,
+                        data: [1, 1, 1, 1, 1],
                         borderColor: '#28a745',
                         backgroundColor: 'rgba(40, 167, 69, 0.2)',
                         pointBackgroundColor: '#28a745',
@@ -556,9 +394,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            labels: {
-                                color: '#ffffff'
-                            }
+                            labels: { color: '#ffffff' }
                         }
                     },
                     scales: {
@@ -569,35 +405,17 @@
                                 color: '#b0b0b0',
                                 stepSize: 2
                             },
-                            grid: {
-                                color: '#4a4a4a'
-                            },
-                            angleLines: {
-                                color: '#4a4a4a'
-                            },
+                            grid: { color: '#4a4a4a' },
+                            angleLines: { color: '#4a4a4a' },
                             pointLabels: {
                                 color: '#ffffff',
-                                font: {
-                                    size: 11
-                                }
+                                font: { size: 11 }
                             }
                         }
                     }
                 }
             });
         }
-        
-        // Inicializar gráficos após DOM carregado
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Inicializando Personal Metrics...');
-            initProgressChart();
-            initCategoryChart();
-            initPerformanceChart();
-            
-            // Carregar dados iniciais imediatamente
-            updatePersonalMetrics();
-        });
-        /*]]>*/
         
         function updatePersonalMetrics() {
             const periodo = document.getElementById('personalPeriodoSelect').value;
@@ -621,7 +439,7 @@
                 })
                 .catch(error => {
                     console.error('Erro ao carregar dados:', error);
-                    alert('Erro ao carregar dados: ' + error.message);
+                    loadPersonalCharts();
                 })
                 .finally(() => {
                     if (refreshBtn) {
@@ -630,69 +448,28 @@
                 });
         }
         
-        function applyPersonalFilter() {
-            console.log('Aplicando filtro...');
-            updatePersonalMetrics();
-        }
-        
-        function clearPersonalFilters() {
-            console.log('Limpando filtros...');
-            document.getElementById('personalPeriodoSelect').value = '';
-            updatePersonalMetrics();
-        }
-        
         function updatePersonalChartsWithData(data) {
             console.log('Atualizando gráficos com dados:', data);
             
-            if (data.error) {
-                console.error('Erro nos dados:', data.error);
-                alert('Erro ao carregar dados: ' + data.error);
-                return;
-            }
-            
-            // Atualizar gráfico de progresso
-            if (data.chartData?.progressData && progressChart) {
+            if (data.chartData && data.chartData.progressData && progressChart) {
                 const progressData = data.chartData.progressData;
-                console.log('Dados de progresso:', progressData);
-                
-                // Garantir que os dados são arrays de números
-                const activities = Array.isArray(progressData.activities) ? 
-                    progressData.activities.map(v => Number(v) || 0) : [0, 0, 0, 0, 0, 0];
-                const goals = Array.isArray(progressData.goals) ? 
-                    progressData.goals.map(v => Number(v) || 0) : [0, 0, 0, 0, 0, 0];
-                
                 progressChart.data.labels = progressData.labels || ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-                progressChart.data.datasets[0].data = activities;
-                if (progressChart.data.datasets[1]) {
-                    progressChart.data.datasets[1].data = goals;
-                }
-                progressChart.update('active');
+                progressChart.data.datasets[0].data = progressData.activities || [0, 0, 0, 0, 0, 0];
+                progressChart.data.datasets[1].data = progressData.goals || [0, 0, 0, 0, 0, 0];
+                progressChart.data.datasets[2].data = progressData.achievements || [0, 0, 0, 0, 0, 0];
+                progressChart.update();
             }
             
-            // Atualizar gráfico radar
-            if (data.chartData?.radarData && categoryChart) {
+            if (data.chartData && data.chartData.radarData && categoryChart) {
                 const radarData = data.chartData.radarData;
-                console.log('Dados do radar:', radarData);
-                
-                // Garantir que os dados são arrays de números
-                const radarValues = Array.isArray(radarData.data) ? 
-                    radarData.data.map(v => Number(v) || 1) : [1, 1, 1, 1, 1, 1];
-                
-                categoryChart.data.datasets[0].data = radarValues;
-                categoryChart.update('active');
+                categoryChart.data.datasets[0].data = radarData.data || [1, 1, 1, 1, 1, 1];
+                categoryChart.update();
             }
             
-            // Atualizar gráfico de performance
-            if (data.chartData?.performanceData && performanceChart) {
+            if (data.chartData && data.chartData.performanceData && performanceChart) {
                 const performanceData = data.chartData.performanceData;
-                console.log('Dados de performance:', performanceData);
-                
-                // Garantir que os dados são arrays de números
-                const performanceValues = Array.isArray(performanceData.data) ? 
-                    performanceData.data.map(v => Number(v) || 1) : [1, 1, 1, 1, 1];
-                
-                performanceChart.data.datasets[0].data = performanceValues;
-                performanceChart.update('active');
+                performanceChart.data.datasets[0].data = performanceData.data || [1, 1, 1, 1, 1];
+                performanceChart.update();
             }
         }
         
@@ -700,102 +477,42 @@
             if (data.monthlyReport) {
                 const metrics = data.monthlyReport;
                 
-                // Atualizar cards de métricas
-                const completedActivitiesEl = document.querySelector('.border-left-primary .h5');
+                const completedActivitiesEl = document.getElementById('completedActivities');
                 if (completedActivitiesEl && metrics.completedActivities !== undefined) {
                     completedActivitiesEl.textContent = metrics.completedActivities;
                 }
                 
-                const totalHoursEl = document.querySelector('.border-left-success .h5');
+                const totalHoursEl = document.getElementById('totalHours');
                 if (totalHoursEl && metrics.totalHours !== undefined) {
                     totalHoursEl.textContent = metrics.totalHours + 'h';
                 }
                 
-                const completedGoalsEl = document.querySelector('.border-left-info .h5');
+                const completedGoalsEl = document.getElementById('completedGoals');
                 if (completedGoalsEl && metrics.completedGoals !== undefined) {
                     completedGoalsEl.textContent = metrics.completedGoals;
                 }
                 
-                const achievementsEl = document.querySelector('.border-left-warning .h5');
+                const achievementsEl = document.getElementById('achievements');
                 if (achievementsEl && metrics.achievements !== undefined) {
                     achievementsEl.textContent = metrics.achievements;
                 }
-                
-                console.log('Métricas atualizadas:', metrics);
             }
         }
-        /*]]>*/
+        
+        function clearPersonalFilters() {
+            document.getElementById('personalPeriodoSelect').value = '';
+            updatePersonalMetrics();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Inicializando Personal Metrics...');
+            loadPersonalCharts();
+            
+            setTimeout(function() {
+                console.log('Carregando dados iniciais...');
+                updatePersonalMetrics();
+            }, 500);
+        });
     </script>
-    
-    <!-- Modal de Explicação do Radar -->
-    <div class="modal fade" id="radarExplanationModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-                <div class="modal-header" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title" style="color: var(--text-primary);">
-                        <i class="fas fa-chart-radar me-2" style="color: var(--accent-orange);"></i>
-                        Como são Calculadas as Habilidades
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body" style="color: var(--text-primary);">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-warning"><i class="fas fa-cogs me-2"></i>Técnico</h6>
-                            <ul class="small text-muted">
-                                <li>Atividades de desenvolvimento concluídas</li>
-                                <li>Metas técnicas atingidas</li>
-                                <li>Conquistas de certificações</li>
-                            </ul>
-                            
-                            <h6 class="text-info"><i class="fas fa-users me-2"></i>Liderança</h6>
-                            <ul class="small text-muted">
-                                <li>Atividades de gestão de equipe</li>
-                                <li>Metas de liderança</li>
-                                <li>Reconhecimentos de liderança</li>
-                            </ul>
-                            
-                            <h6 class="text-success"><i class="fas fa-comments me-2"></i>Comunicação</h6>
-                            <ul class="small text-muted">
-                                <li>Apresentações realizadas</li>
-                                <li>Documentações criadas</li>
-                                <li>Treinamentos ministrados</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-primary"><i class="fas fa-lightbulb me-2"></i>Inovação</h6>
-                            <ul class="small text-muted">
-                                <li>Projetos inovadores</li>
-                                <li>Melhorias implementadas</li>
-                                <li>Ideias aprovadas</li>
-                            </ul>
-                            
-                            <h6 class="text-warning"><i class="fas fa-handshake me-2"></i>Colaboração</h6>
-                            <ul class="small text-muted">
-                                <li>Trabalhos em equipe</li>
-                                <li>Mentoria oferecida</li>
-                                <li>Suporte a colegas</li>
-                            </ul>
-                            
-                            <h6 class="text-info"><i class="fas fa-graduation-cap me-2"></i>Aprendizado</h6>
-                            <ul class="small text-muted">
-                                <li>Cursos concluídos</li>
-                                <li>Certificações obtidas</li>
-                                <li>Conhecimentos adquiridos</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-calculator me-2"></i>
-                        <strong>Fórmula de Cálculo:</strong> Cada habilidade é pontuada de 0 a 10 com base na quantidade e qualidade das atividades, metas e conquistas relacionadas. O sistema considera frequência, complexidade e impacto de cada item.
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
