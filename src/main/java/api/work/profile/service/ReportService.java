@@ -800,6 +800,7 @@ public class ReportService {
             var monthNames = new java.util.ArrayList<String>();
             var monthlyActivities = new java.util.ArrayList<Integer>();
             var monthlyGoals = new java.util.ArrayList<Integer>();
+            var monthlyAchievements = new java.util.ArrayList<Integer>();
             
             for (int i = 5; i >= 0; i--) {
                 var monthStart = now.minusMonths(i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
@@ -819,14 +820,21 @@ public class ReportService {
                     .filter(g -> g.getCreatedAt() != null && !g.getCreatedAt().isBefore(monthStart) && !g.getCreatedAt().isAfter(monthEnd))
                     .count();
                 
+                // Contar conquistas no mês
+                long achievementsCount = achievements.stream()
+                    .filter(a -> a.getAchievedAt() != null && !a.getAchievedAt().isBefore(monthStart) && !a.getAchievedAt().isAfter(monthEnd))
+                    .count();
+                
                 monthlyActivities.add((int) activitiesCount);
                 monthlyGoals.add((int) goalsCount);
+                monthlyAchievements.add((int) achievementsCount);
             }
             
             chartData.put("progressData", Map.of(
                 "labels", monthNames,
                 "activities", monthlyActivities,
-                "goals", monthlyGoals
+                "goals", monthlyGoals,
+                "achievements", monthlyAchievements
             ));
             
             // Dados para radar de habilidades (baseado em atividades e metas)
@@ -911,7 +919,8 @@ public class ReportService {
             chartData.put("progressData", Map.of(
                 "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
                 "activities", List.of(0, 0, 0, 0, 0, 0),
-                "goals", List.of(0, 0, 0, 0, 0, 0)
+                "goals", List.of(0, 0, 0, 0, 0, 0),
+                "achievements", List.of(0, 0, 0, 0, 0, 0)
             ));
             chartData.put("radarData", Map.of(
                 "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
@@ -928,7 +937,8 @@ public class ReportService {
             chartData.put("progressData", Map.of(
                 "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
                 "activities", List.of(0, 0, 0, 0, 0, 0),
-                "goals", List.of(0, 0, 0, 0, 0, 0)
+                "goals", List.of(0, 0, 0, 0, 0, 0),
+                "achievements", List.of(0, 0, 0, 0, 0, 0)
             ));
         }
         if (!chartData.containsKey("radarData")) {

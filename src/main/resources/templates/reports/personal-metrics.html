@@ -298,6 +298,14 @@
                         tension: 0.4,
                         pointBackgroundColor: '#28a745',
                         pointBorderColor: '#34ce57'
+                    }, {
+                        label: 'Conquistas',
+                        data: [0, 0, 0, 0, 0, 0],
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffc107',
+                        pointBorderColor: '#ffcd39'
                     }]
                 },
                 options: {
@@ -448,6 +456,7 @@
                 progressChart.data.labels = progressData.labels || ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
                 progressChart.data.datasets[0].data = progressData.activities || [0, 0, 0, 0, 0, 0];
                 progressChart.data.datasets[1].data = progressData.goals || [0, 0, 0, 0, 0, 0];
+                progressChart.data.datasets[2].data = progressData.achievements || [0, 0, 0, 0, 0, 0];
                 progressChart.update();
             }
             

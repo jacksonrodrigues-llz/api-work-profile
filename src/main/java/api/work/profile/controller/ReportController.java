@@ -82,7 +82,8 @@ public class ReportController {
                     "progressData", Map.of(
                         "labels", List.of("Jan", "Fev", "Mar", "Abr", "Mai", "Jun"),
                         "activities", List.of(0, 0, 0, 0, 0, 0),
-                        "goals", List.of(0, 0, 0, 0, 0, 0)
+                        "goals", List.of(0, 0, 0, 0, 0, 0),
+                        "achievements", List.of(0, 0, 0, 0, 0, 0)
                     ),
                     "radarData", Map.of(
                         "labels", List.of("Técnico", "Liderança", "Comunicação", "Inovação", "Colaboração", "Aprendizado"),
